@@ -1,6 +1,7 @@
 package com.sil.morphlect
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.sil.morphlect.ui.theme.MorphlectTheme
+import org.opencv.android.OpenCVLoader
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,6 +25,12 @@ class MainActivity : ComponentActivity() {
                     AppNavHost()
                 }
             }
+        }
+        try {
+            val opencvLoaded = OpenCVLoader.initLocal()
+            Log.d("OpenCV", "=============> OPENCV STATUS: $opencvLoaded")
+        } catch (e: Exception) {
+            Log.e("Error", e.toString())
         }
     }
 }
