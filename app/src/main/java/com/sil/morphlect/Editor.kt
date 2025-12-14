@@ -8,7 +8,7 @@ import androidx.navigation.NavController
 
 @Composable
 fun Editor(navController: NavController, imageUri: Uri?) {
-    Scaffold { paddingValues ->
+    Scaffold { _ ->
         if (imageUri == null) {
             Text("no image")
         }

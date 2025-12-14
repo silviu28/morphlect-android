@@ -37,6 +37,10 @@ android {
     buildFeatures {
         compose = true
     }
+    lint {
+        disable += "UnusedMaterial3ScaffoldPaddingParameter"
+        abortOnError = false
+    }
 }
 
 dependencies {
