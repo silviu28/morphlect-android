@@ -5,10 +5,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
+    val imageViewModel: PickImageViewModel = viewModel()
     NavHost(
         navController = navController,
         startDestination = "frontpage") {
@@ -16,14 +18,10 @@ fun AppNavHost() {
             Frontpage(navController)
         }
         composable("pick") {
-            PickImage(navController)
+            PickImage(navController, imageViewModel)
         }
-        composable("editor/{imageUri}", arguments = listOf(navArgument("imageUri") {
-            type = NavType.StringType
-        })) { navBackStackEntry ->
-            val uriStr = navBackStackEntry.arguments?.getString("imageUri")
-            val uri = uriStr?.toUri()
-            Editor(navController, uri)
+        composable("editor") {
+            Editor(navController, imageViewModel)
         }
     }
 }

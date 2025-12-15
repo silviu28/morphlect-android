@@ -63,4 +63,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // https://mvnrepository.com/artifact/org.opencv/opencv
     implementation("org.opencv:opencv:4.12.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
 }

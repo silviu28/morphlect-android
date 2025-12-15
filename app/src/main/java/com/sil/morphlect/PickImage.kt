@@ -18,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,19 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun PickImage(navController: NavController) {
-    var imageUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
-    val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) {
-            imageUri = uri
-            navController.navigate("editor")
-        }
+fun PickImage(navController: NavController, imageViewModel: PickImageViewModel) {
+    val imagePickLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
+        imageViewModel.setImage(uri!!)
+        navController.navigate("editor")
     }
 
     Scaffold { _ ->
@@ -47,33 +43,22 @@ fun PickImage(navController: NavController) {
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                if (imageUri != null) {
-                    Box{
-                       Text("image chosen")
-                    }
-                    Button(onClick = {
-                        navController.navigate("editor/${imageUri.toString()}")
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(100.dp)
+                    )
+                    Text(
+                        text = "no image",
+                        fontSize = 24.sp
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    TextButton(onClick = {
+                        imagePickLauncher.launch("image/*")
                     }) {
-                        Text("continue")
+                        Text("pick image", fontSize = 18.sp)
                     }
-                } else {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp)
-                        )
-                        Text(
-                            text = "no image",
-                            fontSize = 24.sp
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-                TextButton(onClick = {
-                    launcher.launch("image/*")
-                }) {
-                    Text("pick image", fontSize = 18.sp)
                 }
             }
         }
