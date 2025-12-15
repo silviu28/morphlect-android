@@ -1,6 +1,8 @@
 package com.sil.morphlect
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sil.morphlect.view.Editor
@@ -20,6 +22,9 @@ fun AppNavHost() {
     val navController = rememberNavController()
     val imageViewModel: PickImageViewModel = viewModel()
     val editorViewModel: EditorViewModel = viewModel()
+    val ctx = LocalContext.current
+    val configRepository = remember { AppConfigRepository(ctx) }
+
     NavHost(
         navController = navController,
         startDestination = "frontpage") {
@@ -51,7 +56,7 @@ fun AppNavHost() {
             ImageComparison()
         }
         composable("settings") {
-            Settings()
+            Settings(configRepository)
         }
     }
 }
