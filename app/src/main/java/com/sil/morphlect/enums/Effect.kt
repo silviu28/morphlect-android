@@ -1,4 +1,4 @@
-package com.sil.morphlect
+package com.sil.morphlect.enums
 
 enum class Effect {
     Contrast,

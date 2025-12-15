@@ -1,4 +1,4 @@
-package com.sil.morphlect
+package com.sil.morphlect.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.PickImageViewModel
+import com.sil.morphlect.enums.Section
 import kotlin.math.roundToInt
 
 @Composable

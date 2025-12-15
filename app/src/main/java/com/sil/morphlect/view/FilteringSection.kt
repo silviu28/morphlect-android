@@ -1,4 +1,4 @@
-package com.sil.morphlect
+package com.sil.morphlect.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,6 +9,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.enums.Effect
 
 @Composable
 fun FilteringSection(vm: EditorViewModel) {

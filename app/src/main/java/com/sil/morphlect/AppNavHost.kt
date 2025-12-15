@@ -1,12 +1,16 @@
 package com.sil.morphlect
 
-import android.content.SharedPreferences.Editor
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
 import androidx.navigation.compose.*
-import androidx.navigation.navArgument
-import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sil.morphlect.view.Editor
+import com.sil.morphlect.view.Frontpage
+import com.sil.morphlect.view.ImageEvaluation
+import com.sil.morphlect.view.PickImage
+import com.sil.morphlect.view.StyleTransfer
+import com.sil.morphlect.view.VibeMatcher
+import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.PickImageViewModel
 
 @Composable
 fun AppNavHost() {
