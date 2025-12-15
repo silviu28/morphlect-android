@@ -16,6 +16,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -32,8 +36,15 @@ import kotlin.math.roundToInt
 fun Editor(navController: NavController, imageViewModel: PickImageViewModel) {
     val vm: EditorViewModel = viewModel()
     val imageUri = imageViewModel.imageUri
+    var showOptionsSheet by remember { mutableStateOf(false) }
 
     Scaffold { _ ->
+        if (showOptionsSheet) {
+            OptionsBottomSheet(
+                navController,
+                onDismiss = { showOptionsSheet = false }
+            )
+        }
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -62,6 +73,7 @@ fun Editor(navController: NavController, imageViewModel: PickImageViewModel) {
                 Row {
                     Spacer(Modifier.weight(1f))
                     ElevatedButton(onClick = {
+                        showOptionsSheet = true
                     }) {
                         Icon(Icons.Default.Menu, contentDescription = "options")
                     }

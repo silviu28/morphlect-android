@@ -5,8 +5,11 @@ import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sil.morphlect.view.Editor
 import com.sil.morphlect.view.Frontpage
+import com.sil.morphlect.view.ImageComparison
 import com.sil.morphlect.view.ImageEvaluation
 import com.sil.morphlect.view.PickImage
+import com.sil.morphlect.view.SaveImage
+import com.sil.morphlect.view.Settings
 import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.viewmodel.EditorViewModel
@@ -40,6 +43,15 @@ fun AppNavHost() {
         }
         composable("styletransfer") {
             StyleTransfer()
+        }
+        composable("save") {
+            SaveImage()
+        }
+        composable("compare") {
+            ImageComparison()
+        }
+        composable("settings") {
+            Settings()
         }
     }
 }
