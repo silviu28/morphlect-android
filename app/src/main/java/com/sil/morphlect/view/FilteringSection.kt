@@ -4,17 +4,30 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Effect
+import kotlin.math.roundToInt
 
 @Composable
 fun FilteringSection(vm: EditorViewModel) {
     Column {
+        Text(vm.selectedEffect.name)
+        Text("${(vm.effectValues[vm.selectedEffect]!! * 100).roundToInt()}")
+        if (vm.effectValues[vm.selectedEffect] != 0.0) {
+            ElevatedButton(onClick = {
+                vm.adjustEffect(value = 0.0)
+            }) {
+                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "undo effect")
+            }
+        }
         Slider(
             value = vm.effectValues[vm.selectedEffect]!!.toFloat(),
             onValueChange = { value ->

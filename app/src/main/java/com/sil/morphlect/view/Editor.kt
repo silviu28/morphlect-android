@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
@@ -111,8 +112,7 @@ fun Editor(
                         )
                     }
                 }
-                Text(vm.selectedEffect.name)
-                Text("${(vm.effectValues[vm.selectedEffect]!! * 100).roundToInt()}")
+
                 when (vm.section) {
                     Section.Filtering -> FilteringSection(vm)
                     Section.SmartFeatures -> SmartFeaturesSection(navController, vm)
