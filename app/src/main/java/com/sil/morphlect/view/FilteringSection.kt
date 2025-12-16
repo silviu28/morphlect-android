@@ -16,9 +16,9 @@ import com.sil.morphlect.enums.Effect
 fun FilteringSection(vm: EditorViewModel) {
     Column {
         Slider(
-            value = vm.effectValues[vm.selectedEffect]!!,
+            value = vm.effectValues[vm.selectedEffect]!!.toFloat(),
             onValueChange = { value ->
-                vm.adjustEffect(value = value)
+                vm.adjustEffect(value = value.toDouble())
             },
             valueRange = -1f..1f
         )
