@@ -73,7 +73,14 @@ class EditorViewModel : ViewModel() {
             // heavy work off main
             val bitmap = kotlinx.coroutines.withContext(Dispatchers.Default) {
                 val copy = src.clone()
-                val processed = Filtering.brightness(copy, effectValues[Effect.Brightness]!!)
+
+                var processed = copy
+                processed = Filtering.contrast(processed, effectValues[Effect.Contrast]!!)
+                processed = Filtering.brightness(processed, effectValues[Effect.Brightness]!!)
+                processed = Filtering.blur(processed, effectValues[Effect.Blur]!! / 10, effectValues[Effect.Blur]!! / 10)
+                processed = Filtering.lightBalance(processed, effectValues[Effect.LightBalance]!!)
+                processed = Filtering.hueShift(processed, effectValues[Effect.Hue]!!)
+
                 val bmp = FormatConverters.matToBitmap(processed)
                 copy.release()
                 processed.release()
