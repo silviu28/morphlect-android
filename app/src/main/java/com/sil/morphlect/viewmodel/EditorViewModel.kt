@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +20,8 @@ import com.sil.morphlect.logic.Filtering
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.opencv.core.Mat
+import java.io.File
+import java.io.FileOutputStream
 
 class EditorViewModel : ViewModel() {
     private var originalMat: Mat? = null
@@ -94,4 +98,5 @@ class EditorViewModel : ViewModel() {
         super.onCleared()
         originalMat?.release()
     }
+
 }

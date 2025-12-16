@@ -41,8 +41,12 @@ import kotlin.math.roundToInt
 
 @RequiresApi(Build.VERSION_CODES.P)
 @Composable
-fun Editor(navController: NavController, imageViewModel: PickImageViewModel) {
-    val vm: EditorViewModel = viewModel()
+fun Editor(
+    navController: NavController,
+    imageViewModel: PickImageViewModel,
+    editorViewModel: EditorViewModel
+) {
+    val vm = editorViewModel
     val imageUri = imageViewModel.imageUri
     val ctx = LocalContext.current
 

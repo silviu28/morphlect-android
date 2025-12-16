@@ -1,5 +1,7 @@
 package com.sil.morphlect
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -17,6 +19,7 @@ import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.viewmodel.PickImageViewModel
 
+@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
@@ -38,7 +41,7 @@ fun AppNavHost() {
             PickImage(navController, imageViewModel)
         }
         composable("editor") {
-            Editor(navController, imageViewModel)
+            Editor(navController, imageViewModel, editorViewModel)
         }
         composable("vibematch") {
             VibeMatcher()
@@ -50,7 +53,7 @@ fun AppNavHost() {
             StyleTransfer()
         }
         composable("save") {
-            SaveImage()
+            SaveImage(editorViewModel)
         }
         composable("compare") {
             ImageComparison()
