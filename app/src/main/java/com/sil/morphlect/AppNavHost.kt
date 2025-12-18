@@ -56,7 +56,7 @@ fun AppNavHost() {
             SaveImage(editorViewModel)
         }
         composable("compare") {
-            ImageComparison()
+            ImageComparison(editorViewModel)
         }
         composable("settings") {
             Settings(configRepository)
