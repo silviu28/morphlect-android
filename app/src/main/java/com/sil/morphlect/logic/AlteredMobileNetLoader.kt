@@ -4,16 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.nnapi.NnApiDelegate
 import java.nio.ByteBuffer
 import androidx.core.graphics.scale
 import java.nio.ByteOrder
 import androidx.core.graphics.get
 import com.sil.morphlect.enums.Output
 import org.tensorflow.lite.support.common.FileUtil
-import java.io.FileInputStream
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
 
 class AlteredMobileNetLoader(private val context: Context) {
     companion object {

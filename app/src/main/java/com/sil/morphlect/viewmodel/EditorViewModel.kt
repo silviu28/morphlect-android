@@ -26,6 +26,10 @@ import java.io.FileOutputStream
 class EditorViewModel : ViewModel() {
     private var originalMat: Mat? = null
 
+    fun getOriginalMat(): Mat? {
+        return originalMat
+    }
+
     // states
     var previewBitmap by mutableStateOf<Bitmap?>(null)
         private set
