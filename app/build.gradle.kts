@@ -68,5 +68,11 @@ dependencies {
     implementation("androidx.datastore:datastore-core:1.1.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite
+    implementation("org.tensorflow:tensorflow-lite:2.17.0")
+    // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-task-vision
+    implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.4")
+    // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-gpu
+    runtimeOnly("org.tensorflow:tensorflow-lite-gpu:2.17.0")
 
 }

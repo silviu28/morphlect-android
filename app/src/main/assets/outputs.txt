@@ -1,0 +1,1 @@
+brightness,contrast,colorfulness,sharpness,quality_factor,bitrate
