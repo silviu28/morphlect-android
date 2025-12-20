@@ -72,4 +72,6 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite:2.17.0")
     // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-support
     implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson:gson:2.13.2")
 }

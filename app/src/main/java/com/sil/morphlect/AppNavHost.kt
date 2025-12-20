@@ -1,5 +1,6 @@
 package com.sil.morphlect
 
+import android.content.SharedPreferences.Editor
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ fun AppNavHost() {
     val editorViewModel: EditorViewModel = viewModel()
     val ctx = LocalContext.current
     val configRepository = remember { AppConfigRepository(ctx) }
+    val presetsRepository = remember { PresetsRepository(ctx) }
 
     NavHost(
         navController = navController,
@@ -41,7 +43,12 @@ fun AppNavHost() {
             PickImage(navController, imageViewModel)
         }
         composable("editor") {
-            Editor(navController, imageViewModel, editorViewModel)
+            Editor(
+                navController,
+                imageViewModel,
+                editorViewModel,
+                presetsRepository
+            )
         }
         composable("vibematch") {
             VibeMatcher()

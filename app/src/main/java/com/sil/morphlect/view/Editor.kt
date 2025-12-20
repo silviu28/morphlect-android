@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.sil.morphlect.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
@@ -46,7 +47,8 @@ import kotlin.math.roundToInt
 fun Editor(
     navController: NavController,
     imageViewModel: PickImageViewModel,
-    editorViewModel: EditorViewModel
+    editorViewModel: EditorViewModel,
+    presetsRepository: PresetsRepository
 ) {
     val vm = editorViewModel
     val imageUri = imageViewModel.imageUri
@@ -115,7 +117,7 @@ fun Editor(
                 }
 
                 when (vm.section) {
-                    Section.Filtering -> FilteringSection(vm)
+                    Section.Filtering -> FilteringSection(vm, presetsRepository)
                     Section.SmartFeatures -> SmartFeaturesSection(navController, vm)
                     Section.ImageManipulation -> ImageManipulationSection(vm)
                 }

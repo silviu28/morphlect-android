@@ -1,6 +1,7 @@
 package com.sil.morphlect.view
 
 import android.graphics.Bitmap
+import androidx.compose.material3.AlertDialog
 import android.graphics.Paint.Align
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,57 +18,97 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.sil.morphlect.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Effect
-import com.sil.morphlect.logic.Filtering
-import com.sil.morphlect.logic.FormatConverters
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.opencv.core.Mat
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun FilteringSection(vm: EditorViewModel) {
-    val presetsMap = remember {
-            mapOf(
-            "eyesore" to mapOf(
-                Effect.Hue to 20.0
-            ),
-            "black and white" to mapOf(
-                Effect.Hue to 0.0
-            ),
-            "brighty bright" to mapOf(
-                Effect.Brightness to .5
-            )
-        )
-    }
+fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) {
+    var presetsMap by remember { mutableStateOf<Map<String, Map<Effect, Double>>>(emptyMap()) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showRemoveDialog by remember { mutableStateOf(false) }
+    var selectedPresetName by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    val applyPreset = { preset: Map<Effect, Double> ->
+        preset.forEach { (effect, value) ->
+            vm.adjustEffect(effect = effect, value = value)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        presetsMap = presetsRepository.load()
+    }
+
+    if (showAddDialog) {
+        AddPresetDialog(
+            onDismissRequest = { showAddDialog = false },
+            onAddPreset = { name ->
+            scope.launch {
+                presetsRepository.addPreset(name, vm.effectValues)
+                presetsMap = presetsRepository.load()
+            }
+        })
+    }
+
+    if (showRemoveDialog) {
+        AlertDialog(
+            onDismissRequest = { showRemoveDialog = false },
+            title = { Text("remove preset") },
+            text = { Text("do you want to remove $selectedPresetName?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch {
+                        presetsRepository.removePreset(selectedPresetName!!)
+                        presetsMap = presetsRepository.load()
+                    }
+                    showRemoveDialog = false
+                }) {
+                    Text("yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showRemoveDialog = false
+                }) {
+                    Text("no")
+                }
+            }
+        )
+    }
 
     Column {
         Text(
@@ -147,10 +190,19 @@ fun FilteringSection(vm: EditorViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 presetsMap.forEach { (name, preset) ->
-                    PresetPreview(name, preset, vm.getOriginalMat())
+                    PresetPreview(
+                        name = name,
+                        preset = preset,
+                        originalMat = vm.getOriginalMat(),
+                        onPress = { applyPreset(preset) },
+                        onLongPress = {
+                            selectedPresetName = name
+                            showRemoveDialog = true
+                        })
                 }
                 ElevatedButton (
-                    modifier = Modifier.size(60.dp), onClick = {}
+                    modifier = Modifier.size(60.dp),
+                    onClick = { showAddDialog = true }
                 ) {
                     Text("+")
                 }
@@ -159,57 +211,3 @@ fun FilteringSection(vm: EditorViewModel) {
     }
 }
 
-@Composable
-fun PresetPreview(name: String, preset: Map<Effect, Double>, originalMat: Mat?) {
-    var processedBitmap by remember { mutableStateOf<Bitmap?>(null) }
-
-    if (originalMat == null) {
-        Box(modifier = Modifier.size(60.dp)) {
-            CircularProgressIndicator()
-        }
-        return
-    }
-
-    LaunchedEffect(originalMat, preset) {
-        withContext(Dispatchers.Default) {
-            try {
-                var previewMat = originalMat.clone()
-
-                val blurValue = preset[Effect.Blur] ?: 0.0
-                if (blurValue != 0.0) {
-                    previewMat = Filtering.blur(previewMat, blurValue / 10, blurValue / 10)
-                }
-
-                val hueValue = preset[Effect.Hue] ?: 0.0
-                if (hueValue != 0.0) {
-                    previewMat = Filtering.hueShift(previewMat, hueValue)
-                }
-
-                val resultBitmap = FormatConverters.matToBitmap(previewMat)
-
-                previewMat.release()
-
-                processedBitmap = resultBitmap
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .size(60.dp)
-            .clip(RoundedCornerShape(8.dp)),
-    ) {
-        if (processedBitmap == null) {
-            CircularProgressIndicator()
-        } else {
-            Image(
-                bitmap = processedBitmap!!.asImageBitmap(),
-                contentDescription = name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
-}
