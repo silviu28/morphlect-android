@@ -31,7 +31,7 @@ class AlteredMobileNetLoader(private val context: Context) {
 
     fun bitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
         val resized = bitmap.scale(IMAGE_SIZE, IMAGE_SIZE, false)
-        val buffer = ByteBuffer.allocateDirect(1 * IMAGE_SIZE * IMAGE_SIZE * CHANNELS)
+        val buffer = ByteBuffer.allocateDirect(1 * IMAGE_SIZE * IMAGE_SIZE * CHANNELS * Float.SIZE_BYTES)
         buffer.order(ByteOrder.nativeOrder())
 
         for (y in 0 until IMAGE_SIZE) {
@@ -47,9 +47,9 @@ class AlteredMobileNetLoader(private val context: Context) {
         return buffer
     }
 
-    fun infer(bitmap: Bitmap): Map<Output, Double> {
+    fun infer(bitmap: Bitmap): Map<Output, Float> {
         val input = bitmapToByteBuffer(bitmap)
-        val output = Array(1) { DoubleArray(OUTPUT_SIZE) }
+        val output = Array(1) { FloatArray(OUTPUT_SIZE) }
         interpreter?.run(input, output)
 
         val actualOutput = output[0]
