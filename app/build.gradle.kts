@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -16,6 +18,28 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+
+        buildConfigField(
+            "String",
+            "UNSPLASH_ACCESS_KEY",
+            "\"${properties.getProperty("UNSPLASH_ACCESS_KEY", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "UNSPLASH_SECRET_KEY",
+            "\"${properties.getProperty("UNSPLASH_SECRET_KEY", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "UNSPLASH_APP_ID",
+            "\"${properties.getProperty("UNSPLASH_APP_ID", "")}\""
+        )
     }
 
     buildTypes {
@@ -36,6 +60,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         disable += "UnusedMaterial3ScaffoldPaddingParameter"
@@ -75,3 +100,5 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation("com.google.code.gson:gson:2.13.2")
 }
+
+

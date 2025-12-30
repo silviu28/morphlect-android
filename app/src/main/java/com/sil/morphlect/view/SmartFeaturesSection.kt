@@ -28,9 +28,9 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                 confirmButton = {
                     TextButton(onClick = {
                         showStyleDialog = false
+                        navController.navigate("styletransfer")
                     }) {
                         Text("yes")
-                        navController.navigate("styletransfer")
                     }
                 },
                 dismissButton = {
