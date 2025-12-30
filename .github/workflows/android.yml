@@ -19,6 +19,13 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: gradle
+        
+    - name: add secrets
+      run: |
+        echo "UNSPLASH_API_KEY=${{ secrets.UNSPLASH_API_KEY }}" >> local.properties
+        echo "UNSPLASH_SECRET_KEY=${{ secrets.UNSPLASH_SECRET_KEY }}" >> local.properties
+        echo "UNSPLASH_APP_ID=${{ secrets.UNSPLASH_APP_ID }}" >> local.properties
+    
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
