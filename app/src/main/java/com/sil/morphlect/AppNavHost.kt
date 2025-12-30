@@ -54,7 +54,7 @@ fun AppNavHost() {
             VibeMatcher(editorViewModel, navController)
         }
         composable("imageeval") {
-            ImageEvaluation()
+            ImageEvaluation(editorViewModel, navController)
         }
         composable("styletransfer") {
             StyleTransfer()

@@ -3,12 +3,17 @@ package com.sil.morphlect.view
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,24 +36,9 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
-    val ctx = LocalContext.current.applicationContext
-    val loader = remember { AlteredMobileNetLoader(ctx) }
-    var values by remember { mutableStateOf<Map<Output, Float>>(mapOf()) }
-    var infoText by remember { mutableStateOf("processing...") }
-    var keepParamsDialogActive by remember { mutableStateOf(false) }
+    var tokens by remember { mutableStateOf(emptySet<String>()) }
+    var currentToken by remember { mutableStateOf("") }
 
-    LaunchedEffect(vm.previewBitmap) {
-        values = withContext(Dispatchers.Default) {
-            loader.infer(vm.previewBitmap!!)
-        }
-        infoText = "done!"
-    }
-
-    if (keepParamsDialogActive) {
-        KeepParamsDialog(
-            onDismissRequest = { keepParamsDialogActive = false },
-            onApply = { /* this should start an optimizer... */ })
-    }
     Column(
         modifier = Modifier.fillMaxWidth().fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -62,16 +52,43 @@ fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
                 contentScale = ContentScale.Crop
             )
         }
-        values.forEach { (effect, value) ->
-            Text("${effect.name}: ${"%.2f".format(value)}")
+
+        OutlinedTextField(
+            value = currentToken,
+            onValueChange = { currentToken = it },
+            label = { Text("add token") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        )
+        Button(onClick = {
+            if (currentToken.isNotBlank()) {
+                tokens += currentToken.trim()
+                currentToken = ""
+            }
+        }) {
+            Text("+")
         }
+
+        FlowRow {
+            tokens.forEach { token ->
+                Button(onClick = { tokens -= token }) {
+                    Text(token)
+                }
+            }
+        }
+
         Row {
-            Button(onClick = { navController.navigate("editor") }) {
-                Text("back to editor")
+            TextButton(onClick = { /* this should start a token parser... */ }) {
+                Text("seems good")
             }
-            Button(onClick = { keepParamsDialogActive = true }) {
-                Text("improve")
+            TextButton(onClick = { /* this should generate tokens based on given image... */ }) {
+                Text("auto")
             }
+        }
+
+        TextButton(onClick = { navController.navigate("editor") }) {
+            Text("back to editor")
         }
     }
 }

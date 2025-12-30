@@ -3,6 +3,7 @@ package com.sil.morphlect.view
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -18,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.sil.morphlect.enums.Effect
@@ -82,11 +84,12 @@ fun PresetPreview(
                 contentDescription = name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .combinedClickable(
-                        onClick = onPress,
-                        onLongClick = onLongPress,
-                    )
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { onPress() },
+                            onLongPress = { onLongPress() }
+                        )
+                    }
             )
         }
     }
