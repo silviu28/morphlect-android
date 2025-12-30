@@ -99,6 +99,8 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation("com.google.code.gson:gson:2.13.2")
+    // https://mvnrepository.com/artifact/androidx.compose.material/material-icons-extended
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 }
 
 
