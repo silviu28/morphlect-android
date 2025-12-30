@@ -15,6 +15,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Brightness4
+import androidx.compose.material.icons.filled.Contrast
+import androidx.compose.material.icons.filled.InvertColors
+import androidx.compose.material.icons.filled.LensBlur
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
@@ -135,27 +140,27 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             ElevatedButton(onClick = {
                 vm.changeSelectedEffect(Effect.Contrast)
             }) {
-                Text("con")
+                Icon(Icons.Filled.Contrast, contentDescription = "contrast")
             }
             ElevatedButton(onClick = {
                 vm.changeSelectedEffect(Effect.Blur)
             }) {
-                Text("blr")
+                Icon(Icons.Filled.LensBlur, contentDescription = "blur")
             }
             ElevatedButton(onClick = {
                 vm.changeSelectedEffect(Effect.Brightness)
             }) {
-                Text("bri")
+                Icon(Icons.Filled.Brightness4, contentDescription = "brightness")
             }
             ElevatedButton(onClick = {
                 vm.changeSelectedEffect(Effect.LightBalance)
             }) {
-                Text("lb")
+                Icon(Icons.Filled.Lightbulb, contentDescription = "light balance")
             }
             ElevatedButton(onClick = {
                 vm.changeSelectedEffect(Effect.Hue)
             }) {
-                Text("hue")
+                Icon(Icons.Filled.InvertColors, contentDescription = "hue")
             }
         }
         Surface(
