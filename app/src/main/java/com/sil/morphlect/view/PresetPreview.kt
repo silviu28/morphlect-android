@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.logic.Filtering
 import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
@@ -42,7 +43,7 @@ fun PresetPreview(
 
     if (originalMat == null) {
         Box(modifier = Modifier.size(60.dp)) {
-            CircularProgressIndicator()
+            FlickeringLedDotProgressIndicator()
         }
         return
     }
@@ -77,7 +78,7 @@ fun PresetPreview(
             .clip(RoundedCornerShape(8.dp)),
     ) {
         if (processedBitmap == null) {
-            CircularProgressIndicator()
+            FlickeringLedDotProgressIndicator()
         } else {
             Image(
                 bitmap = processedBitmap!!.asImageBitmap(),

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.sil.morphlect.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Effect
+import com.sil.morphlect.view.custom.LedDotSlider
 import com.sil.morphlect.view.dialog.AddPresetDialog
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -126,7 +127,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 Text(text = vm.selectedEffect.name, fontSize = 30.sp)
             }
         }
-        Slider(
+        LedDotSlider(
             value = vm.effectValues[vm.selectedEffect]!!.toFloat(),
             onValueChange = { value ->
                 vm.adjustEffect(value = value.toDouble())
