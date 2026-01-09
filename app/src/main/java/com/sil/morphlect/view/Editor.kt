@@ -1,6 +1,8 @@
 package com.sil.morphlect.view
 
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
@@ -41,6 +44,8 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
 import kotlin.math.roundToInt
+import androidx.compose.material3.AlertDialog
+
 
 @RequiresApi(Build.VERSION_CODES.P)
 @Composable
@@ -53,6 +58,12 @@ fun Editor(
     val vm = editorViewModel
     val imageUri = imageViewModel.imageUri
     val ctx = LocalContext.current
+
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    BackHandler {
+        showExitDialog = true
+    }
 
     var showOptionsSheet by remember { mutableStateOf(false) }
     LaunchedEffect(imageUri) {
@@ -68,6 +79,27 @@ fun Editor(
                 onDismiss = { showOptionsSheet = false }
             )
         }
+
+        if (showExitDialog) {
+            AlertDialog(
+                onDismissRequest = { showExitDialog = false },
+                title = { Text("quit app?") },
+                text = { Text("all unsaved changes will be lost.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        (ctx as? ComponentActivity)?.finish()
+                    }) { Text("quit") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showExitDialog = false
+                    }) {
+                        Text("no")
+                    }
+                }
+            )
+        }
+
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
