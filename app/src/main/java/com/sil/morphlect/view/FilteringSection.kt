@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,6 +51,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     var showAddDialog by remember { mutableStateOf(false) }
     var showRemoveDialog by remember { mutableStateOf(false) }
     var selectedPresetName by remember { mutableStateOf<String?>(null) }
+    var isBlurring2d by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val applyPreset = { preset: Map<Effect, Double> ->
@@ -105,14 +105,16 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         Text(
             text = "${(vm.effectValues[vm.selectedEffect]!! * 100).roundToInt()}",
             fontSize = 30.sp,
-            modifier = Modifier.offset(x = (-70).dp, y = (-40).dp).align(Alignment.End)
+            modifier = Modifier
+                    .offset(x = (-70).dp, y = (-40).dp)
+                    .align(Alignment.End)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Row {
                 if (vm.effectValues[vm.selectedEffect] != 0.0) {
                     ElevatedButton(
                         modifier = Modifier.height(30.dp),
@@ -120,6 +122,14 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                         vm.adjustEffect(value = 0.0)
                     }) {
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "undo effect")
+
+                    }
+                }
+                if (vm.selectedEffect == Effect.Blur) {
+                    ElevatedButton(
+                        modifier = Modifier.height(30.dp),
+                        onClick = { isBlurring2d = !isBlurring2d }) {
+                        if (isBlurring2d) Text("XY") else Text("X")
                     }
                 }
             }
@@ -127,78 +137,96 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 Text(text = vm.selectedEffect.name, fontSize = 30.sp)
             }
         }
+
+        // the usual slider
         LedDotSlider(
             value = vm.effectValues[vm.selectedEffect]!!.toFloat(),
             onValueChange = { value ->
                 vm.adjustEffect(value = value.toDouble())
+                // merge both blurring axes
+                if (!isBlurring2d) {
+                    vm.adjustEffect(effect = Effect.BlurSecondAxis, value = value.toDouble())
+                }
             },
-            valueRange = -1f..1f
+            valueRange = -1f..1f,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            ElevatedButton(onClick = {
-                vm.changeSelectedEffect(Effect.Contrast)
-            }) {
-                Icon(Icons.Filled.Contrast, contentDescription = "contrast")
-            }
-            ElevatedButton(onClick = {
-                vm.changeSelectedEffect(Effect.Blur)
-            }) {
-                Icon(Icons.Filled.LensBlur, contentDescription = "blur")
-            }
-            ElevatedButton(onClick = {
-                vm.changeSelectedEffect(Effect.Brightness)
-            }) {
-                Icon(Icons.Filled.Brightness4, contentDescription = "brightness")
-            }
-            ElevatedButton(onClick = {
-                vm.changeSelectedEffect(Effect.LightBalance)
-            }) {
-                Icon(Icons.Filled.Lightbulb, contentDescription = "light balance")
-            }
-            ElevatedButton(onClick = {
-                vm.changeSelectedEffect(Effect.Hue)
-            }) {
-                Icon(Icons.Filled.InvertColors, contentDescription = "hue")
-            }
+
+        // the slider that appears when enabling 2d blur
+        if (isBlurring2d) {
+            LedDotSlider(
+                value = vm.effectValues[Effect.BlurSecondAxis]!!.toFloat(),
+                onValueChange = { value ->
+                    vm.adjustEffect(effect = Effect.BlurSecondAxis, value = value.toDouble())
+                },
+                valueRange = -1f..1f
+            )
         }
-        Surface(
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        ElevatedButton(onClick = {
+            vm.changeSelectedEffect(Effect.Contrast)
+        }) {
+            Icon(Icons.Filled.Contrast, contentDescription = "contrast")
+        }
+        ElevatedButton(onClick = {
+            vm.changeSelectedEffect(Effect.Blur)
+        }) {
+            Icon(Icons.Filled.LensBlur, contentDescription = "blur")
+        }
+        ElevatedButton(onClick = {
+            vm.changeSelectedEffect(Effect.Brightness)
+        }) {
+            Icon(Icons.Filled.Brightness4, contentDescription = "brightness")
+        }
+        ElevatedButton(onClick = {
+            vm.changeSelectedEffect(Effect.LightBalance)
+        }) {
+            Icon(Icons.Filled.Lightbulb, contentDescription = "light balance")
+        }
+        ElevatedButton(onClick = {
+            vm.changeSelectedEffect(Effect.Hue)
+        }) {
+            Icon(Icons.Filled.InvertColors, contentDescription = "hue")
+        }
+    }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.Gray.copy(alpha = .2f)
+    ) {
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .padding(vertical = 8.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = Color.Gray.copy(alpha = .2f)
+                .fillMaxSize()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            presetsMap.forEach { (name, preset) ->
+                PresetPreview(
+                    name = name,
+                    preset = preset,
+                    originalMat = vm.getOriginalMat(),
+                    onPress = { applyPreset(preset) },
+                    onLongPress = {
+                        selectedPresetName = name
+                        showRemoveDialog = true
+                    })
+            }
+            ElevatedButton(
+                modifier = Modifier.size(60.dp),
+                onClick = { showAddDialog = true }
             ) {
-                presetsMap.forEach { (name, preset) ->
-                    PresetPreview(
-                        name = name,
-                        preset = preset,
-                        originalMat = vm.getOriginalMat(),
-                        onPress = { applyPreset(preset) },
-                        onLongPress = {
-                            selectedPresetName = name
-                            showRemoveDialog = true
-                        })
-                }
-                ElevatedButton (
-                    modifier = Modifier.size(60.dp),
-                    onClick = { showAddDialog = true }
-                ) {
-                    Text("+")
-                }
+                Text("+")
             }
         }
     }
 }
+
 

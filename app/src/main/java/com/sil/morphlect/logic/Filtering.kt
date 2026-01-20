@@ -23,11 +23,17 @@ object Filtering {
 
     // TODO
     fun blur(src: Mat, horizontalKernelDim: Double, verticalKernelDim: Double): Mat {
-        if (horizontalKernelDim <= 1 && verticalKernelDim <= 1) {
-            return src
+        val hKernel = horizontalKernelDim.toInt().let {
+            if (it <= 1) return src
+            if (it % 2 == 0) it + 1 else it
         }
+        val vKernel = verticalKernelDim.toInt().let {
+            if (it <= 1) return src
+            if (it % 2 == 0) it + 1 else it
+        }
+
         val dst = Mat()
-        val kSize = Size(horizontalKernelDim, verticalKernelDim)
+        val kSize = Size(hKernel.toDouble(), vKernel.toDouble())
         Imgproc.blur(src, dst, kSize)
         return dst
     }

@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -45,6 +48,10 @@ import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
 import kotlin.math.roundToInt
 import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 
 
 @RequiresApi(Build.VERSION_CODES.P)
@@ -60,6 +67,13 @@ fun Editor(
     val ctx = LocalContext.current
 
     var showExitDialog by remember { mutableStateOf(false) }
+
+    var thumbnailZoomScale by remember { mutableStateOf(1f) }
+    var thumbnailOffset by remember { mutableStateOf(Offset.Zero) }
+    val thumbnailTransformState = rememberTransformableState { zoomChange, offsetChange, _ ->
+        thumbnailZoomScale = (thumbnailZoomScale * zoomChange).coerceIn(.1f, 5f)
+        thumbnailOffset += offsetChange
+    }
 
     BackHandler {
         showExitDialog = true
@@ -101,7 +115,9 @@ fun Editor(
         }
 
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -142,7 +158,16 @@ fun Editor(
                         Image(
                             bitmap = it,
                             contentDescription = "preview",
-                            modifier = Modifier.size(300.dp),
+                            modifier = Modifier
+                                .size(300.dp)
+                                .clip(RectangleShape)
+                                .transformable(state = thumbnailTransformState)
+                                .graphicsLayer(
+                                    scaleX = thumbnailZoomScale,
+                                    scaleY = thumbnailZoomScale,
+                                    translationX = thumbnailOffset.x,
+                                    translationY = thumbnailOffset.y
+                                ),
                             contentScale = ContentScale.Crop
                         )
                     }

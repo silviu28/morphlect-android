@@ -4,26 +4,21 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sil.morphlect.PresetsRepository
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.enums.Section
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.Filtering
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
-import java.io.File
-import java.io.FileOutputStream
 
 class EditorViewModel : ViewModel() {
     private var originalMat: Mat? = null
@@ -43,6 +38,7 @@ class EditorViewModel : ViewModel() {
         Effect.Contrast to 0.0,
         Effect.Hue to 0.0,
         Effect.Blur to 0.0,
+        Effect.BlurSecondAxis to 0.0,
         Effect.Brightness to 0.0,
         Effect.LightBalance to 0.0
     )
@@ -81,13 +77,13 @@ class EditorViewModel : ViewModel() {
         val src = originalMat ?: return
         viewModelScope.launch {
             // heavy work off main
-            val bitmap = kotlinx.coroutines.withContext(Dispatchers.Default) {
+            val bitmap = withContext(Dispatchers.Default) {
                 val copy = src.clone()
 
                 var processed = copy
                 processed = Filtering.contrast(processed, effectValues[Effect.Contrast]!!)
                 processed = Filtering.brightness(processed, effectValues[Effect.Brightness]!!)
-                processed = Filtering.blur(processed, effectValues[Effect.Blur]!! / 10, effectValues[Effect.Blur]!! / 10)
+                processed = Filtering.blur(processed, effectValues[Effect.Blur]!!, effectValues[Effect.BlurSecondAxis]!!)
                 processed = Filtering.lightBalance(processed, effectValues[Effect.LightBalance]!!)
                 processed = Filtering.hueShift(processed, effectValues[Effect.Hue]!!)
 

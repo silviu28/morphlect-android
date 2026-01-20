@@ -4,6 +4,7 @@ enum class Effect {
     Contrast,
     Brightness,
     Blur,
+    BlurSecondAxis,
     LightBalance,
     Hue,
 }

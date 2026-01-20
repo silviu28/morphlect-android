@@ -2,13 +2,10 @@ package com.sil.morphlect.view
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,8 +23,6 @@ import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.logic.Filtering
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
 
 @Composable
