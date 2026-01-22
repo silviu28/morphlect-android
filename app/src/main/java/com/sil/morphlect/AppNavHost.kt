@@ -17,6 +17,7 @@ import com.sil.morphlect.view.SaveImage
 import com.sil.morphlect.view.Settings
 import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
+import com.sil.morphlect.view.dialog.OnboardingCarousel
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.viewmodel.PickImageViewModel
 
@@ -38,6 +39,9 @@ fun AppNavHost() {
         }
         composable("frontpage") {
             Frontpage(navController)
+        }
+        composable("onboarding") {
+            OnboardingCarousel(navController)
         }
         composable("pick") {
             PickImage(navController, imageViewModel)

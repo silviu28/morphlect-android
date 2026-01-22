@@ -49,7 +49,7 @@ fun Frontpage(navController: NavController) {
                     Text("login")
                 }
                 TextButton(onClick = {
-                    navController.navigate("pick")
+                    navController.navigate("onboarding")
                 }) {
                     Text("use")
                 }
