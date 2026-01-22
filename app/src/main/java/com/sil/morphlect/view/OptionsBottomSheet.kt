@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 fun OptionsBottomSheet(navController: NavController, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        modifier = Modifier.padding(18.dp)
     ) {
         Column(
             modifier = Modifier

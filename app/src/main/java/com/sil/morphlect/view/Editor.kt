@@ -12,12 +12,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.currentCompositionContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,19 +37,16 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.sil.morphlect.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
-import kotlin.math.roundToInt
-import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import com.sil.morphlect.view.animated.AnimatedSectionButton
 
 
 @RequiresApi(Build.VERSION_CODES.P)
@@ -67,6 +62,7 @@ fun Editor(
     val ctx = LocalContext.current
 
     var showExitDialog by remember { mutableStateOf(false) }
+    var showHistoryStack by remember { mutableStateOf(false) }
 
     var thumbnailZoomScale by remember { mutableStateOf(1f) }
     var thumbnailOffset by remember { mutableStateOf(Offset.Zero) }
@@ -75,6 +71,7 @@ fun Editor(
         thumbnailOffset += offsetChange
     }
 
+    // listen for back gesture - in case if it's accidental
     BackHandler {
         showExitDialog = true
     }
@@ -87,6 +84,10 @@ fun Editor(
     }
 
     Scaffold { _ ->
+        if (showHistoryStack) {
+            HistoryStack(onDismissRequest = { showHistoryStack = false })
+        }
+
         if (showOptionsSheet) {
             OptionsBottomSheet(
                 navController,
@@ -125,24 +126,34 @@ fun Editor(
                 verticalArrangement = Arrangement.Center
             ) {
                 Row {
-                    TextButton(onClick = {
-                        vm.changeSection(Section.Filtering)
-                    }) {
+                    AnimatedSectionButton(
+                        onClick = { vm.changeSection(Section.Filtering) },
+                        isSelected = vm.section == Section.Filtering,
+                    ) {
                         Text("filtering")
                     }
-                    TextButton(onClick = {
-                        vm.changeSection(Section.SmartFeatures)
-                    }) {
+
+                    AnimatedSectionButton(
+                        onClick = { vm.changeSection(Section.SmartFeatures) },
+                        isSelected = vm.section == Section.SmartFeatures
+                    ) {
                         Text("smart features")
                     }
-                    TextButton(onClick = {
-                        vm.changeSection(Section.ImageManipulation)
-                    }) {
-                        Text("image manipulation")
+
+                    AnimatedSectionButton(
+                        onClick = { vm.changeSection(Section.ImageManipulation) },
+                        isSelected = vm.section == Section.ImageManipulation
+                    ) {
+                        Text("manipulation")
                     }
                 }
-                Row {
-                    Spacer(Modifier.weight(1f))
+                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                    ElevatedButton(onClick = {
+                        showHistoryStack = true
+                    }) {
+                        Icon(Icons.Default.History, contentDescription = "history")
+                    }
+
                     ElevatedButton(onClick = {
                         showOptionsSheet = true
                     }) {
