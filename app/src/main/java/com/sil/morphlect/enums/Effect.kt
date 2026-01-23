@@ -7,4 +7,5 @@ enum class Effect {
     BlurSecondAxis,
     LightBalance,
     Hue,
+    Sharpness,
 }

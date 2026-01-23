@@ -2,9 +2,11 @@ package com.sil.morphlect.logic
 
 import android.util.Log
 import org.opencv.core.Core
+import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
+import org.opencv.imgproc.Imgproc.calcHist
 
 object Filtering {
     fun contrast(src: Mat, contrast: Double): Mat {
@@ -22,19 +24,36 @@ object Filtering {
     }
 
     // TODO
-    fun blur(src: Mat, horizontalKernelDim: Double, verticalKernelDim: Double): Mat {
-        val hKernel = horizontalKernelDim.toInt().let {
-            if (it <= 1) return src
+    fun blur(src: Mat, xStrength: Double, yStrength: Double): Mat {
+        // values in range (0, 1) must be converted to arbitrary odd kernel sizes
+        // can be multiplied by a larger number for higher blur but it will run very poorly
+        val hKernel = (xStrength * 100).toInt().let {
+            if (it <= 1) return src.clone()
             if (it % 2 == 0) it + 1 else it
         }
-        val vKernel = verticalKernelDim.toInt().let {
-            if (it <= 1) return src
+        val vKernel = (yStrength * 100).toInt().let {
+            if (it <= 1) return src.clone()
             if (it % 2 == 0) it + 1 else it
         }
 
         val dst = Mat()
         val kSize = Size(hKernel.toDouble(), vKernel.toDouble())
-        Imgproc.blur(src, dst, kSize)
+        Imgproc.GaussianBlur(src, dst, kSize, 0.0)
+        return dst
+    }
+
+    fun sharpen(src: Mat, sharpening: Double): Mat {
+        if (sharpening == 0.0) return src
+        val dst = Mat()
+
+        val kernel = Mat(3, 3, CvType.CV_32F).apply {
+            put(0, 0,
+              .0,           -1.0,   .0,
+            -1.0, 5 + sharpening, -1.0,
+              .0,           -1.0,   .0)
+        }
+
+        Imgproc.filter2D(src, dst, -1, kernel)
         return dst
     }
 

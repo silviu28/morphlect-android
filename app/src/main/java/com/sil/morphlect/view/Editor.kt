@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import com.sil.morphlect.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 
 
@@ -55,7 +56,8 @@ fun Editor(
     navController: NavController,
     imageViewModel: PickImageViewModel,
     editorViewModel: EditorViewModel,
-    presetsRepository: PresetsRepository
+    presetsRepository: PresetsRepository,
+    configRepository: AppConfigRepository
 ) {
     val vm = editorViewModel
     val imageUri = imageViewModel.imageUri
@@ -63,6 +65,7 @@ fun Editor(
 
     var showExitDialog by remember { mutableStateOf(false) }
     var showHistoryStack by remember { mutableStateOf(false) }
+    var showHistogram by remember { mutableStateOf(false) }
 
     var thumbnailZoomScale by remember { mutableStateOf(1f) }
     var thumbnailOffset by remember { mutableStateOf(Offset.Zero) }
@@ -115,6 +118,10 @@ fun Editor(
             )
         }
 
+        if (showHistogram) {
+            HistogramBottomSheet(onDismissRequest = { showHistogram = false })
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -160,7 +167,9 @@ fun Editor(
                         Icon(Icons.Default.Menu, contentDescription = "options")
                     }
                 }
+
                 Spacer(modifier = Modifier.size(10.dp))
+
                 // thumbnail
                 if (vm.previewBitmap == null) {
                     CircularProgressIndicator()
@@ -188,6 +197,13 @@ fun Editor(
                     Section.Filtering -> FilteringSection(vm, presetsRepository)
                     Section.SmartFeatures -> SmartFeaturesSection(navController, vm)
                     Section.ImageManipulation -> ImageManipulationSection(vm)
+                }
+
+//                if (configRepository.advancedMode.equals(true)) {
+                if (true) {
+                    TextButton(onClick = { showHistogram = true }) {
+                        Text("histogram")
+                    }
                 }
             }
         }

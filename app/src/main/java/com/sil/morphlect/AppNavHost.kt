@@ -1,6 +1,5 @@
 package com.sil.morphlect
 
-import android.content.SharedPreferences.Editor
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -17,7 +16,7 @@ import com.sil.morphlect.view.SaveImage
 import com.sil.morphlect.view.Settings
 import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
-import com.sil.morphlect.view.dialog.OnboardingCarousel
+import com.sil.morphlect.view.OnboardingCarousel
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.viewmodel.PickImageViewModel
 
@@ -51,7 +50,8 @@ fun AppNavHost() {
                 navController,
                 imageViewModel,
                 editorViewModel,
-                presetsRepository
+                presetsRepository,
+                configRepository
             )
         }
         composable("vibematch") {

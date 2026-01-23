@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Contrast
+import androidx.compose.material.icons.filled.Deblur
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.Lightbulb
@@ -163,7 +164,9 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         }
     }
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.Center
     ) {
         ElevatedButton(onClick = {
@@ -175,6 +178,11 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             vm.changeSelectedEffect(Effect.Blur)
         }) {
             Icon(Icons.Filled.LensBlur, contentDescription = "blur")
+        }
+        ElevatedButton(onClick = {
+            vm.changeSelectedEffect(Effect.Sharpness)
+        }) {
+            Icon(Icons.Filled.Deblur, contentDescription = "sharpen")
         }
         ElevatedButton(onClick = {
             vm.changeSelectedEffect(Effect.Brightness)

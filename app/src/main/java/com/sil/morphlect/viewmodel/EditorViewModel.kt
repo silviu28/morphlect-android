@@ -40,7 +40,8 @@ class EditorViewModel : ViewModel() {
         Effect.Blur to 0.0,
         Effect.BlurSecondAxis to 0.0,
         Effect.Brightness to 0.0,
-        Effect.LightBalance to 0.0
+        Effect.LightBalance to 0.0,
+        Effect.Sharpness to 0.0,
     )
         private set
 
@@ -86,6 +87,7 @@ class EditorViewModel : ViewModel() {
                 processed = Filtering.blur(processed, effectValues[Effect.Blur]!!, effectValues[Effect.BlurSecondAxis]!!)
                 processed = Filtering.lightBalance(processed, effectValues[Effect.LightBalance]!!)
                 processed = Filtering.hueShift(processed, effectValues[Effect.Hue]!!)
+                processed = Filtering.sharpen(processed, effectValues[Effect.Sharpness]!!)
 
                 val bmp = FormatConverters.matToBitmap(processed)
                 copy.release()
