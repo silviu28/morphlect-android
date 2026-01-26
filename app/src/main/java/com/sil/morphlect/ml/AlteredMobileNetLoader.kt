@@ -1,15 +1,15 @@
-package com.sil.morphlect.logic
+package com.sil.morphlect.ml
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
-import org.tensorflow.lite.Interpreter
-import java.nio.ByteBuffer
-import androidx.core.graphics.scale
-import java.nio.ByteOrder
 import androidx.core.graphics.get
+import androidx.core.graphics.scale
 import com.sil.morphlect.enums.Output
+import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class AlteredMobileNetLoader(private val context: Context) {
     companion object {

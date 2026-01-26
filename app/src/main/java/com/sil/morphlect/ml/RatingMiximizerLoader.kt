@@ -1,4 +1,4 @@
-package com.sil.morphlect.logic
+package com.sil.morphlect.ml
 
 import android.content.Context
 import com.sil.morphlect.enums.Output

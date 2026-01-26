@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
@@ -27,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,7 +91,13 @@ fun Editor(
 
     Scaffold { _ ->
         if (showHistoryStack) {
-            HistoryStack(onDismissRequest = { showHistoryStack = false })
+            History(
+                onDismissRequest = { showHistoryStack = false },
+                undoStack = vm.undoStack,
+                redoStack = vm.redoStack,
+                onUndo = { vm.undoLastCommand() },
+                onRedo = { vm.redoLastCommand() },
+            )
         }
 
         if (showOptionsSheet) {
@@ -155,6 +164,24 @@ fun Editor(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                    ElevatedButton(
+                        enabled = vm.canUndo(),
+                        onClick = {
+                        vm.undoLastCommand()
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "undo")
+                    }
+
+                    ElevatedButton(
+                        enabled = vm.canRedo(),
+                        onClick = {
+                        vm.redoLastCommand()
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "redo")
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
                     ElevatedButton(onClick = {
                         showHistoryStack = true
                     }) {
@@ -199,8 +226,8 @@ fun Editor(
                     Section.ImageManipulation -> ImageManipulationSection(vm)
                 }
 
-//                if (configRepository.advancedMode.equals(true)) {
-                if (true) {
+                if (configRepository.advancedMode.collectAsState(initial = false).value == true) {
+//                if (true) {
                     TextButton(onClick = { showHistogram = true }) {
                         Text("histogram")
                     }
