@@ -56,14 +56,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import com.sil.morphlect.constant.WebConstants
 
 val http by lazy { OkHttpClient() }
 
 suspend fun fetchImages(query: String? = null): List<String> = withContext(Dispatchers.IO) {
     val url = if (query.isNullOrBlank()) {
-        "https://api.unsplash.com/photos/random?count=8"
+        WebConstants.UNSPLASH_API_BASE + "/photos/random?count=8"
     } else {
-        "https://api.unsplash.com/search/photos?page=1&query=$query"
+        WebConstants.UNSPLASH_API_BASE + "/photos?page=1&query=$query"
     }
     val request = Request.Builder()
         .url(url)

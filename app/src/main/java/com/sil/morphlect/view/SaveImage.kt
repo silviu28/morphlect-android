@@ -9,10 +9,18 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -20,9 +28,12 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +46,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.sil.morphlect.view.dialog.GlazeDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 import java.io.File
 import java.io.FileOutputStream
@@ -44,9 +56,14 @@ import java.io.FileOutputStream
 fun SaveImage(editorViewModel: EditorViewModel) {
     val vm = editorViewModel
     val ctx = LocalContext.current
+
     var imageName by remember { mutableStateOf("image name") }
     var format by remember { mutableStateOf("JPG") }
     var dropdownExpanded by remember { mutableStateOf(false) }
+
+    var showGlazeInfo by remember { mutableStateOf(false) }
+    var showGlazeDialog by remember { mutableStateOf(false) }
+
     val formats = listOf("JPG", "PNG", "WEBP")
 
     fun saveImage() {
@@ -87,7 +104,15 @@ fun SaveImage(editorViewModel: EditorViewModel) {
         }
     }
 
-    Scaffold { _ ->
+    Scaffold(modifier = Modifier.padding(18.dp)) { _ ->
+        if (showGlazeInfo) {
+            GlazeHelp(onDismissRequest = { showGlazeInfo = false })
+        }
+
+        if (showGlazeDialog) {
+            GlazeDialog(onDismissRequest = { showGlazeDialog = false })
+        }
+
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -146,6 +171,21 @@ fun SaveImage(editorViewModel: EditorViewModel) {
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Row {
+                    TextButton(onClick = { showGlazeDialog = true }) {
+                        Icon(Icons.Default.WaterDrop, contentDescription = "glaze")
+                        Text("glaze...")
+                    }
+                    IconButton(onClick = { showGlazeInfo = true }) {
+                        Icon(Icons.Default.QuestionMark, contentDescription = "what is glaze?")
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
                 ElevatedButton(onClick = { saveImage() }) {
                     Text("save")
                 }

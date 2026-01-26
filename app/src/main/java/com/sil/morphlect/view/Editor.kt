@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,7 @@ import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import com.sil.morphlect.AppConfigRepository
@@ -89,7 +91,7 @@ fun Editor(
         }
     }
 
-    Scaffold { _ ->
+    Scaffold(modifier = Modifier.background(Color.Black)) { _ ->
         if (showHistoryStack) {
             History(
                 onDismissRequest = { showHistoryStack = false },
