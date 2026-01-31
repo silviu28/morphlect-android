@@ -32,9 +32,9 @@ fun FlickeringLedDotProgressIndicator(
         // for each dot run probabilities if they get lit
         for (i in 0 until 9) {
             scope.launch {
-                delay(Random.nextLong(0, 2000))
+                delay(Random.nextLong(0, 200))
                 while (true) {
-                    delay(Random.nextLong(800, 2500))
+                    delay(Random.nextLong(80, 250))
 
                     if (Random.nextFloat() > .4f) {
                         // turn on
