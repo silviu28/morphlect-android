@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.enums.Output
-import com.sil.morphlect.ml.AlteredMobileNetLoader
+import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
 import com.sil.morphlect.view.dialog.KeepParamsDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 import kotlinx.coroutines.Dispatchers
