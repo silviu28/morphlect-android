@@ -17,7 +17,7 @@ fun AnimatedSectionButton(
     children: @Composable() () -> Unit,
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.2f else 1f,
+        targetValue = if (isSelected) 1.4f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMedium

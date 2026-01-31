@@ -4,6 +4,11 @@ import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -59,6 +64,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import com.sil.morphlect.AppConfigRepository
 import com.sil.morphlect.ui.theme.MorphlectTheme
 import com.sil.morphlect.view.animated.AnimatedSectionButton
+import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 
 
 @RequiresApi(Build.VERSION_CODES.P)
@@ -99,7 +105,7 @@ fun Editor(
         }
     }
 
-    Scaffold(modifier = Modifier.background(Color.Black)) { _ ->
+    Scaffold { _ ->
         if (showHistoryStack) {
             History(
                 onDismissRequest = { showHistoryStack = false },
@@ -158,9 +164,8 @@ fun Editor(
                 Row(modifier = Modifier
                         .background(
                             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            shape = RoundedCornerShape(24.dp)
+                            shape = RoundedCornerShape(36.dp)
                         )
-                        .padding(2.dp),
                 ) {
                     AnimatedSectionButton(
                         onClick = { vm.changeSection(Section.Filtering) },
@@ -217,7 +222,9 @@ fun Editor(
 
                 // thumbnail
                 if (vm.previewBitmap == null) {
-                    CircularProgressIndicator()
+                    Box(modifier = Modifier.size(300.dp)) {
+                        FlickeringLedDotProgressIndicator()
+                    }
                 } else {
                     vm.previewBitmap?.asImageBitmap()?.let {
                         Image(
@@ -238,26 +245,32 @@ fun Editor(
                     }
                 }
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                ) {
-                    when (vm.section) {
-                        Section.Filtering -> FilteringSection(vm, presetsRepository)
-                        Section.SmartFeatures -> SmartFeaturesSection(navController, vm)
-                        Section.ImageManipulation -> ImageManipulationSection(vm)
+                // animate section switching using AnimatedContent
+                AnimatedContent(
+                    targetState = vm.section,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
                     }
+                ) { targetState ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp)
+                    ) {
+                        when (targetState) {
+                            Section.Filtering -> FilteringSection(vm, presetsRepository)
+                            Section.SmartFeatures -> SmartFeaturesSection(navController, vm)
+                            Section.ImageManipulation -> ImageManipulationSection(vm)
+                        }
 
-                    if (advancedMode) {
-                        TextButton(onClick = { showHistogram = true }) {
-                            Text("histogram")
+                        if (advancedMode) {
+                            TextButton(onClick = { showHistogram = true }) {
+                                Text("histogram")
+                            }
                         }
                     }
                 }
-
-
             }
         }
     }
