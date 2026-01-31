@@ -85,6 +85,8 @@ fun Editor(
         thumbnailOffset += offsetChange
     }
 
+    val advancedMode by configRepository.advancedMode.collectAsState(initial = false)
+
     // listen for back gesture - in case if it's accidental
     BackHandler {
         showExitDialog = true
@@ -248,7 +250,7 @@ fun Editor(
                         Section.ImageManipulation -> ImageManipulationSection(vm)
                     }
 
-                    if (configRepository.advancedMode.collectAsState(initial = false).value == true) {
+                    if (advancedMode) {
                         TextButton(onClick = { showHistogram = true }) {
                             Text("histogram")
                         }
