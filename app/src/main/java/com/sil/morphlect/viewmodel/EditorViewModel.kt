@@ -12,11 +12,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sil.morphlect.command.BlurCommand
-import com.sil.morphlect.command.BrightnessCommand
-import com.sil.morphlect.command.ContrastCommand
+import com.sil.morphlect.command.impl.BlurCommand
+import com.sil.morphlect.command.impl.BrightnessCommand
+import com.sil.morphlect.command.impl.ContrastCommand
 import com.sil.morphlect.command.EditorCommand
 import com.sil.morphlect.command.EditorCommandManager
+import com.sil.morphlect.command.impl.HueCommand
+import com.sil.morphlect.command.impl.LightBalanceCommand
+import com.sil.morphlect.command.impl.SharpnessCommand
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.enums.Section
 import com.sil.morphlect.logic.FormatConverters
@@ -112,7 +115,10 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
                 xFactor = factor,
                 yFactor = effectValues[Effect.BlurSecondAxis] ?: 0.0
             )
-            else -> ContrastCommand(factor)
+            Effect.Sharpness -> SharpnessCommand(factor)
+            Effect.Hue -> HueCommand(factor)
+            Effect.LightBalance -> LightBalanceCommand(factor)
+            else -> ContrastCommand(.0)
         }
     }
 

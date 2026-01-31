@@ -1,5 +1,6 @@
-package com.sil.morphlect.command
+package com.sil.morphlect.command.impl
 
+import com.sil.morphlect.command.EditorCommand
 import com.sil.morphlect.logic.Filtering
 import org.opencv.core.Mat
 

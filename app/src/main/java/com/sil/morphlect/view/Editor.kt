@@ -130,7 +130,10 @@ fun Editor(
         }
 
         if (showHistogram) {
-            HistogramBottomSheet(onDismissRequest = { showHistogram = false })
+            HistogramBottomSheet(
+                onDismissRequest = { showHistogram = false },
+                colorReference = vm.previewBitmap!!
+            )
         }
 
         Box(

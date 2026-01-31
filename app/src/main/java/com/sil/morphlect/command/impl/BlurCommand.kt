@@ -1,8 +1,8 @@
-package com.sil.morphlect.command
+package com.sil.morphlect.command.impl
 
+import com.sil.morphlect.command.EditorCommand
 import com.sil.morphlect.logic.Filtering
 import org.opencv.core.Mat
-import kotlin.math.roundToInt
 
 class BlurCommand(var xFactor: Double, var yFactor: Double) : EditorCommand {
     override val actionName: String
