@@ -8,6 +8,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -19,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.sil.morphlect.AppConfigRepository
 import kotlinx.coroutines.launch
 
@@ -26,7 +32,10 @@ import kotlinx.coroutines.launch
  the settings page, where the user can adjust any setting.
 */
 @Composable
-fun Settings(configRepository: AppConfigRepository) {
+fun Settings(
+    configRepository: AppConfigRepository,
+    navController: NavController,
+) {
     val advancedMode by configRepository.advancedMode.collectAsState(initial = false)
     val hidePrimaryBar by configRepository.hidePrimaryBar.collectAsState(initial = false)
     val localSmartFeatures by configRepository.localSmartFeatures.collectAsState(initial = false)
@@ -77,8 +86,32 @@ fun Settings(configRepository: AppConfigRepository) {
                     scope.launch { configRepository.setCloudCompute(it) }
                 }
             )
-        }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "manage your models",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                }
+
+                IconButton(onClick = { navController.navigate("modeldownload") }) {
+                    Icon(Icons.Default.Settings, contentDescription = "manage models")
+                }
+            }
+        }
     }
 }
 

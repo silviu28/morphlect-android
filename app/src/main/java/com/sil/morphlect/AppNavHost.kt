@@ -2,9 +2,6 @@ package com.sil.morphlect
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -14,6 +11,7 @@ import com.sil.morphlect.view.Editor
 import com.sil.morphlect.view.Frontpage
 import com.sil.morphlect.view.ImageComparison
 import com.sil.morphlect.view.ImageEvaluation
+import com.sil.morphlect.view.ModelManager
 import com.sil.morphlect.view.PickImage
 import com.sil.morphlect.view.SaveImage
 import com.sil.morphlect.view.Settings
@@ -73,7 +71,10 @@ fun AppNavHost() {
             ImageComparison(editorViewModel, navController)
         }
         composable("settings") {
-            Settings(configRepository)
+            Settings(configRepository, navController)
+        }
+        composable("modeldownload") {
+            ModelManager()
         }
     }
 }
