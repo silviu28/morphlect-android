@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.sil.morphlect.constant.WebConstants
 import com.sil.morphlect.dto.ModelInfoDTO
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import kotlinx.coroutines.Dispatchers
@@ -37,17 +38,44 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONArray
+import java.net.SocketTimeoutException
 
 val myHttp by lazy { OkHttpClient() }
 
-// TODO just mock for now
-suspend fun fetchModelData(count: Int = 10): List<ModelInfoDTO> = withContext(Dispatchers.IO) {
-    delay(3000)
-    return@withContext listOf(
-        ModelInfoDTO("Model 1", "Description 1", 392_293_213),
-        ModelInfoDTO("Model 2", "Description 2", 392_293_213),
-        ModelInfoDTO("Model 3", "Description 3", 392_293_213),
-    )
+/**
+ * retrieve a page of model information from the server.
+ */
+suspend fun fetchModelData(
+    query: String? = null,
+    limit: Int = 10,
+    page: Int? = 0,
+): List<ModelInfoDTO> = withContext(Dispatchers.IO) {
+    delay(1000)
+    val url = "${WebConstants.SERVER_BASE}/models?${if (query != null) "$query&" else ""}limit=$limit&page=$page"
+    val request = Request.Builder()
+        .url(url)
+        .build()
+    try {
+        val response = myHttp.newCall(request).execute()
+
+        if (!response.isSuccessful)
+            return@withContext emptyList()
+
+        val body = response.body?.string()
+        val models = JSONArray(body)
+        return@withContext List(models.length()) {
+            val data = models.getJSONObject(it)
+            ModelInfoDTO(
+                name = data.getString("name"),
+                description = data.getString("description"),
+                size = data.getLong("size"),
+            )
+        }
+    } catch (e: Exception) {
+        return@withContext emptyList()
+    }
 }
 
 // TODO
