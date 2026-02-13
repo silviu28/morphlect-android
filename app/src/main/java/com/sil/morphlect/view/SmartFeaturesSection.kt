@@ -1,8 +1,10 @@
 package com.sil.morphlect.view
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -13,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.sil.morphlect.view.dialog.AddFunctionalityDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 
 @Composable
@@ -20,8 +23,12 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
     var showVibeDialog by remember { mutableStateOf(false) }
     var showEvalDialog by remember { mutableStateOf(false) }
     var showStyleDialog by remember { mutableStateOf(false) }
+    var showAddFuncDialog by remember { mutableStateOf(false) }
 
     Column {
+        if (showAddFuncDialog) {
+            AddFunctionalityDialog(onDismissRequest = { showAddFuncDialog = false })
+        }
         if (showStyleDialog) {
             AlertDialog(
                 onDismissRequest = { showStyleDialog = false },
@@ -105,9 +112,12 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                 Text("style transfer")
             }
         }
-        Row {
-            TextButton(onClick = { }) {
-                Text("+")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            TextButton(onClick = { showAddFuncDialog = true }) {
+                Text("new functionality...")
             }
         }
     }
