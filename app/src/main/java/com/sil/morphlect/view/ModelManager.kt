@@ -1,5 +1,7 @@
 package com.sil.morphlect.view
 
+import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -13,9 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,6 +45,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import java.io.File
 import java.net.SocketTimeoutException
 
 val myHttp by lazy { OkHttpClient() }
@@ -53,7 +59,12 @@ suspend fun fetchModelData(
     page: Int? = 0,
 ): List<ModelInfoDTO> = withContext(Dispatchers.IO) {
     delay(1000)
-    val url = "${WebConstants.SERVER_BASE}/models?${if (query != null) "$query&" else ""}limit=$limit&page=$page"
+    val url = StringBuilder()
+        .append("${WebConstants.SERVER_BASE}/models?")
+        .append(if (!query.isNullOrEmpty()) "query=$query&" else "")
+        .append("limit=$limit&page=$page")
+        .toString()
+
     val request = Request.Builder()
         .url(url)
         .build()
@@ -68,27 +79,54 @@ suspend fun fetchModelData(
         return@withContext List(models.length()) {
             val data = models.getJSONObject(it)
             ModelInfoDTO(
+                id = data.getInt("id"),
                 name = data.getString("name"),
                 description = data.getString("description"),
                 size = data.getLong("size"),
             )
         }
     } catch (e: Exception) {
+        Log.e("Model data", "Unable to retrieve data from server - $e")
         return@withContext emptyList()
     }
 }
 
 // TODO
-suspend fun downloadModel(name: String): Unit = withContext(Dispatchers.IO) {
-    // ...
+suspend fun downloadModel(id: Int, context: Context): File? = withContext(Dispatchers.IO) {
+    delay(1000)
+    val url = "${WebConstants.SERVER_BASE}/models/$id/download"
+    val request = Request.Builder()
+        .url(url)
+        .build()
+    try {
+        val response = myHttp.newCall(request).execute()
+        if (!response.isSuccessful)
+            return@withContext null
+
+        val file = File(context.filesDir.toString() + "/models", "model_$id.tflite")
+        file.parentFile?.mkdirs()
+
+        response.body?.run {
+            byteStream().use { input ->
+                file.outputStream().use {
+                    input.copyTo(it)
+                }
+            }
+        } ?: return@withContext null
+
+        return@withContext file
+    } catch (e: Exception) {
+        Log.e("Model download", "Unable to download model - $e")
+        return@withContext null
+    }
 }
 
 @Composable
 fun ModelManager() {
     var onDownloads by remember { mutableStateOf(false) }
-    var modelInfo by remember { mutableStateOf<List<ModelInfoDTO>>(
-        listOf()
-    ) }
+    var modelInfo by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
+    var query by remember { mutableStateOf("") }
+
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     val installed: List<ModelInfoDTO> = listOf() // TODO
@@ -107,8 +145,20 @@ fun ModelManager() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text("model manager")
+
             if (onDownloads) {
                 // downloads section
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("search") },
+                )
+                Button(onClick = {
+                    scope.launch { modelInfo = fetchModelData(query) }
+                }) {
+                    Icon(Icons.Default.Search, contentDescription = "search")
+                }
+
                 if (modelInfo.isEmpty()) {
                     FlickeringLedDotProgressIndicator()
                     Text("fetching data...")
@@ -119,7 +169,12 @@ fun ModelManager() {
                             onDownload = {
                                 Toast.makeText(ctx, "installing ${dto.name}...", Toast.LENGTH_SHORT)
                                     .show()
-                                scope.launch { downloadModel(dto.name) }
+                                scope.launch {
+                                    val model = downloadModel(dto.id, ctx)
+                                    if (model != null)
+                                        Toast.makeText(ctx, "model installed at ${model.absolutePath}",
+                                            Toast.LENGTH_SHORT).show()
+                                }
                             },
                         )
                     }
