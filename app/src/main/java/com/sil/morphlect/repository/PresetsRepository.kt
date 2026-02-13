@@ -1,10 +1,9 @@
-package com.sil.morphlect
+package com.sil.morphlect.repository
 
 import android.content.Context
 import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sil.morphlect.enums.Effect

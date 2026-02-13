@@ -7,6 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sil.morphlect.repository.AppConfigRepository
+import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.Editor
 import com.sil.morphlect.view.Frontpage
 import com.sil.morphlect.view.ImageComparison

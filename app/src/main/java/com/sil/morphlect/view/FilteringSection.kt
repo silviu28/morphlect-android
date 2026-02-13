@@ -39,7 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sil.morphlect.PresetsRepository
+import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.view.custom.LedDotSlider

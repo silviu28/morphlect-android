@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,7 +30,6 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,17 +50,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.sil.morphlect.PresetsRepository
+import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
-import com.sil.morphlect.AppConfigRepository
-import com.sil.morphlect.ui.theme.MorphlectTheme
+import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 

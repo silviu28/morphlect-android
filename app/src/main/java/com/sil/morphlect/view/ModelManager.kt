@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.sil.morphlect.constant.WebConstants
 import com.sil.morphlect.dto.ModelInfoDTO
+import com.sil.morphlect.repository.ModelsRepository
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -45,6 +48,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.net.SocketTimeoutException
 
@@ -58,7 +62,6 @@ suspend fun fetchModelData(
     limit: Int = 10,
     page: Int? = 0,
 ): List<ModelInfoDTO> = withContext(Dispatchers.IO) {
-    delay(1000)
     val url = StringBuilder()
         .append("${WebConstants.SERVER_BASE}/models?")
         .append(if (!query.isNullOrEmpty()) "query=$query&" else "")
@@ -91,9 +94,33 @@ suspend fun fetchModelData(
     }
 }
 
-// TODO
-suspend fun downloadModel(id: Int, context: Context): File? = withContext(Dispatchers.IO) {
-    delay(1000)
+// TODO might be used in the future?
+suspend fun fetchOneModelData(id: Int): ModelInfoDTO? = withContext(Dispatchers.IO) {
+    val url = "${WebConstants.SERVER_BASE}/models/$id"
+    val request = Request.Builder()
+        .url(url)
+        .build()
+    try {
+        val response = myHttp.newCall(request).execute()
+
+        if (!response.isSuccessful)
+            return@withContext null
+
+        val body = response.body?.string() ?: return@withContext null
+        val data = JSONObject(body)
+        return@withContext ModelInfoDTO(
+            id = data.getInt("id"),
+            name = data.getString("name"),
+            description = data.getString("description"),
+            size = data.getLong("size"),
+        )
+    } catch (e: Exception) {
+        Log.e("Model data", "Unable to retrieve data from server - $e")
+        return@withContext null
+    }
+}
+
+suspend fun downloadModel(id: Int, context: Context, name: String): File? = withContext(Dispatchers.IO) {
     val url = "${WebConstants.SERVER_BASE}/models/$id/download"
     val request = Request.Builder()
         .url(url)
@@ -103,7 +130,7 @@ suspend fun downloadModel(id: Int, context: Context): File? = withContext(Dispat
         if (!response.isSuccessful)
             return@withContext null
 
-        val file = File(context.filesDir.toString() + "/models", "model_$id.tflite")
+        val file = File(context.filesDir.toString() + "/models", "$name.tflite")
         file.parentFile?.mkdirs()
 
         response.body?.run {
@@ -126,13 +153,17 @@ fun ModelManager() {
     var onDownloads by remember { mutableStateOf(false) }
     var modelInfo by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
     var query by remember { mutableStateOf("") }
+    var installed by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
 
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
-    val installed: List<ModelInfoDTO> = listOf() // TODO
+    val modelsRepository = ModelsRepository(ctx)
 
     LaunchedEffect(Unit) {
         modelInfo = fetchModelData()
+        installed = modelsRepository.readContents().map {
+            ModelInfoDTO(0, it, "", 0)
+        }
     }
 
     Scaffold { _ ->
@@ -170,7 +201,7 @@ fun ModelManager() {
                                 Toast.makeText(ctx, "installing ${dto.name}...", Toast.LENGTH_SHORT)
                                     .show()
                                 scope.launch {
-                                    val model = downloadModel(dto.id, ctx)
+                                    val model = downloadModel(dto.id, ctx, dto.name)
                                     if (model != null)
                                         Toast.makeText(ctx, "model installed at ${model.absolutePath}",
                                             Toast.LENGTH_SHORT).show()
@@ -188,6 +219,14 @@ fun ModelManager() {
                         ModelInfoView(
                             dto,
                             onRemove = {
+                                scope.launch {
+                                    modelsRepository.delete(dto.name)
+                                        .also {
+                                            installed = modelsRepository.readContents().map {
+                                                ModelInfoDTO(0, it, "", 0)
+                                            }
+                                        }
+                                }
                                 Toast.makeText(ctx, "${dto.name} has been removed.", Toast.LENGTH_SHORT).show()
                             }
                         )
@@ -240,10 +279,15 @@ fun ModelInfoView(
             )
         }
 
-        IconButton(onClick = {
-            onDownload?.invoke(dto.name) ?: onRemove?.invoke(dto.name) }
-        ) {
-            Icon(Icons.Default.Download, contentDescription = "download")
+        onDownload?.let {
+            IconButton(onClick = { it(dto.name) }) {
+                Icon(Icons.Default.Download, contentDescription = "download")
+            }
+        }
+        onRemove?.let {
+            IconButton(onClick = { it(dto.name) }) {
+                Icon(Icons.Default.Delete, contentDescription = "remove")
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.sil.morphlect
+package com.sil.morphlect.repository
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
