@@ -1,5 +1,6 @@
 package com.sil.morphlect.view.dialog
 
+import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,8 +32,10 @@ import androidx.compose.ui.window.Dialog
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.repository.PresetsRepository
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
+import android.util.Log
 
 @Composable
 fun AddPresetDialog(
@@ -45,15 +48,30 @@ fun AddPresetDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            val file = File(uri.toString())
-            if (!file.name.endsWith(".preset")) {
-                Toast.makeText(ctx, "Please select a .preset file.", Toast.LENGTH_SHORT)
-                    .show()
-            } else {
-                val json = JSONObject(file.readText())
-                val preset = Preset.fromJSON(json)
-                onAddPreset(preset)
+            val fileName = ctx.contentResolver.query(uri, null, null, null, null)?.use {
+                val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                it.moveToFirst()
+                it.getString(nameIndex)
             }
+
+            fileName?.let {
+                if (!it.endsWith(".preset")) {
+                    Toast.makeText(ctx, "Please select a .preset file.", Toast.LENGTH_SHORT)
+                        .show()
+                } else {
+                    try {
+                        val content = ctx.contentResolver.openInputStream(uri)?.use { stream ->
+                            stream.bufferedReader().readText()
+                        }
+                        val json = JSONObject(content ?: return@let)
+                        val preset = Preset.fromJSON(json)
+                        onAddPreset(preset)
+                    } catch (e: JSONException) {
+                        Log.e("Preset parsing", "An error occurred - $e")
+                    }
+                }
+            }
+
         }
     }
     var presetName by remember { mutableStateOf("") }

@@ -12,25 +12,23 @@ data class Preset(val name: String, val params: Map<Effect, Double>) {
             val name = json.getString("name")
             val paramsData = json.getJSONObject("values")
 
-            val params = Effect.entries.associate { e ->
-                try {
-                    e to paramsData.getDouble(e.name)
-                } catch (_: JSONException) {
-                    e to 0.0
-                }
-            }
+            val params = Effect.entries.associate { it to paramsData.optDouble(it.name) }
             return Preset(name, params)
         }
     }
 
     fun toJSON(): JSONObject {
-        return JSONObject().apply {
-            put("name", name)
-            put("values", JSONObject().apply {
-                params.forEach { (effect, value) ->
-                    put(effect.name, value)
-                }
-            })
+        try {
+            return JSONObject().apply {
+                put("name", name)
+                put("values", JSONObject().apply {
+                    params.forEach { (effect, value) ->
+                        put(effect.name, value)
+                    }
+                })
+            }
+        } catch (_: JSONException) {
+            throw JSONException("Preset file is of invalid format.")
         }
     }
 }
