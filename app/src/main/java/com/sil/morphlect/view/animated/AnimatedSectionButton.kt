@@ -9,7 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 
-/// a button that when selected scales using a spring animation - can be used for anything
+/**
+* a button that when selected scales using a spring animation - can be used for anything
+*/
 @Composable
 fun AnimatedSectionButton(
     isSelected: Boolean,

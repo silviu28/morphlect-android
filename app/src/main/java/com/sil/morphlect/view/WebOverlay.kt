@@ -57,45 +57,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import com.sil.morphlect.constant.WebConstants
+import com.sil.morphlect.logic.WebHelper
 
-val http by lazy { OkHttpClient() }
-
-suspend fun fetchImages(query: String? = null): List<String> = withContext(Dispatchers.IO) {
-    val url = if (query.isNullOrBlank()) {
-        WebConstants.UNSPLASH_API_BASE + "/photos/random?count=8"
-    } else {
-        WebConstants.UNSPLASH_API_BASE + "/photos?page=1&query=$query"
-    }
-    val request = Request.Builder()
-        .url(url)
-        .header("Authorization", "Client-ID ${BuildConfig.UNSPLASH_ACCESS_KEY}")
-        .build()
-    val response = http.newCall(request).execute()
-
-    if (!response.isSuccessful)
-        return@withContext emptyList()
-
-    val body = response.body?.string()
-
-    if (query.isNullOrBlank()) {
-        val images = JSONArray(body)
-        return@withContext List(images.length()) {
-            images
-                .getJSONObject(it)
-                .getJSONObject("urls")
-                .getString("small")
-        }
-    } else {
-        val parsedBody = JSONObject(body)
-        val images = parsedBody.getJSONArray("results")
-        return@withContext List(images.length()) {
-            images
-                .getJSONObject(it)
-                .getJSONObject("urls")
-                .getString("small")
-        }
-    }
-}
 
 @Composable
 fun WebOverlay(
@@ -109,7 +72,7 @@ fun WebOverlay(
 
     // initial image fetch
     LaunchedEffect(Unit) {
-        images = fetchImages()
+        images = WebHelper.fetchImages()
     }
 
     if (expandedImageUrl != null) {
@@ -169,7 +132,7 @@ fun WebOverlay(
                 ) {
                     Button(onClick = {
                         scope.launch {
-                            images = fetchImages()
+                            images = WebHelper.fetchImages()
                         }
                     }) {
                         Icon(Icons.Rounded.Refresh, contentDescription = "random")
@@ -177,7 +140,7 @@ fun WebOverlay(
 
                     Button(onClick = {
                         scope.launch {
-                            images = fetchImages(searchTerm)
+                            images = WebHelper.fetchImages(searchTerm)
                         }
                     }) {
                         Icon(Icons.Rounded.Search, contentDescription = "search")

@@ -1,5 +1,14 @@
 package com.sil.morphlect.view
 
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.Bitmap
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Button
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -19,9 +28,12 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Deblur
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -37,16 +49,53 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.sil.morphlect.data.Preset
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.view.custom.LedDotSlider
 import com.sil.morphlect.view.dialog.AddPresetDialog
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.io.File
 import kotlin.math.roundToInt
 
+// TODO
+@RequiresApi(Build.VERSION_CODES.Q)
+suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.IO) {
+    val resolver = ctx.contentResolver
+
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Downloads.DISPLAY_NAME, "${preset.name}.preset")
+//        put(MediaStore.Downloads.MIME_TYPE, "application/json")
+        put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Morphlect")
+        put(MediaStore.Downloads.IS_PENDING, 1)
+    }
+
+    // Use Downloads instead of Files
+    val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+        ?: return@withContext
+
+    resolver.openOutputStream(uri)?.use { out ->
+        out.write(
+            preset.toJSON()
+                .toString(2)
+                .toByteArray()
+        )
+    }
+
+    contentValues.clear()
+    contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+    resolver.update(uri, contentValues, null, null)
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) {
     var presetsMap by remember { mutableStateOf<Map<String, Map<Effect, Double>>>(emptyMap()) }
@@ -54,11 +103,14 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     var showRemoveDialog by remember { mutableStateOf(false) }
     var selectedPresetName by remember { mutableStateOf<String?>(null) }
     var isBlurring2d by remember { mutableStateOf(false) }
+    var selectedPreset by remember { mutableStateOf<Preset?>(null) }
+
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
 
     val applyPreset = { preset: Map<Effect, Double> ->
         preset.forEach { (effect, value) ->
-            vm.adjustEffect(effect = effect, value = value)
+            vm.adjustEffect(effect, value)
         }
     }
 
@@ -69,12 +121,19 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     if (showAddDialog) {
         AddPresetDialog(
             onDismissRequest = { showAddDialog = false },
-            onAddPreset = { name ->
-            scope.launch {
-                presetsRepository.addPreset(name, vm.effectValues)
-                presetsMap = presetsRepository.load()
+            onAddPreset = { preset ->
+                scope.launch {
+                    presetsRepository.addPreset(preset)
+                    presetsMap = presetsRepository.load()
+                }
+            },
+            onAddPresetFromEditor = { name ->
+                scope.launch {
+                    presetsRepository.addPreset(name, vm.effectValues)
+                    presetsMap = presetsRepository.load()
+                }
             }
-        })
+        )
     }
 
     if (showRemoveDialog) {
@@ -94,13 +153,37 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    showRemoveDialog = false
-                }) {
+                TextButton(onClick = { showRemoveDialog = false }) {
                     Text("no")
                 }
             }
         )
+    }
+
+    selectedPreset?.let {
+        Dialog(onDismissRequest = { selectedPreset = null }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Text("options")
+                TextButton(onClick = {
+                    scope.launch { savePreset(ctx, it) }
+                }) {
+                    Icon(Icons.Default.Save, contentDescription = "save")
+                    Text("save preset")
+                }
+                TextButton(onClick = {
+                    selectedPreset = null
+                    showRemoveDialog = true
+                }) {
+                    Icon(Icons.Default.Delete, contentDescription = "remove")
+                    Text("remove preset")
+                }
+            }
+        }
     }
 
     Column {
@@ -217,7 +300,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            presetsMap.forEach { (name, preset) ->
+            presetsMap.forEach { (name, preset) -> // TODO NOT preset!!!!
                 PresetPreview(
                     name = name,
                     preset = preset,
@@ -225,7 +308,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                     onPress = { applyPreset(preset) },
                     onLongPress = {
                         selectedPresetName = name
-                        showRemoveDialog = true
+                        selectedPreset = Preset(name, preset) // TODO CHANGE THIS!!!
                     })
             }
             ElevatedButton(

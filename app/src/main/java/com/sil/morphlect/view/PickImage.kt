@@ -24,7 +24,9 @@ import com.sil.morphlect.viewmodel.PickImageViewModel
 
 @Composable
 fun PickImage(navController: NavController, imageViewModel: PickImageViewModel) {
-    val imagePickLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
+    val imagePickLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
         imageViewModel.setImage(uri!!)
         navController.navigate("editor")
     }

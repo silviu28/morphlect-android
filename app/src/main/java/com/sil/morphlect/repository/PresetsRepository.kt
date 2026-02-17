@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Effect
 import kotlinx.coroutines.flow.first
 
@@ -66,6 +67,10 @@ class PresetsRepository(private val context: Context) {
 
     suspend fun addPreset(name: String, preset: Map<Effect, Double>) {
         save(load() + (name to preset))
+    }
+
+    suspend fun addPreset(preset: Preset) {
+        save(load() + (preset.name to preset.params))
     }
 
     suspend fun removePreset(name: String) {

@@ -1,7 +1,5 @@
 package com.sil.morphlect.view
 
-import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,116 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.sil.morphlect.constant.WebConstants
 import com.sil.morphlect.dto.ModelInfoDTO
+import com.sil.morphlect.logic.WebHelper
 import com.sil.morphlect.repository.ModelsRepository
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.File
-import java.net.SocketTimeoutException
-
-val myHttp by lazy { OkHttpClient() }
-
-/**
- * retrieve a page of model information from the server.
- */
-suspend fun fetchModelData(
-    query: String? = null,
-    limit: Int = 10,
-    page: Int? = 0,
-): List<ModelInfoDTO> = withContext(Dispatchers.IO) {
-    val url = StringBuilder()
-        .append("${WebConstants.SERVER_BASE}/models?")
-        .append(if (!query.isNullOrEmpty()) "query=$query&" else "")
-        .append("limit=$limit&page=$page")
-        .toString()
-
-    val request = Request.Builder()
-        .url(url)
-        .build()
-    try {
-        val response = myHttp.newCall(request).execute()
-
-        if (!response.isSuccessful)
-            return@withContext emptyList()
-
-        val body = response.body?.string()
-        val models = JSONArray(body)
-        return@withContext List(models.length()) {
-            val data = models.getJSONObject(it)
-            ModelInfoDTO(
-                id = data.getInt("id"),
-                name = data.getString("name"),
-                description = data.getString("description"),
-                size = data.getLong("size"),
-            )
-        }
-    } catch (e: Exception) {
-        Log.e("Model data", "Unable to retrieve data from server - $e")
-        return@withContext emptyList()
-    }
-}
-
-// TODO might be used in the future?
-suspend fun fetchOneModelData(id: Int): ModelInfoDTO? = withContext(Dispatchers.IO) {
-    val url = "${WebConstants.SERVER_BASE}/models/$id"
-    val request = Request.Builder()
-        .url(url)
-        .build()
-    try {
-        val response = myHttp.newCall(request).execute()
-
-        if (!response.isSuccessful)
-            return@withContext null
-
-        val body = response.body?.string() ?: return@withContext null
-        val data = JSONObject(body)
-        return@withContext ModelInfoDTO(
-            id = data.getInt("id"),
-            name = data.getString("name"),
-            description = data.getString("description"),
-            size = data.getLong("size"),
-        )
-    } catch (e: Exception) {
-        Log.e("Model data", "Unable to retrieve data from server - $e")
-        return@withContext null
-    }
-}
-
-suspend fun downloadModel(id: Int, context: Context, name: String): File? = withContext(Dispatchers.IO) {
-    val url = "${WebConstants.SERVER_BASE}/models/$id/download"
-    val request = Request.Builder()
-        .url(url)
-        .build()
-    try {
-        val response = myHttp.newCall(request).execute()
-        if (!response.isSuccessful)
-            return@withContext null
-
-        val file = File(context.filesDir.toString() + "/models", "$name.tflite")
-        file.parentFile?.mkdirs()
-
-        response.body?.run {
-            byteStream().use { input ->
-                file.outputStream().use {
-                    input.copyTo(it)
-                }
-            }
-        } ?: return@withContext null
-
-        return@withContext file
-    } catch (e: Exception) {
-        Log.e("Model download", "Unable to download model - $e")
-        return@withContext null
-    }
-}
 
 @Composable
 fun ModelManager() {
@@ -160,7 +52,7 @@ fun ModelManager() {
     val modelsRepository = ModelsRepository(ctx)
 
     LaunchedEffect(Unit) {
-        modelInfo = fetchModelData()
+        modelInfo = WebHelper.fetchModelData()
         installed = modelsRepository.readContents().map {
             ModelInfoDTO(0, it, "", 0)
         }
@@ -185,7 +77,7 @@ fun ModelManager() {
                     label = { Text("search") },
                 )
                 Button(onClick = {
-                    scope.launch { modelInfo = fetchModelData(query) }
+                    scope.launch { modelInfo = WebHelper.fetchModelData(query) }
                 }) {
                     Icon(Icons.Default.Search, contentDescription = "search")
                 }
@@ -201,7 +93,7 @@ fun ModelManager() {
                                 Toast.makeText(ctx, "installing ${dto.name}...", Toast.LENGTH_SHORT)
                                     .show()
                                 scope.launch {
-                                    val model = downloadModel(dto.id, ctx, dto.name)
+                                    val model = WebHelper.downloadModel(dto.id, ctx, dto.name)
                                     if (model != null)
                                         Toast.makeText(ctx, "model installed at ${model.absolutePath}",
                                             Toast.LENGTH_SHORT).show()

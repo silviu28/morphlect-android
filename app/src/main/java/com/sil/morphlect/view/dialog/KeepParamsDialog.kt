@@ -27,7 +27,7 @@ fun KeepParamsDialog(onDismissRequest: () -> Unit, onApply: () -> Unit) {
     var keepContrast by remember { mutableStateOf(false) }
     var keepHue by remember { mutableStateOf(false) }
 
-    Dialog(onDismissRequest = onDismissRequest) {
+    Dialog(onDismissRequest) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()

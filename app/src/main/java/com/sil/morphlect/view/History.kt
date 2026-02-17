@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.sil.morphlect.command.EditorCommand
 
-enum class HistoryEntryAction { Undo, Redo }
+private enum class HistoryEntryAction { Undo, Redo }
 
 @Composable
 fun History(
@@ -72,7 +72,7 @@ fun History(
 }
 
 @Composable
-fun HistoryEntry(
+private fun HistoryEntry(
     command: EditorCommand,
     onClick: () -> Unit,
     action: HistoryEntryAction

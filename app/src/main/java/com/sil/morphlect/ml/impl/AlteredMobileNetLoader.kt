@@ -68,14 +68,7 @@ class AlteredMobileNetLoader(private val context: Context) : ModelLoader<Bitmap,
         interpreter!!.run(input, output)
 
         val actualOutput = output[0]
-        return mapOf(
-            Output.Sharpness to actualOutput[0],
-            Output.Brightness to actualOutput[1],
-            Output.Contrast to actualOutput[2],
-            Output.Hue to actualOutput[3],
-            Output.Bitrate to actualOutput[4],
-            Output.QualityRating to actualOutput[5]
-        )
+        return Output.entries.associate { it to actualOutput[it.ordinal] }
     }
 
     override fun dispose() {

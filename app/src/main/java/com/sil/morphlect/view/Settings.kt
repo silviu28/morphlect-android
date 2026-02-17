@@ -50,7 +50,7 @@ fun Settings(
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.Center
         ) {
-            SettingsEntry(
+            SliderSettingsEntry(
                 title = "advanced mode",
                 description = "activate professional grade tooling, such as dynamic adjustable color levels using a dynamic histogram",
                 checked = advancedMode,
@@ -59,7 +59,7 @@ fun Settings(
                 }
             )
 
-            SettingsEntry(
+            SliderSettingsEntry(
                 title = "hide primary bar",
                 description = "hide primary bar for sections that may have it",
                 checked = hidePrimaryBar,
@@ -68,7 +68,7 @@ fun Settings(
                 }
             )
 
-            SettingsEntry(
+            SliderSettingsEntry(
                 title = "local smart features",
                 description = "use smart features locally instead of offloading to server",
                 checked = localSmartFeatures,
@@ -77,7 +77,7 @@ fun Settings(
                 }
             )
 
-            SettingsEntry(
+            SliderSettingsEntry(
                 title = "cloud compute",
                 description = null,
                 checked = cloudCompute,
@@ -86,26 +86,7 @@ fun Settings(
                 }
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "manage your models",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                }
-
+            SettingsEntry(title = "manage models") {
                 IconButton(onClick = { navController.navigate("modeldownload") }) {
                     Icon(Icons.Default.Settings, contentDescription = "manage models")
                 }
@@ -118,9 +99,9 @@ fun Settings(
  a compact brief for a setting, alongside a slider to adjust it.
 */
 @Composable
-fun SettingsEntry(
+private fun SliderSettingsEntry(
     title: String,
-    description: String?,
+    description: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
@@ -155,5 +136,43 @@ fun SettingsEntry(
             onCheckedChange = onCheckedChange,
             modifier = Modifier.padding(start = 16.dp)
         )
+    }
+}
+
+@Composable
+private fun SettingsEntry(
+    title: String,
+    description: String? = null,
+    content: @Composable (() -> Unit),
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            description?.let {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+
+        content()
     }
 }

@@ -18,7 +18,7 @@ import androidx.compose.ui.window.Dialog
 
 @Composable
 fun GlazeDialog(onDismissRequest: () -> Unit) {
-    Dialog(onDismissRequest = onDismissRequest) {
+    Dialog(onDismissRequest) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()

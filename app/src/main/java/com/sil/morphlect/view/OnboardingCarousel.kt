@@ -29,7 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // all page content organized in a tidy class
-data class OnboardingPageContent(
+private data class OnboardingPageContent(
     val title: String,
     val description: String,
     val imageId: Int = -1
@@ -103,7 +103,7 @@ fun OnboardingCarousel(navController: NavController) {
 }
 
 @Composable
-fun OnboardingPage(pageContent: OnboardingPageContent) {
+private fun OnboardingPage(pageContent: OnboardingPageContent) {
     Column(
         modifier = Modifier
             .fillMaxSize()
