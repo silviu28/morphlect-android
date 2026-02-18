@@ -27,10 +27,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -61,6 +65,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
+import com.sil.morphlect.view.dialog.LayeringDialog
 
 
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -76,12 +81,14 @@ fun Editor(
     val imageUri = imageViewModel.imageUri
     val ctx = LocalContext.current
 
-    var showExitDialog by remember { mutableStateOf(false) }
+    var showExitDialog   by remember { mutableStateOf(false) }
     var showHistoryStack by remember { mutableStateOf(false) }
-    var showHistogram by remember { mutableStateOf(false) }
+    var showHistogram    by remember { mutableStateOf(false) }
     var showOptionsSheet by remember { mutableStateOf(false) }
+    var showLayersView   by remember { mutableStateOf(false) }
+    var showLayering     by remember { mutableStateOf(false) }
 
-    val advancedMode by configRepository.advancedMode.collectAsState(initial = false)
+    val advancedMode     by configRepository.advancedMode.collectAsState(initial = false)
 
     // listen for back gesture - in case if it's accidental
     BackHandler {
@@ -102,6 +109,15 @@ fun Editor(
                 redoStack = vm.redoStack,
                 onUndo = { vm.undoLastCommand() },
                 onRedo = { vm.redoLastCommand() },
+            )
+        }
+
+        if (showLayering) {
+            LayeringDialog(
+                layers = vm.imageLayers,
+                onRemoveLayer = { _ -> vm.removeLayer(0) },
+                onAddLayer = { vm.addLayer("new") },
+                onDismissRequest = { showLayering = false },
             )
         }
 
@@ -145,6 +161,20 @@ fun Editor(
                 .padding(10.dp),
             contentAlignment = Alignment.Center,
         ) {
+            Row(modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+            ) {
+                if (showLayersView) {
+                    FloatingActionButton(onClick = { showLayering = true }) {
+                        Icon(Icons.Default.Map, "layering")
+                    }
+                }
+                FloatingActionButton(onClick = { showLayersView = !showLayersView }) {
+                    Icon(Icons.Default.Layers, "layers")
+                }
+            }
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,

@@ -20,6 +20,7 @@ import com.sil.morphlect.command.EditorCommandManager
 import com.sil.morphlect.command.impl.HueCommand
 import com.sil.morphlect.command.impl.LightBalanceCommand
 import com.sil.morphlect.command.impl.SharpnessCommand
+import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.enums.Section
 import com.sil.morphlect.logic.FormatConverters
@@ -33,6 +34,8 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     override var redoStack = mutableStateListOf<EditorCommand>()
 
     private var originalMat: Mat? = null
+
+    var imageLayers = mutableStateListOf<EditorLayer>()
 
     override fun redoLastCommand() {
         if (redoStack.isEmpty()) return
@@ -183,6 +186,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         return (effectValues[selectedEffect] ?: 0.0) != 0.0
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     fun loadImage(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
@@ -223,4 +227,12 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     fun canRedo(): Boolean = redoStack.isNotEmpty()
 
     fun getOriginalMat() = this.originalMat
+
+    fun removeLayer(index: Int) {
+        imageLayers -= imageLayers[index]
+    }
+
+    fun addLayer(name: String) {
+        imageLayers += EditorLayer.emptyNamed(name)
+    }
 }

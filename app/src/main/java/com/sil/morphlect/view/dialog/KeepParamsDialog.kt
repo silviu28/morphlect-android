@@ -22,10 +22,10 @@ import androidx.compose.ui.window.Dialog
 
 @Composable
 fun KeepParamsDialog(onDismissRequest: () -> Unit, onApply: () -> Unit) {
-    var keepSharpness by remember { mutableStateOf(false) }
+    var keepSharpness  by remember { mutableStateOf(false) }
     var keepBrightness by remember { mutableStateOf(false) }
-    var keepContrast by remember { mutableStateOf(false) }
-    var keepHue by remember { mutableStateOf(false) }
+    var keepContrast   by remember { mutableStateOf(false) }
+    var keepHue        by remember { mutableStateOf(false) }
 
     DialogScaffold(title = "select which parameters to keep", onDismissRequest) {
         Text(

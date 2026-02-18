@@ -44,8 +44,8 @@ fun InteractiveThumbnail(
 
     Box(
         modifier = Modifier
-        .width(300.dp)
-        .height(300.dp)
+            .width(300.dp)
+            .height(300.dp)
     ) {
         preview?.asImageBitmap()?.let {
             Image(
