@@ -63,7 +63,7 @@ import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 
 
-@RequiresApi(Build.VERSION_CODES.P)
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun Editor(
     navController: NavController,
@@ -79,13 +79,7 @@ fun Editor(
     var showExitDialog by remember { mutableStateOf(false) }
     var showHistoryStack by remember { mutableStateOf(false) }
     var showHistogram by remember { mutableStateOf(false) }
-
-    var thumbnailZoomScale by remember { mutableStateOf(1f) }
-    var thumbnailOffset by remember { mutableStateOf(Offset.Zero) }
-    val thumbnailTransformState = rememberTransformableState { zoomChange, offsetChange, _ ->
-        thumbnailZoomScale = (thumbnailZoomScale * zoomChange).coerceIn(.1f, 5f)
-        thumbnailOffset += offsetChange
-    }
+    var showOptionsSheet by remember { mutableStateOf(false) }
 
     val advancedMode by configRepository.advancedMode.collectAsState(initial = false)
 
@@ -94,7 +88,6 @@ fun Editor(
         showExitDialog = true
     }
 
-    var showOptionsSheet by remember { mutableStateOf(false) }
     LaunchedEffect(imageUri) {
         if (imageUri != null) {
             vm.loadImage(ctx, imageUri)
@@ -217,29 +210,7 @@ fun Editor(
                 Spacer(modifier = Modifier.size(10.dp))
 
                 // thumbnail
-                if (vm.previewBitmap == null) {
-                    Box(modifier = Modifier.size(300.dp)) {
-                        FlickeringLedDotProgressIndicator()
-                    }
-                } else {
-                    vm.previewBitmap?.asImageBitmap()?.let {
-                        Image(
-                            bitmap = it,
-                            contentDescription = "preview",
-                            modifier = Modifier
-                                .size(300.dp)
-                                .clip(RectangleShape)
-                                .transformable(state = thumbnailTransformState)
-                                .graphicsLayer(
-                                    scaleX = thumbnailZoomScale,
-                                    scaleY = thumbnailZoomScale,
-                                    translationX = thumbnailOffset.x,
-                                    translationY = thumbnailOffset.y
-                                ),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                }
+                InteractiveThumbnail(vm.previewBitmap)
 
                 // animate section switching using AnimatedContent
                 AnimatedContent(

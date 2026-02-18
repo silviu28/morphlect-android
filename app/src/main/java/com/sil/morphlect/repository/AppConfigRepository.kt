@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.map
 
 val Context.dataStore by preferencesDataStore(name = "app_config")
 class AppConfigRepository(private val context: Context) {
-    // companion object acts as the "static" initializer block in java
     companion object {
         val ADVANCED_MODE = booleanPreferencesKey("advanced_mode")
         val HIDE_PRIMARY_BAR = booleanPreferencesKey("hide_primary_bar")

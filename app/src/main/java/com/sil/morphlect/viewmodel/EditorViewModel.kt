@@ -183,7 +183,6 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         return (effectValues[selectedEffect] ?: 0.0) != 0.0
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     fun loadImage(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
