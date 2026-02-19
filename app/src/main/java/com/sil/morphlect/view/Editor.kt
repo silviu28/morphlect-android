@@ -71,11 +71,11 @@ import com.sil.morphlect.view.dialog.LayeringDialog
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun Editor(
-    navController: NavController,
-    imageViewModel: PickImageViewModel,
-    editorViewModel: EditorViewModel,
+    navController:     NavController,
+    imageViewModel:    PickImageViewModel,
+    editorViewModel:   EditorViewModel,
     presetsRepository: PresetsRepository,
-    configRepository: AppConfigRepository
+    configRepository:  AppConfigRepository
 ) {
     val vm = editorViewModel
     val imageUri = imageViewModel.imageUri
@@ -114,10 +114,11 @@ fun Editor(
 
         if (showLayering) {
             LayeringDialog(
-                layers = vm.imageLayers,
-                onRemoveLayer = { _ -> vm.removeLayer(0) },
+                layers = vm.layers,
+                onRemoveLayer = { _ -> vm.removeLayer(vm.layers.size - 1) },
                 onAddLayer = { vm.addLayer("new") },
                 onDismissRequest = { showLayering = false },
+                onInterchangeLayers = { l1, l2 -> vm.interchangeLayers(l1, l2) },
             )
         }
 

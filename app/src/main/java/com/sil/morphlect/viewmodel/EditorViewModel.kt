@@ -24,6 +24,7 @@ import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.enums.Effect
 import com.sil.morphlect.enums.Section
 import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.logic.LayerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,7 +36,8 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 
     private var originalMat: Mat? = null
 
-    var imageLayers = mutableStateListOf<EditorLayer>()
+    private val layerManager = LayerManager(mutableListOf())
+    var layers by mutableStateOf(layerManager.layers.toList())
 
     override fun redoLastCommand() {
         if (redoStack.isEmpty()) return
@@ -192,6 +194,8 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
             val mat = FormatConverters.bitmapToMat(bitmap)
 
+            layerManager.addLayer("layer 1", mat)
+
             // release old image if exists
             originalMat?.release()
 
@@ -208,8 +212,6 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             }
 
             val initialBitmap = FormatConverters.matToBitmap(originalMat!!)
-
-            mat.release()
 
             withContext(Dispatchers.Main) {
                 processedBitmap = initialBitmap
@@ -229,10 +231,21 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     fun getOriginalMat() = this.originalMat
 
     fun removeLayer(index: Int) {
-        imageLayers -= imageLayers[index]
+        layerManager.removeLayer(index)
+        layers = layerManager.layers.toList()
     }
 
     fun addLayer(name: String) {
-        imageLayers += EditorLayer.emptyNamed(name)
+        layerManager.addLayer(name)
+        layers = layerManager.layers.toList()
+    }
+
+    fun interchangeLayers(firstIndex: Int, secondIndex: Int) {
+        // spaghetti........
+        if (firstIndex >= 0 && firstIndex < layerManager.layers.size
+            && secondIndex >= 0 && secondIndex < layerManager.layers.size) {
+            layerManager.interchangeLayers(firstIndex, secondIndex)
+            layers = layerManager.layers.toList()
+        }
     }
 }

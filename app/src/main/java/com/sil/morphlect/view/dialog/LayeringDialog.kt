@@ -45,14 +45,15 @@ fun LayeringDialog(
     onRemoveLayer: (EditorLayer) -> Unit,
     onAddLayer: () -> Unit,
     onDismissRequest: () -> Unit,
+    onInterchangeLayers: (Int, Int) -> Unit,
 ) {
     DialogScaffold("layers", onDismissRequest) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
         ) {
-            layers.forEach { layer ->
-                LayerInfo(layer, onRemoveLayer)
+            layers.forEachIndexed { i, layer ->
+                LayerInfo(i, layer, onRemoveLayer, onInterchangeLayers)
             }
             Button(onClick = onAddLayer) {
                 Icon(Icons.Default.Add, contentDescription = "add new layer")
@@ -63,8 +64,10 @@ fun LayeringDialog(
 
 @Composable
 private fun LayerInfo(
+    key: Int,
     layer: EditorLayer,
     onRemoveLayer: (EditorLayer) -> Unit,
+    onInterchangeLayers: (Int, Int) -> Unit,
 ) {
     var hidden by remember { mutableStateOf(false) }
 
@@ -103,10 +106,10 @@ private fun LayerInfo(
             modifier = Modifier.weight(1f),
         )
 
-        IconButton(onClick = { /* ... up */ }) {
+        IconButton(onClick = { onInterchangeLayers(key, key - 1) }) {
             Icon(Icons.Default.ArrowDropUp, contentDescription = "move layer up")
         }
-        IconButton(onClick = { /* ... down */ }) {
+        IconButton(onClick = { onInterchangeLayers(key, key + 1) }) {
             Icon(Icons.Default.ArrowDropDown, contentDescription = "move layer down")
         }
         IconButton(onClick = { /* ... merge */ }) {
