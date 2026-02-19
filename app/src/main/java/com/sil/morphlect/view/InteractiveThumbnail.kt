@@ -4,10 +4,19 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.ZoomInMap
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,25 +57,45 @@ fun InteractiveThumbnail(
         modifier = Modifier
             .width(width)
             .height(height)
-            .clip(RectangleShape)
-            .transformable(state = thumbnailTransformState)
-            .graphicsLayer(
-                scaleX = zoomScale,
-                scaleY = zoomScale,
-                translationX = positionOffset.x,
-                translationY = positionOffset.y
-            ),
-        contentAlignment = Alignment.Center,
     ) {
-        if (layers.isEmpty())
-            FlickeringLedDotProgressIndicator()
-        else
-            layers.forEach { layer ->
-            Image(
-                bitmap = layer.visual,
-                contentDescription = "preview",
-                modifier = Modifier.size(300.dp)
-            )
+        Box(
+            modifier = Modifier
+                .width(width)
+                .height(height)
+                .clip(RectangleShape)
+                .transformable(state = thumbnailTransformState)
+                .graphicsLayer(
+                    scaleX = zoomScale,
+                    scaleY = zoomScale,
+                    translationX = positionOffset.x,
+                    translationY = positionOffset.y
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (layers.isEmpty())
+                FlickeringLedDotProgressIndicator()
+            else
+                layers.forEach { layer ->
+                    Image(
+                        bitmap = layer.visual,
+                        contentDescription = "preview",
+                        modifier = Modifier.size(300.dp)
+                    )
+                }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            if (zoomScale != 1f)
+                IconButton(onClick = { zoomScale = 1f }) {
+                    Icon(Icons.Default.ZoomInMap, contentDescription = "reset zoom")
+                }
+            if (positionOffset != Offset.Zero)
+                IconButton(onClick = { positionOffset = Offset.Zero }) {
+                    Icon(Icons.Default.OpenWith, contentDescription = "reset position")
+                }
         }
     }
 }
