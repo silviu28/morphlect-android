@@ -2,11 +2,12 @@ package com.sil.morphlect.logic
 
 import com.sil.morphlect.data.EditorLayer
 import org.opencv.core.Mat
+import java.io.Closeable
 
 /**
  * safely manages layers and operations with layers.
  */
-class LayerManager {
+class LayerManager : Closeable {
     var layers: MutableList<EditorLayer>
         private set
 
@@ -40,5 +41,9 @@ class LayerManager {
             set(firstIndex, get(secondIndex))
             set(secondIndex, clone)
         }
+    }
+
+    override fun close() {
+        layers.forEach { it.close() }
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 
 /**
@@ -29,7 +31,7 @@ import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
  */
 @Composable
 fun InteractiveThumbnail(
-    preview: Bitmap?,
+    layers: List<EditorLayer>,
     width: Dp = 300.dp,
     height: Dp = 300.dp,
     minZoomInRatio: Float = .1f,
@@ -44,24 +46,27 @@ fun InteractiveThumbnail(
 
     Box(
         modifier = Modifier
-            .width(300.dp)
-            .height(300.dp)
+            .width(width)
+            .height(height)
+            .clip(RectangleShape)
+            .transformable(state = thumbnailTransformState)
+            .graphicsLayer(
+                scaleX = zoomScale,
+                scaleY = zoomScale,
+                translationX = positionOffset.x,
+                translationY = positionOffset.y
+            ),
+        contentAlignment = Alignment.Center,
     ) {
-        preview?.asImageBitmap()?.let {
+        if (layers.isEmpty())
+            FlickeringLedDotProgressIndicator()
+        else
+            layers.forEach { layer ->
             Image(
-                bitmap = it,
+                bitmap = layer.visual,
                 contentDescription = "preview",
-                modifier = Modifier
-                    .clip(RectangleShape)
-                    .transformable(state = thumbnailTransformState)
-                    .graphicsLayer(
-                        scaleX = zoomScale,
-                        scaleY = zoomScale,
-                        translationX = positionOffset.x,
-                        translationY = positionOffset.y
-                    ),
-                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(300.dp)
             )
-        } ?: FlickeringLedDotProgressIndicator()
+        }
     }
 }

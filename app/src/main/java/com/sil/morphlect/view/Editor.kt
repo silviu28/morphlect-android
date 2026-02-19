@@ -241,7 +241,7 @@ fun Editor(
                 Spacer(modifier = Modifier.size(10.dp))
 
                 // thumbnail
-                InteractiveThumbnail(vm.previewBitmap)
+                InteractiveThumbnail(vm.layers)
 
                 // animate section switching using AnimatedContent
                 AnimatedContent(

@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.datastore.core.Closeable
 import com.sil.morphlect.logic.FormatConverters
+import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Size
@@ -11,7 +12,7 @@ import org.opencv.core.Size
 class EditorLayer(var name: String, private val mat: Mat) : Closeable {
     companion object {
         fun emptyNamed(name: String) : EditorLayer {
-            return EditorLayer(name, Mat(300, 300, CvType.CV_8UC3))
+            return EditorLayer(name, Mat.zeros(300, 300, CvType.CV_8UC4))
         }
     }
 
@@ -24,7 +25,16 @@ class EditorLayer(var name: String, private val mat: Mat) : Closeable {
      * returns the resulting layer created from the merging of another given layer.
      */
     fun mergeWith(other: EditorLayer): EditorLayer {
-        return TODO()
+        TODO("below has to be tested.")
+//        val extended = other.mat.extend(other.mat, mat.size())
+//        var res = mat.clone()
+//        val channels = ArrayList<Mat>()
+//        Core.split(extended, channels)
+//        val opacityMask = channels[3]
+//        extended.copyTo(res, opacityMask)
+//        extended.release()
+//
+//        return EditorLayer("$name + ${other.name}", res)
     }
 
     /**
@@ -38,4 +48,13 @@ class EditorLayer(var name: String, private val mat: Mat) : Closeable {
         val matClone = mat.clone()
         return EditorLayer(name, matClone)
     }
+}
+
+fun Mat.extend(src: Mat, size: Size): Mat {
+    var dst = Mat.zeros(size, src.type())
+    val region = dst.submat(0, src.rows(), 0, src.cols())
+    src.copyTo(region)
+    region.release()
+
+    return dst
 }
