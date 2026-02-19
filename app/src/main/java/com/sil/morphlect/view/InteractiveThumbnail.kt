@@ -1,6 +1,10 @@
 package com.sil.morphlect.view
 
 import android.graphics.Bitmap
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -45,13 +49,29 @@ fun InteractiveThumbnail(
     height: Dp = 300.dp,
     minZoomInRatio: Float = .1f,
     maxZoomOutRatio: Float = 5f,
+    expandLayers: Boolean = false,
 ) {
-    var zoomScale by remember { mutableStateOf(1f) }
+    var zoomScale      by remember { mutableStateOf(1f) }
     var positionOffset by remember { mutableStateOf(Offset.Zero) }
+
     val thumbnailTransformState = rememberTransformableState { zoomChange, offsetChange, _ ->
         zoomScale = (zoomScale * zoomChange).coerceIn(minZoomInRatio, maxZoomOutRatio)
         positionOffset += offsetChange
     }
+
+    val transition = updateTransition(expandLayers, label = "stack")
+
+    // animates the tilting of the layers with an angle of 45 degs
+    val tilt by transition.animateFloat(
+        label = "tilt",
+        transitionSpec = { tween(300, easing = EaseInOutCubic) }
+    ) { tilted -> if (tilted) 45f else 0f }
+
+    // animates the spreading out of layers
+    val spread by transition.animateFloat(
+        label = "spread",
+        transitionSpec = { tween(300, easing = EaseInOutCubic) }
+    ) { isSpread -> if (isSpread) 1f else 0f }
 
     Box(
         modifier = Modifier
@@ -75,11 +95,20 @@ fun InteractiveThumbnail(
             if (layers.isEmpty())
                 FlickeringLedDotProgressIndicator()
             else
-                layers.forEach { layer ->
+                layers.forEachIndexed { index, layer ->
+                    val offset = index * 60f * spread
+
                     Image(
                         bitmap = layer.visual,
                         contentDescription = "preview",
-                        modifier = Modifier.size(300.dp)
+                        modifier = Modifier
+                            .size(300.dp)
+                            .graphicsLayer {
+                                cameraDistance = 12 * density
+                                rotationX = tilt
+                                translationY = -offset
+                                alpha = if (expandLayers) 1f - (index * .08f) else 1f
+                            }
                     )
                 }
         }

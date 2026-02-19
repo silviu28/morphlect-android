@@ -26,12 +26,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.LayersClear
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FloatingActionButton
@@ -168,11 +171,14 @@ fun Editor(
             ) {
                 if (showLayersView) {
                     FloatingActionButton(onClick = { showLayering = true }) {
-                        Icon(Icons.Default.Map, "layering")
+                        Icon(Icons.AutoMirrored.Filled.Sort, "layering")
                     }
                 }
                 FloatingActionButton(onClick = { showLayersView = !showLayersView }) {
-                    Icon(Icons.Default.Layers, "layers")
+                    if (showLayersView)
+                        Icon(Icons.Default.LayersClear, "layers")
+                    else
+                        Icon(Icons.Default.Layers, "layers")
                 }
             }
 
@@ -241,7 +247,7 @@ fun Editor(
                 Spacer(modifier = Modifier.size(10.dp))
 
                 // thumbnail
-                InteractiveThumbnail(vm.layers)
+                InteractiveThumbnail(vm.layers, expandLayers = showLayersView)
 
                 // animate section switching using AnimatedContent
                 AnimatedContent(
