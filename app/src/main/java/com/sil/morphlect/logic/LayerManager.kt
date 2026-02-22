@@ -1,5 +1,6 @@
 package com.sil.morphlect.logic
 
+import androidx.compose.ui.geometry.Offset
 import com.sil.morphlect.data.EditorLayer
 import org.opencv.core.Mat
 import java.io.Closeable
@@ -41,6 +42,10 @@ class LayerManager : Closeable {
             set(firstIndex, get(secondIndex))
             set(secondIndex, clone)
         }
+    }
+
+    fun cropLayers(upCorner: Offset, downCorner: Offset) {
+        layers = layers.map { it.crop(upCorner, downCorner) }.toMutableList()
     }
 
     override fun close() {

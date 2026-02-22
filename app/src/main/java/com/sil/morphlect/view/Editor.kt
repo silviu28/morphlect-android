@@ -1,5 +1,6 @@
 package com.sil.morphlect.view
 
+import android.graphics.Point
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LayersClear
@@ -36,6 +38,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -91,6 +94,10 @@ fun Editor(
     var showLayersView   by remember { mutableStateOf(false) }
     var showLayering     by remember { mutableStateOf(false) }
 
+    var croppingMode     by remember { mutableStateOf(false) }
+    var cropUpCorner     by remember { mutableStateOf<Offset?>(null) }
+    var cropDownCorner   by remember { mutableStateOf<Offset?>(null) }
+
     val advancedMode     by configRepository.advancedMode.collectAsState(initial = false)
 
     // listen for back gesture - in case if it's accidental
@@ -143,9 +150,7 @@ fun Editor(
                     }) { Text("quit") }
                 },
                 dismissButton = {
-                    TextButton(onClick = {
-                        showExitDialog = false
-                    }) {
+                    TextButton(onClick = { showExitDialog = false }) {
                         Text("no")
                     }
                 }
@@ -223,23 +228,17 @@ fun Editor(
 
                     ElevatedButton(
                         enabled = vm.canRedo(),
-                        onClick = {
-                        vm.redoLastCommand()
-                    }) {
+                        onClick = { vm.redoLastCommand() }) {
                         Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "redo")
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    ElevatedButton(onClick = {
-                        showHistoryStack = true
-                    }) {
+                    ElevatedButton(onClick = { showHistoryStack = true }) {
                         Icon(Icons.Default.History, contentDescription = "history")
                     }
 
-                    ElevatedButton(onClick = {
-                        showOptionsSheet = true
-                    }) {
+                    ElevatedButton(onClick = { showOptionsSheet = true }) {
                         Icon(Icons.Default.Menu, contentDescription = "options")
                     }
                 }
@@ -247,7 +246,15 @@ fun Editor(
                 Spacer(modifier = Modifier.size(10.dp))
 
                 // thumbnail
-                InteractiveThumbnail(vm.layers, expandLayers = showLayersView)
+                InteractiveThumbnail(
+                    layers = vm.layers,
+                    expandLayers = showLayersView,
+                    croppingMode = croppingMode,
+                    cropUpCorner = cropUpCorner,
+                    cropDownCorner = cropDownCorner,
+                    onDragStart = { cropUpCorner = it },
+                    onDrag = { cropDownCorner = it },
+                )
 
                 // animate section switching using AnimatedContent
                 AnimatedContent(
@@ -265,7 +272,12 @@ fun Editor(
                         when (targetState) {
                             Section.Filtering -> FilteringSection(vm, presetsRepository)
                             Section.SmartFeatures -> SmartFeaturesSection(navController, vm)
-                            Section.ImageManipulation -> ImageManipulationSection(vm)
+                            Section.ImageManipulation -> ImageManipulationSection(
+                                vm = vm,
+                                croppingMode,
+                                onCropToggle = { croppingMode = !croppingMode },
+                                onCropApply = { vm.cropLayers(cropUpCorner!!, cropDownCorner!!) },
+                            )
                         }
 
                         if (advancedMode) {

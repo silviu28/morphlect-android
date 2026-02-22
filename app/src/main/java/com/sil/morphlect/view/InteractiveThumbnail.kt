@@ -1,6 +1,5 @@
 package com.sil.morphlect.view
 
-import android.graphics.Bitmap
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.OpenWith
-import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.ZoomInMap
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,13 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
+import com.sil.morphlect.view.custom.ResizableCropRegion
 
 /**
  * a component that displays a thumbnail for a given image. it can be repositioned and zoomed in or out.
@@ -50,6 +47,11 @@ fun InteractiveThumbnail(
     minZoomInRatio: Float = .1f,
     maxZoomOutRatio: Float = 5f,
     expandLayers: Boolean = false,
+    croppingMode: Boolean,
+    cropUpCorner: Offset?,
+    cropDownCorner: Offset?,
+    onDragStart: (Offset) -> Unit,
+    onDrag: (Offset) -> Unit,
 ) {
     var zoomScale      by remember { mutableStateOf(1f) }
     var positionOffset by remember { mutableStateOf(Offset.Zero) }
@@ -110,6 +112,9 @@ fun InteractiveThumbnail(
                                 alpha = if (expandLayers) 1f - (index * .08f) else 1f
                             }
                     )
+                    if (croppingMode) {
+                        ResizableCropRegion(cropUpCorner, cropDownCorner, onDragStart, onDrag)
+                    }
                 }
         }
 

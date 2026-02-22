@@ -1,13 +1,19 @@
 package com.sil.morphlect.data
 
 import android.graphics.Bitmap
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.datastore.core.Closeable
 import com.sil.morphlect.logic.FormatConverters
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.Rect
 import org.opencv.core.Size
+import java.lang.Math.pow
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class EditorLayer(var name: String, private val mat: Mat) : Closeable {
     companion object {
@@ -47,6 +53,17 @@ class EditorLayer(var name: String, private val mat: Mat) : Closeable {
     fun clone(): EditorLayer {
         val matClone = mat.clone()
         return EditorLayer(name, matClone)
+    }
+
+    fun crop(upCorner: Offset, downCorner: Offset): EditorLayer {
+//        val width = sqrt((upCorner.x - downCorner.x).pow(2)).toInt()
+//        val height = sqrt((upCorner.y - downCorner.y).pow(2)).toInt()
+//
+//        // define a rectangle as a region of interest to create a submat of
+//        val roi = Rect(upCorner.x.toInt(), upCorner.y.toInt(), width, height)
+//        val clone = mat.clone().submat(roi)
+//        return EditorLayer(name, clone) TODO
+        return this
     }
 }
 
