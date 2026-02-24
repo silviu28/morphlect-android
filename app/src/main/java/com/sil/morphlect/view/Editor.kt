@@ -217,6 +217,7 @@ fun Editor(
                         Text("manipulation")
                     }
                 }
+
                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
                     ElevatedButton(
                         enabled = vm.canUndo(),

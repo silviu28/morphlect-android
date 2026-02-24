@@ -27,8 +27,10 @@ fun PickImage(navController: NavController, imageViewModel: PickImageViewModel) 
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        imageViewModel.setImage(uri!!)
-        navController.navigate("editor")
+        uri?.run {
+            imageViewModel.setImage(uri)
+            navController.navigate("editor")
+        }
     }
 
     Scaffold { _ ->

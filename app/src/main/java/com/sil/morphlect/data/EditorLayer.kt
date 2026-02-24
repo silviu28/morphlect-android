@@ -56,14 +56,19 @@ class EditorLayer(var name: String, private val mat: Mat) : Closeable {
     }
 
     fun crop(upCorner: Offset, downCorner: Offset): EditorLayer {
-//        val width = sqrt((upCorner.x - downCorner.x).pow(2)).toInt()
-//        val height = sqrt((upCorner.y - downCorner.y).pow(2)).toInt()
-//
-//        // define a rectangle as a region of interest to create a submat of
-//        val roi = Rect(upCorner.x.toInt(), upCorner.y.toInt(), width, height)
-//        val clone = mat.clone().submat(roi)
-//        return EditorLayer(name, clone) TODO
-        return this
+        val width = sqrt((upCorner.x - downCorner.x).pow(2)).toInt()
+        val height = sqrt((upCorner.y - downCorner.y).pow(2)).toInt()
+
+        if (width > mat.width() || height > mat.height()) {
+            return this // TODO the cropping must be fixed for these cases.
+        }
+
+        // define a rectangle as a region of interest to create a submat of
+        val roi = Rect(upCorner.x.toInt(), upCorner.y.toInt(), width, height)
+        val clone = mat.clone().submat(roi)
+
+        return EditorLayer(name, clone)
+//        return this
     }
 }
 

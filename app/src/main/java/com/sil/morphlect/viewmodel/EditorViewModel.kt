@@ -69,7 +69,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             if (hasActiveAdjustment()) {
                 val previewCommand = createCommandForEffect(
                     selectedEffect,
-                    effectValues[selectedEffect] ?: 0.0
+                    effectValues[selectedEffect] ?: .0
                 )
                 processed = previewCommand.execute(processed)
             }
@@ -101,9 +101,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         private set
 
     var effectValues = mutableStateMapOf<Effect, Double>().apply {
-        Effect.entries.forEach { effect ->
-            put(effect, 0.0)
-        }
+        Effect.entries.forEach { effect -> put(effect, .0) }
     }
         private set
 
@@ -120,7 +118,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             Effect.Brightness -> BrightnessCommand(factor)
             Effect.Blur -> BlurCommand(
                 xFactor = factor,
-                yFactor = effectValues[Effect.BlurSecondAxis] ?: 0.0
+                yFactor = effectValues[Effect.BlurSecondAxis] ?: .0
             )
             Effect.Sharpness -> SharpnessCommand(factor)
             Effect.Hue -> HueCommand(factor)
@@ -147,7 +145,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 
     fun applyCurrentEffect() {
         val effect = selectedEffect
-        val value = effectValues[effect] ?: 0.0
+        val value = effectValues[effect] ?: .0
 
         // only add command if value is non-zero
         if (value != .0) {
@@ -171,8 +169,8 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             }
 
             // Apply current adjustment on top
-            val currentValue = effectValues[selectedEffect] ?: 0.0
-            if (currentValue != 0.0) {
+            val currentValue = effectValues[selectedEffect] ?: .0
+            if (currentValue != .0) {
                 val previewCommand = createCommandForEffect(selectedEffect, currentValue)
                 processed = previewCommand.execute(processed)
             }
@@ -187,7 +185,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     }
 
     private fun hasActiveAdjustment(): Boolean {
-        return (effectValues[selectedEffect] ?: 0.0) != 0.0
+        return (effectValues[selectedEffect] ?: .0) != .0
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
@@ -209,9 +207,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             redoStack.clear()
 
             // reset effect values
-            effectValues.forEach { (effect, _) ->
-                effectValues[effect] = 0.0
-            }
+            effectValues.forEach { (effect, _) -> effectValues[effect] = .0 }
 
             val initialBitmap = FormatConverters.matToBitmap(originalMat!!)
 
@@ -225,6 +221,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     override fun onCleared() {
         super.onCleared()
         originalMat?.release()
+        layerManager.close()
     }
 
     fun canUndo(): Boolean = undoStack.isNotEmpty()

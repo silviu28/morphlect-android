@@ -45,9 +45,14 @@ class LayerManager : Closeable {
     }
 
     fun cropLayers(upCorner: Offset, downCorner: Offset) {
-        layers = layers.map { it.crop(upCorner, downCorner) }.toMutableList()
+        layers = layers.map {
+            it.crop(upCorner, downCorner)
+        }.toMutableList()
     }
 
+    /**
+     frees the memory allocated by all layers (JNI optimization)
+     */
     override fun close() {
         layers.forEach { it.close() }
     }
