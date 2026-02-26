@@ -4,6 +4,8 @@ import android.graphics.Point
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -71,6 +73,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
@@ -106,6 +110,18 @@ fun Editor(
     var croppingMode     by remember { mutableStateOf(false) }
     var cropUpCorner     by remember { mutableStateOf<Offset?>(null) }
     var cropDownCorner   by remember { mutableStateOf<Offset?>(null) }
+    var addingImage      by remember { mutableStateOf(false) }
+    var newImageLayer    by remember { mutableStateOf<EditorLayer?>(null) }
+    val imagePickLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.run {
+            val bitmap = FormatConverters.uriToBitmap(ctx, uri)
+            val mat = FormatConverters.bitmapToMat(bitmap)
+            vm.addLayer("new image", EditorLayer("new image", mat))
+            addingImage = false
+        }
+    }
 
     val advancedMode     by configRepository.advancedMode.collectAsState(initial = false)
 
@@ -288,7 +304,9 @@ fun Editor(
                                 onCropToggle = { croppingMode = !croppingMode },
                                 onCropApply = {
                                     vm.cropLayers(cropUpCorner!!, cropDownCorner!!, thumbnailSizePx)
-                              },
+                                },
+                                addingImage,
+                                onImageAddToggle = { imagePickLauncher.launch("image/*") },
                             )
                         }
 

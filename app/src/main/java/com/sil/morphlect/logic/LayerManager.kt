@@ -22,10 +22,8 @@ class LayerManager : Closeable {
         layer.close()
     }
 
-    fun addLayer(name: String = "layer ${layers.size - 1}", mat: Mat? = null) {
-        mat?.let {
-            layers.add(EditorLayer(name, it))
-        } ?: layers.add(EditorLayer.emptyNamed(name))
+    fun addLayer(layer: EditorLayer) {
+        layers.add(layer)
     }
 
     fun mergeLayerWithBelow(index: Int) {

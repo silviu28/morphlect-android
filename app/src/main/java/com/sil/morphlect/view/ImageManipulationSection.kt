@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.viewmodel.EditorViewModel
 
@@ -30,15 +31,22 @@ fun ImageManipulationSection(
     croppingMode: Boolean,
     onCropToggle: () -> Unit,
     onCropApply: () -> Unit,
+    addingImage: Boolean,
+    onImageAddToggle: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        if (croppingMode) {
+        if (croppingMode || addingImage) {
             Button(onClick = {
-                onCropApply()
-                onCropToggle()
+                if (croppingMode) {
+                    onCropApply()
+                    onCropToggle()
+                }
+                if (addingImage) {
+                    onImageAddToggle()
+                }
             }) {
                 Icon(Icons.Default.Check, contentDescription = "apply crop")
             }
@@ -46,6 +54,9 @@ fun ImageManipulationSection(
         else {
             TextButton(onClick = onCropToggle) {
                 Text("crop")
+            }
+            TextButton(onClick = onImageAddToggle) {
+                Text("add image")
             }
         }
     }

@@ -197,7 +197,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
             val mat = FormatConverters.bitmapToMat(bitmap)
 
-            layerManager.addLayer("layer 1", mat)
+            layerManager.addLayer(EditorLayer("layer 1", mat))
 
             // release old image if exists
             originalMat?.release()
@@ -237,8 +237,8 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         layers = layerManager.layers.toList()
     }
 
-    fun addLayer(name: String) {
-        layerManager.addLayer(name)
+    fun addLayer(name: String, layer: EditorLayer = EditorLayer.emptyNamed(name)) {
+        layerManager.addLayer(layer)
         layers = layerManager.layers.toList()
     }
 
