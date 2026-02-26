@@ -111,7 +111,7 @@ fun Editor(
     var cropUpCorner     by remember { mutableStateOf<Offset?>(null) }
     var cropDownCorner   by remember { mutableStateOf<Offset?>(null) }
     var addingImage      by remember { mutableStateOf(false) }
-    var newImageLayer    by remember { mutableStateOf<EditorLayer?>(null) }
+
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
