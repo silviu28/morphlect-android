@@ -38,7 +38,7 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 @Composable
 fun ImageComparison(vm: EditorViewModel, navController: NavController) {
     var dividerRatio by remember { mutableStateOf(.5) }
-    var original by remember { mutableStateOf(FormatConverters.matToBitmap(vm.getOriginalMat()!!)) }
+    var original by remember { mutableStateOf(FormatConverters.matToBitmap(vm.originalMat!!)) }
     var edited by remember { mutableStateOf(vm.previewBitmap!!) }
 
     Box(

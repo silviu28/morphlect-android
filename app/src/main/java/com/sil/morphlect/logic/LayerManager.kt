@@ -11,7 +11,6 @@ import java.io.Closeable
  */
 class LayerManager : Closeable {
     var layers: MutableList<EditorLayer>
-        private set
 
     constructor(layers: MutableList<EditorLayer>) {
         this.layers = layers

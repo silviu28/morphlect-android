@@ -12,7 +12,7 @@ import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class EditorLayer(var name: String, private val mat: Mat) : Closeable {
+class EditorLayer(var name: String, val mat: Mat) : Closeable {
     companion object {
         fun emptyNamed(name: String) : EditorLayer {
             return EditorLayer(name, Mat.zeros(300, 300, CvType.CV_8UC4))
