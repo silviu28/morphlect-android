@@ -1,6 +1,7 @@
 package com.sil.morphlect.viewmodel
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.net.Uri
@@ -12,6 +13,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sil.morphlect.command.impl.BlurCommand
@@ -248,7 +251,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         }
     }
 
-    fun cropLayers(upCorner: Offset, downCorner: Offset) {
-        layerManager.cropLayers(upCorner, downCorner)
+    fun cropLayers(upCorner: Offset, downCorner: Offset, size: Size) {
+        layerManager.cropLayers(upCorner, downCorner, size)
     }
 }

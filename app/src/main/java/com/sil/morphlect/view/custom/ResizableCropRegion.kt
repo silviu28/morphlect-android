@@ -32,12 +32,11 @@ fun ResizableCropRegion(
                 )
             }
     ) {
-        val start = cropUpCorner
-        val end = cropDownCorner
-
-        if (start != null && end != null) {
-            val topLeft = Offset(minOf(start.x, end.x), minOf(start.y, end.y))
-            val bottomRight = Offset(maxOf(start.x, end.x), maxOf(start.y, end.y))
+        if (cropUpCorner != null && cropDownCorner != null) {
+            val topLeft = Offset(minOf(cropUpCorner.x, cropDownCorner.x), minOf(cropUpCorner.y,
+                cropDownCorner.y))
+            val bottomRight = Offset(maxOf(cropUpCorner.x, cropDownCorner.x), maxOf(cropUpCorner.y,
+                cropDownCorner.y))
             val cropSize = Size(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y)
 
             // area

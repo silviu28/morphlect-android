@@ -66,8 +66,11 @@ import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
@@ -85,7 +88,13 @@ fun Editor(
 ) {
     val vm = editorViewModel
     val imageUri = imageViewModel.imageUri
-    val ctx = LocalContext.current
+
+    val ctx    = LocalContext.current
+    val density = LocalDensity.current
+
+    val thumbnailSizePx = with(density) {
+        Size(300.dp.toPx(), 300.dp.toPx())
+    }
 
     var showExitDialog   by remember { mutableStateOf(false) }
     var showHistoryStack by remember { mutableStateOf(false) }
@@ -277,7 +286,9 @@ fun Editor(
                                 vm = vm,
                                 croppingMode,
                                 onCropToggle = { croppingMode = !croppingMode },
-                                onCropApply = { vm.cropLayers(cropUpCorner!!, cropDownCorner!!) },
+                                onCropApply = {
+                                    vm.cropLayers(cropUpCorner!!, cropDownCorner!!, thumbnailSizePx)
+                              },
                             )
                         }
 

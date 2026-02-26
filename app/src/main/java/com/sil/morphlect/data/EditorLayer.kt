@@ -1,16 +1,13 @@
 package com.sil.morphlect.data
 
-import android.graphics.Bitmap
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.datastore.core.Closeable
 import com.sil.morphlect.logic.FormatConverters
-import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Rect
 import org.opencv.core.Size
-import java.lang.Math.pow
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -55,20 +52,28 @@ class EditorLayer(var name: String, private val mat: Mat) : Closeable {
         return EditorLayer(name, matClone)
     }
 
-    fun crop(upCorner: Offset, downCorner: Offset): EditorLayer {
-        val width = sqrt((upCorner.x - downCorner.x).pow(2)).toInt()
-        val height = sqrt((upCorner.y - downCorner.y).pow(2)).toInt()
+    fun crop(upCorner: Offset, downCorner: Offset, size: androidx.compose.ui.geometry.Size): EditorLayer {
+        // scale factors between display space and mat space
+        val scaleX = mat.width().toFloat() / size.width
+        val scaleY = mat.height().toFloat() / size.height
 
-        if (width > mat.width() || height > mat.height()) {
-            return this // TODO the cropping must be fixed for these cases.
-        }
+        // convert offsets from display space to mat space
+        val matUpCorner = Offset(upCorner.x * scaleX, upCorner.y * scaleY)
+        val matDownCorner = Offset(downCorner.x * scaleX, downCorner.y * scaleY)
 
-        // define a rectangle as a region of interest to create a submat of
-        val roi = Rect(upCorner.x.toInt(), upCorner.y.toInt(), width, height)
-        val clone = mat.clone().submat(roi)
+        val x = minOf(matUpCorner.x, matDownCorner.x).toInt()
+        val y = minOf(matUpCorner.y, matDownCorner.y).toInt()
+        val width = abs(matUpCorner.x - matDownCorner.x).toInt()
+        val height = abs(matUpCorner.y - matDownCorner.y).toInt()
 
-        return EditorLayer(name, clone)
-//        return this
+        // clamp to mat bounds just in case
+        val safeX = x.coerceIn(0, mat.width() - 1)
+        val safeY = y.coerceIn(0, mat.height() - 1)
+        val safeWidth = width.coerceIn(1, mat.width() - safeX)
+        val safeHeight = height.coerceIn(1, mat.height() - safeY)
+
+        val roi = Rect(safeX, safeY, safeWidth, safeHeight)
+        return EditorLayer(name, mat.clone().submat(roi))
     }
 }
 
