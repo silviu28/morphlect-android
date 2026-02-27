@@ -76,57 +76,39 @@ fun AddPresetDialog(
     }
     var presetName by remember { mutableStateOf("") }
 
-    Dialog(onDismissRequest) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
+    DialogScaffold(
+        title = "add preset",
+        onDismissRequest
+    ) {
+        OutlinedTextField(
+            value = presetName,
+            onValueChange = { presetName = it },
+            label = { Text("preset name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "add preset",
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = presetName,
-                    onValueChange = { presetName = it },
-                    label = { Text("preset name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismissRequest) {
-                        Text("cancel")
-                    }
-                    TextButton(
-                        onClick = {
-                            if (presetName.isNotBlank()) {
-                                onAddPresetFromEditor(presetName)
-                                onDismissRequest()
-                            }
-                        }
-                    ) {
-                        Text("add")
-                    }
-                }
-                
-                Button(onClick = { presetPickLauncher.launch("*/*") }) {
-                    Icon(Icons.Default.Save, contentDescription = "load")
-                    Text("load from device")
-                }
+            TextButton(onClick = onDismissRequest) {
+                Text("cancel")
             }
+            TextButton(
+                onClick = {
+                    if (presetName.isNotBlank()) {
+                        onAddPresetFromEditor(presetName)
+                        onDismissRequest()
+                    }
+                }
+            ) {
+                Text("add")
+            }
+        }
+
+        Button(onClick = { presetPickLauncher.launch("*/*") }) {
+            Icon(Icons.Default.Save, contentDescription = "load")
+            Text("load from device")
         }
     }
 }

@@ -42,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +67,11 @@ fun SaveImage(editorViewModel: EditorViewModel) {
 
     val formats = listOf("JPG", "PNG", "WEBP")
 
+    val image = vm.layers
+        .reduce { allMerge, layer -> allMerge.mergeWith(layer) }
+        .visual
+        .asAndroidBitmap()
+
     fun saveImage() {
         try {
             val resolver = ctx.contentResolver
@@ -74,6 +80,7 @@ fun SaveImage(editorViewModel: EditorViewModel) {
                 "webp" -> "image/webp"
                 else -> "image/jpeg"
             }
+
 
             val contentValues = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, "$imageName.$format")
@@ -91,7 +98,7 @@ fun SaveImage(editorViewModel: EditorViewModel) {
                     "webp" -> Bitmap.CompressFormat.WEBP
                     else -> Bitmap.CompressFormat.JPEG
                 }
-                vm.previewBitmap!!.compress(compressFmt, 100, out)
+                image.compress(compressFmt, 100, out)
             }
 
             contentValues.clear()
@@ -125,14 +132,12 @@ fun SaveImage(editorViewModel: EditorViewModel) {
                 if (vm.previewBitmap == null) {
                     CircularProgressIndicator()
                 } else {
-                    vm.previewBitmap?.asImageBitmap()?.let {
-                        Image(
-                            bitmap = it,
-                            contentDescription = "preview",
-                            modifier = Modifier.size(300.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
+                    Image(
+                        bitmap = image.asImageBitmap(),
+                        contentDescription = "preview",
+                        modifier = Modifier.size(300.dp),
+                        contentScale = ContentScale.Crop,
+                    )
                 }
                 Text("image name")
                 OutlinedTextField(

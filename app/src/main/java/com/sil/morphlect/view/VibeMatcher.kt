@@ -3,6 +3,7 @@ package com.sil.morphlect.view
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.viewmodel.EditorViewModel
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
     var tokens by remember { mutableStateOf(emptySet<String>()) }

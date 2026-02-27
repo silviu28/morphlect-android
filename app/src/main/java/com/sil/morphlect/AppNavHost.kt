@@ -21,13 +21,11 @@ import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.view.OnboardingCarousel
 import com.sil.morphlect.viewmodel.EditorViewModel
-import com.sil.morphlect.viewmodel.PickImageViewModel
 
 @RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
-    val imageViewModel: PickImageViewModel = viewModel()
     val editorViewModel: EditorViewModel = viewModel()
     val ctx = LocalContext.current
     val configRepository = remember { AppConfigRepository(ctx) }
@@ -46,12 +44,11 @@ fun AppNavHost() {
             OnboardingCarousel(navController)
         }
         composable("pick") {
-            PickImage(navController, imageViewModel)
+            PickImage(navController, editorViewModel)
         }
         composable("editor") {
             Editor(
                 navController,
-                imageViewModel,
                 editorViewModel,
                 presetsRepository,
                 configRepository

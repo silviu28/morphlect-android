@@ -73,7 +73,6 @@ suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.I
 
     val contentValues = ContentValues().apply {
         put(MediaStore.Downloads.DISPLAY_NAME, "${preset.name}.preset")
-//        put(MediaStore.Downloads.MIME_TYPE, "application/json")
         put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Morphlect")
         put(MediaStore.Downloads.IS_PENDING, 1)
     }
@@ -98,12 +97,12 @@ suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.I
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) {
-    var presetsMap by remember { mutableStateOf<Map<String, Map<Effect, Double>>>(emptyMap()) }
-    var showAddDialog by remember { mutableStateOf(false) }
-    var showRemoveDialog by remember { mutableStateOf(false) }
+    var presetsMap         by remember { mutableStateOf<Map<String, Map<Effect, Double>>>(emptyMap()) }
+    var showAddDialog      by remember { mutableStateOf(false) }
+    var showRemoveDialog   by remember { mutableStateOf(false) }
     var selectedPresetName by remember { mutableStateOf<String?>(null) }
-    var isBlurring2d by remember { mutableStateOf(false) }
-    var selectedPreset by remember { mutableStateOf<Preset?>(null) }
+    var isBlurring2d       by remember { mutableStateOf(false) }
+    var selectedPreset     by remember { mutableStateOf<Preset?>(null) }
 
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
@@ -304,7 +303,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 PresetPreview(
                     name = name,
                     preset = preset,
-                    originalMat = vm.getOriginalMat(),
+                    originalMat = vm.originalMat,
                     onPress = { applyPreset(preset) },
                     onLongPress = {
                         selectedPresetName = name

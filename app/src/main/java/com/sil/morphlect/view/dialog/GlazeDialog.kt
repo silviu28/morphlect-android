@@ -18,21 +18,5 @@ import androidx.compose.ui.window.Dialog
 
 @Composable
 fun GlazeDialog(onDismissRequest: () -> Unit) {
-    Dialog(onDismissRequest) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text("coming soon...")
-            }
-        }
-    }
+    DialogScaffold(title = "coming soon...", onDismissRequest) { }
 }

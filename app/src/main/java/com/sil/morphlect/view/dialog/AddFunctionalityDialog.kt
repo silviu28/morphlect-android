@@ -44,70 +44,54 @@ fun AddFunctionalityDialog(
         modelNames = modelsRepository.readContents()
     }
 
-    Dialog(onDismissRequest) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
+    DialogScaffold(
+        title = "add functionality",
+        onDismissRequest
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = dropdownExpanded,
+            onExpandedChange = { dropdownExpanded = it }
         ) {
-            Column(
+            OutlinedTextField(
+                value = selectedModel ?: "select a model",
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
+                },
                 modifier = Modifier
+                    .menuAnchor()
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            )
+            ExposedDropdownMenu(
+                expanded = dropdownExpanded,
+                onDismissRequest = { dropdownExpanded = false }
             ) {
-                Text(
-                    text = "add functionality",
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                ExposedDropdownMenuBox(
-                    expanded = dropdownExpanded,
-                    onExpandedChange = { dropdownExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedModel ?: modelNames[0],
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
-                        },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = dropdownExpanded,
-                        onDismissRequest = { dropdownExpanded = false }
-                    ) {
-                        modelNames.forEach { modelOption ->
-                            DropdownMenuItem(
-                                text = { Text(modelOption) },
-                                onClick = {
-                                    selectedModel = modelOption
-                                    dropdownExpanded = false
-                                }
-                            )
+                modelNames.forEach { modelOption ->
+                    DropdownMenuItem(
+                        text = { Text(modelOption) },
+                        onClick = {
+                            selectedModel = modelOption
+                            dropdownExpanded = false
                         }
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismissRequest) {
-                        Text("cancel")
-                    }
-                    TextButton(
-                        onClick = { }
-                    ) {
-                        Text("add")
-                    }
+                    )
                 }
             }
         }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = onDismissRequest) {
+                Text("cancel")
+            }
+            TextButton(
+                onClick = { }
+            ) {
+                Text("add")
+            }
+        }
     }
+
 }
