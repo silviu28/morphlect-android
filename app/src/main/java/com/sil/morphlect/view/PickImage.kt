@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sil.morphlect.viewmodel.EditorViewModel
-import com.sil.morphlect.viewmodel.PickImageViewModel
 
 @RequiresApi(Build.VERSION_CODES.P)
 @Composable

@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
-import com.sil.morphlect.viewmodel.PickImageViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -69,7 +68,6 @@ import com.sil.morphlect.view.dialog.LayeringDialog
 @Composable
 fun Editor(
     navController:     NavController,
-    imageViewModel:    PickImageViewModel,
     editorViewModel:   EditorViewModel,
     presetsRepository: PresetsRepository,
     configRepository:  AppConfigRepository
