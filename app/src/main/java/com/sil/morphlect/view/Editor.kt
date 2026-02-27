@@ -64,7 +64,6 @@ import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.dialog.LayeringDialog
 
 
-@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun Editor(
     navController:     NavController,

@@ -13,7 +13,6 @@ object FormatConverters {
     /**
      * pass the URI of an image and return a bitmap object representing the image at the specified URI.
      */
-    @RequiresApi(Build.VERSION_CODES.P)
     fun uriToBitmap(context: Context, uri: Uri): Bitmap {
         val src = ImageDecoder.createSource(context.contentResolver, uri)
         return ImageDecoder

@@ -190,7 +190,6 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 
     private val hasActiveAdjustment get() = (effectValues[selectedEffect] ?: .0) != .0
 
-    @RequiresApi(Build.VERSION_CODES.P)
     fun loadImage(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = FormatConverters.uriToBitmap(context, uri)

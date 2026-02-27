@@ -67,7 +67,6 @@ import java.io.File
 import kotlin.math.roundToInt
 
 // TODO
-@RequiresApi(Build.VERSION_CODES.Q)
 suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.IO) {
     val resolver = ctx.contentResolver
 
@@ -94,7 +93,6 @@ suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.I
     resolver.update(uri, contentValues, null, null)
 }
 
-@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) {
     var presetsMap         by remember { mutableStateOf<Map<String, Map<Effect, Double>>>(emptyMap()) }

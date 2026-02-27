@@ -22,7 +22,6 @@ import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.view.OnboardingCarousel
 import com.sil.morphlect.viewmodel.EditorViewModel
 
-@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
