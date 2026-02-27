@@ -86,21 +86,27 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.navigation.compose)
+
     // https://mvnrepository.com/artifact/org.opencv/opencv
-    implementation("org.opencv:opencv:4.12.0")
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("androidx.datastore:datastore-preferences:1.1.0")
-    implementation("androidx.datastore:datastore-core:1.1.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation(libs.opencv)
+
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.lifecycle.runtime.ktx.v261)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
     // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite
-    implementation("org.tensorflow:tensorflow-lite:2.17.0")
+    implementation(libs.tensorflow.lite)
+
     // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-support
-    implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
+    implementation(libs.tensorflow.lite.support)
+
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
-    implementation("com.google.code.gson:gson:2.13.2")
+    implementation(libs.gson)
+
     // https://mvnrepository.com/artifact/androidx.compose.material/material-icons-extended
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation(libs.androidx.compose.material.icons.extended)
 }
 
 
