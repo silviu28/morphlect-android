@@ -46,7 +46,7 @@ fun AppNavHost() {
             OnboardingCarousel(navController)
         }
         composable("pick") {
-            PickImage(navController, imageViewModel)
+            PickImage(navController, editorViewModel)
         }
         composable("editor") {
             Editor(

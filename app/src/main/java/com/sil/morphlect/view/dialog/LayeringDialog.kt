@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +55,12 @@ fun LayeringDialog(
                     onVisibilityToggle
                 )
             }
+
+            if (layers.size > 5)
+                Row {
+                    Icon(Icons.Default.Warning, contentDescription = null)
+                    Text(" working with too many layers may cause performance issues.", style = MaterialTheme.typography.bodySmall)
+                }
         }
     }
 }

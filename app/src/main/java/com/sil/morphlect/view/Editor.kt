@@ -75,7 +75,6 @@ fun Editor(
     configRepository:  AppConfigRepository
 ) {
     val vm = editorViewModel
-    val imageUri = imageViewModel.imageUri
 
     val ctx    = LocalContext.current
     val density = LocalDensity.current
@@ -112,12 +111,6 @@ fun Editor(
     // listen for back gesture - in case if it's accidental
     BackHandler {
         showExitDialog = true
-    }
-
-    LaunchedEffect(imageUri) {
-        if (imageUri != null) {
-            vm.loadImage(ctx, imageUri)
-        }
     }
 
     Scaffold { _ ->
