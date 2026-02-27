@@ -1,5 +1,9 @@
 package com.sil.morphlect.data
 
+import android.graphics.Bitmap
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.datastore.core.Closeable
@@ -11,6 +15,8 @@ import org.opencv.core.Size
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
+import androidx.core.graphics.createBitmap
+import org.opencv.core.Core
 
 class EditorLayer(var name: String, val mat: Mat) : Closeable {
     companion object {
@@ -24,20 +30,34 @@ class EditorLayer(var name: String, val mat: Mat) : Closeable {
     */
     val visual by lazy { FormatConverters.matToBitmap(mat).asImageBitmap() }
 
+    var visible by mutableStateOf(true)
+
     /**
      * returns the resulting layer created from the merging of another given layer.
      */
     fun mergeWith(other: EditorLayer): EditorLayer {
-        TODO("below has to be tested.")
-//        val extended = other.mat.extend(other.mat, mat.size())
-//        var res = mat.clone()
-//        val channels = ArrayList<Mat>()
-//        Core.split(extended, channels)
-//        val opacityMask = channels[3]
-//        extended.copyTo(res, opacityMask)
-//        extended.release()
-//
-//        return EditorLayer("$name + ${other.name}", res)
+        // merged layer should fit in size both layers
+        val resultSize = Size(
+            maxOf(mat.cols(), other.mat.cols()).toDouble(),
+            maxOf(mat.rows(), other.mat.rows()).toDouble()
+        )
+
+        // span both images across the required size
+        val extended = mat.extend(resultSize)
+        val extendedOther = other.mat.extend(resultSize)
+
+        // overlap extended other on this layer with respect to the alpha channel
+        val channels = ArrayList<Mat>()
+        Core.split(extendedOther, channels)
+        val opacityMask = channels[3]
+
+        extendedOther.copyTo(extended, opacityMask)
+
+        // dispose JNI resources
+        extendedOther.release()
+        channels.forEach { it.release() }
+
+        return EditorLayer("$name + ${other.name}", extended)
     }
 
     /**
@@ -77,10 +97,15 @@ class EditorLayer(var name: String, val mat: Mat) : Closeable {
     }
 }
 
-fun Mat.extend(src: Mat, size: Size): Mat {
-    var dst = Mat.zeros(size, src.type())
-    val region = dst.submat(0, src.rows(), 0, src.cols())
-    src.copyTo(region)
+/**
+ * returns a new `Mat` padded to fit given `size`.
+ */
+fun Mat.extend(size: Size): Mat {
+    if (size == size()) return this
+
+    var dst = Mat.zeros(size, type())
+    val region = dst.submat(0, rows(), 0, cols())
+    copyTo(region)
     region.release()
 
     return dst

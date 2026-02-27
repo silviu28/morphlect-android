@@ -1,6 +1,5 @@
 package com.sil.morphlect.view.dialog
 
-import android.widget.ScrollView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,30 +8,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,9 +34,10 @@ import com.sil.morphlect.data.EditorLayer
 fun LayeringDialog(
     layers: List<EditorLayer>,
     onRemoveLayer: (EditorLayer) -> Unit,
-    onAddLayer: () -> Unit,
+    onMergeLayerWithBelow: (Int) -> Unit,
     onDismissRequest: () -> Unit,
     onInterchangeLayers: (Int, Int) -> Unit,
+    onVisibilityToggle: (Int) -> Unit,
 ) {
     DialogScaffold("layers", onDismissRequest) {
         Column(
@@ -53,10 +45,14 @@ fun LayeringDialog(
                 .verticalScroll(rememberScrollState())
         ) {
             layers.forEachIndexed { i, layer ->
-                LayerInfo(i, layer, onRemoveLayer, onInterchangeLayers)
-            }
-            Button(onClick = onAddLayer) {
-                Icon(Icons.Default.Add, contentDescription = "add new layer")
+                LayerInfo(
+                    key = i,
+                    layer,
+                    onRemoveLayer,
+                    onMergeLayerWithBelow,
+                    onInterchangeLayers,
+                    onVisibilityToggle
+                )
             }
         }
     }
@@ -67,10 +63,10 @@ private fun LayerInfo(
     key: Int,
     layer: EditorLayer,
     onRemoveLayer: (EditorLayer) -> Unit,
+    onMergeLayerWithAbove: (Int) -> Unit,
     onInterchangeLayers: (Int, Int) -> Unit,
+    onVisibilityToggle: (Int) -> Unit
 ) {
-    var hidden by remember { mutableStateOf(false) }
-
     val baseColor = MaterialTheme.colorScheme.background
     val insetColor = baseColor.copy(
         red = (baseColor.red + 0.04f).coerceAtMost(1f),
@@ -94,9 +90,9 @@ private fun LayerInfo(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = { hidden = !hidden }),
+                    .clickable(onClick = { onVisibilityToggle(key) }),
             )
-            if (hidden)
+            if (!layer.visible)
                 Icon(Icons.Default.VisibilityOff, contentDescription = "layer hidden")
         }
 
@@ -112,8 +108,8 @@ private fun LayerInfo(
         IconButton(onClick = { onInterchangeLayers(key, key + 1) }) {
             Icon(Icons.Default.ArrowDropDown, contentDescription = "move layer down")
         }
-        IconButton(onClick = { /* ... merge */ }) {
-            Icon(Icons.Default.Merge, contentDescription = "merge with layer below")
+        IconButton(onClick = { onMergeLayerWithAbove(key) }) {
+            Icon(Icons.Default.Merge, contentDescription = "merge with layer above")
         }
         IconButton(onClick = { onRemoveLayer(layer) }) {
             Icon(Icons.Default.Delete, contentDescription = "remove layer")

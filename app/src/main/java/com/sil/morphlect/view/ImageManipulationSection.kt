@@ -44,9 +44,8 @@ fun ImageManipulationSection(
                     onCropApply()
                     onCropToggle()
                 }
-                if (addingImage) {
+                if (addingImage)
                     onImageAddToggle()
-                }
             }) {
                 Icon(Icons.Default.Check, contentDescription = "apply crop")
             }

@@ -3,7 +3,6 @@ package com.sil.morphlect.logic
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import com.sil.morphlect.data.EditorLayer
-import org.opencv.core.Mat
 import java.io.Closeable
 
 /**
@@ -25,7 +24,7 @@ class LayerManager : Closeable {
         layers.add(layer)
     }
 
-    fun mergeLayerWithBelow(index: Int) {
+    fun mergeLayerWithAbove(index: Int) {
         if (index == 0) return
         val mergedLayer = layers[index].mergeWith(layers[index - 1])
         layers.apply {
@@ -53,5 +52,9 @@ class LayerManager : Closeable {
      */
     override fun close() {
         layers.forEach { it.close() }
+    }
+
+    fun toggleVisibilityOf(index: Int) {
+        layers[index].apply { visible = !visible }
     }
 }

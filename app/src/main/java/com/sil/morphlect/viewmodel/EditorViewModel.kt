@@ -1,9 +1,7 @@
 package com.sil.morphlect.viewmodel
 
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Bitmap
-import android.graphics.Point
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -15,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sil.morphlect.command.impl.BlurCommand
@@ -44,11 +41,13 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         private set
 
     private val layerManager = LayerManager(mutableStateListOf())
-    val layers by derivedStateOf { layerManager.layers.map { layer ->
-        // TODO works but a bit verbose
-        (undoStack +
-            EditorCommand.of(selectedEffect, effectValues[selectedEffect]!!)
-        ).fold(layer) { layer, comm -> comm.execute(layer) }
+    val layers by derivedStateOf {
+        layerManager.layers.map { layer ->
+            if (!layer.visible) return@map EditorLayer.emptyNamed("")
+            // TODO works but a bit verbose
+            (undoStack +
+                EditorCommand.of(selectedEffect, effectValues[selectedEffect]!!)
+            ).fold(layer) { layer, comm -> comm.execute(layer) }
     } }
     var originalLayers = mutableStateListOf<EditorLayer>()
 
@@ -249,5 +248,15 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 
     fun cropLayers(upCorner: Offset, downCorner: Offset, size: Size) {
         layerManager.cropLayers(upCorner, downCorner, size)
+    }
+
+    fun toggleVisibilityOfLayer(index: Int) {
+//        layerManager.toggleVisibilityOf(index)
+        layerManager.layers[index].apply { visible = !visible }
+    }
+
+    fun mergeLayerWithAbove(index: Int) {
+        if (index < layers.size)
+            layerManager.mergeLayerWithAbove(index)
     }
 }
