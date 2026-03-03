@@ -7,9 +7,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +61,7 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.logic.FormatConverters
@@ -174,12 +180,23 @@ fun Editor(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
             ) {
-                if (showLayersView) {
-                    FloatingActionButton(onClick = { showLayering = true }) {
+                AnimatedVisibility(
+                    visible = showLayersView,
+                    enter = slideInHorizontally { it },
+                    exit = slideOutHorizontally { it }
+                ) {
+                    FloatingActionButton(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        onClick = { showLayering = true },
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.Sort, "layering")
                     }
                 }
-                FloatingActionButton(onClick = { showLayersView = !showLayersView }) {
+                Spacer(Modifier.size(2.dp))
+                FloatingActionButton(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    onClick = { showLayersView = !showLayersView }
+                ) {
                     if (showLayersView)
                         Icon(Icons.Default.LayersClear, "layers")
                     else
@@ -192,12 +209,7 @@ fun Editor(
                 verticalArrangement = Arrangement.Center,
 
             ) {
-                Row(modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            shape = RoundedCornerShape(36.dp)
-                        )
-                ) {
+                Row {
                     AnimatedSectionButton(
                         onClick = { vm.changeSection(Section.Filtering) },
                         isSelected = vm.section == Section.Filtering,

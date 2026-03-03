@@ -1,9 +1,15 @@
 package com.sil.morphlect.view
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -19,6 +25,7 @@ import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.ZoomInMap
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +39,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.custom.ResizableCropRegion
@@ -118,18 +126,35 @@ fun InteractiveThumbnail(
                 }
         }
 
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start
         ) {
-            if (zoomScale != 1f)
-                IconButton(onClick = { zoomScale = 1f }) {
-                    Icon(Icons.Default.ZoomInMap, contentDescription = "reset zoom")
+            AnimatedContent(
+                targetState = zoomScale != 1f,
+                transitionSpec = {
+                    slideInVertically { it } togetherWith slideOutVertically { it }
                 }
-            if (positionOffset != Offset.Zero)
-                IconButton(onClick = { positionOffset = Offset.Zero }) {
-                    Icon(Icons.Default.OpenWith, contentDescription = "reset position")
+            ) { isZoomed ->
+                if (isZoomed) {
+                    IconButton(onClick = { zoomScale = 1f }) {
+                        Icon(Icons.Default.ZoomInMap, contentDescription = "reset zoom")
+                    }
                 }
+            }
+            AnimatedContent(
+                targetState = positionOffset != Offset.Zero,
+                transitionSpec = {
+                    slideInVertically { it } togetherWith slideOutVertically { it }
+                }
+            ) { isRepositioned ->
+                if (isRepositioned) {
+                    IconButton(onClick = { positionOffset = Offset.Zero }) {
+                        Icon(Icons.Default.OpenWith, contentDescription = "reset position")
+                    }
+                }
+            }
         }
     }
 }

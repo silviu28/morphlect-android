@@ -4,6 +4,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -207,8 +211,16 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                     }
                 }
             }
+
             Column {
-                Text(text = vm.selectedFilter.name, fontSize = 30.sp)
+                AnimatedContent(
+                    targetState = vm.selectedFilter.name,
+                    transitionSpec = {
+                        slideInVertically { it } togetherWith slideOutVertically { it }
+                    }
+                ) { filterName ->
+                    Text(text = filterName.lowercase(), fontSize = 30.sp)
+                }
             }
         }
 
@@ -289,7 +301,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            presets.forEach { preset -> // TODO NOT preset!!!!
+            presets.forEach { preset ->
                 PresetPreview(
                     preset = preset,
                     originalMat = vm.originalMat,

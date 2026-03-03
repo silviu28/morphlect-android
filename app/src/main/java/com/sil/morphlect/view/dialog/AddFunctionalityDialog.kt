@@ -54,7 +54,7 @@ fun AddFunctionalityDialog(
         ) {
             OutlinedTextField(
                 value = selectedModel ?: "select a model",
-                onValueChange = {},
+                onValueChange = { },
                 readOnly = true,
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
