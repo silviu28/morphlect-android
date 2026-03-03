@@ -10,6 +10,6 @@ class BrightnessCommand(var factor: Double) : EditorCommand {
         get() = "Brightness ${"%.2f".format(factor)}"
 
     override fun execute(src: EditorLayer): EditorLayer {
-        return EditorLayer(src.name, Filtering.brightness(src.mat, factor))
+        return EditorLayer(Filtering.brightness(src.mat, factor))
     }
 }

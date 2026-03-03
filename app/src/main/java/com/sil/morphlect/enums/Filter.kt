@@ -1,6 +1,6 @@
 package com.sil.morphlect.enums
 
-enum class Effect {
+enum class Filter {
     Contrast,
     Brightness,
     Blur,

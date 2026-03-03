@@ -1,18 +1,18 @@
 package com.sil.morphlect.data
 
-import com.sil.morphlect.enums.Effect
+import com.sil.morphlect.enums.Filter
 import kotlinx.serialization.Serializable
 import org.json.JSONException
 import org.json.JSONObject
 
 @Serializable
-data class Preset(val name: String, val params: Map<Effect, Double>) {
+data class Preset(val name: String, val params: Map<Filter, Double>) {
     companion object {
         fun fromJSON(json: JSONObject): Preset {
             val name = json.getString("name")
             val paramsData = json.getJSONObject("values")
 
-            val params = Effect.entries.associate { it to paramsData.optDouble(it.name) }
+            val params = Filter.entries.associate { it to paramsData.optDouble(it.name) }
             return Preset(name, params)
         }
     }

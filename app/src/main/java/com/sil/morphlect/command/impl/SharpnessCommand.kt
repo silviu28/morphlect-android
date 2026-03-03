@@ -10,6 +10,6 @@ class SharpnessCommand(val factor: Double) : EditorCommand {
         get() = "Sharpness ${".2f".format(factor)}"
 
     override fun execute(src: EditorLayer): EditorLayer {
-        return EditorLayer(src.name, Filtering.sharpen(src.mat, factor))
+        return EditorLayer(Filtering.sharpen(src.mat, factor))
     }
 }

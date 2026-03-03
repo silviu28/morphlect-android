@@ -2,19 +2,13 @@ package com.sil.morphlect.view
 
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.Bitmap
-import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.widget.Button
-import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,14 +50,12 @@ import androidx.compose.ui.window.Dialog
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
-import com.sil.morphlect.enums.Effect
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.view.custom.LedDotSlider
 import com.sil.morphlect.view.dialog.AddPresetDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.io.File
 import kotlin.math.roundToInt
 
 // TODO
@@ -95,7 +87,7 @@ suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.I
 
 @Composable
 fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) {
-    var presetsMap         by remember { mutableStateOf<Map<String, Map<Effect, Double>>>(emptyMap()) }
+    var presetsMap         by remember { mutableStateOf<Map<String, Map<Filter, Double>>>(emptyMap()) }
     var showAddDialog      by remember { mutableStateOf(false) }
     var showRemoveDialog   by remember { mutableStateOf(false) }
     var selectedPresetName by remember { mutableStateOf<String?>(null) }
@@ -105,7 +97,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
 
-    val applyPreset = { preset: Map<Effect, Double> ->
+    val applyPreset = { preset: Map<Filter, Double> ->
         preset.forEach { (effect, value) ->
             vm.adjustEffect(effect, value)
         }
@@ -126,7 +118,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             },
             onAddPresetFromEditor = { name ->
                 scope.launch {
-                    presetsRepository.addPreset(name, vm.effectValues)
+                    presetsRepository.addPreset(name, vm.filterValues)
                     presetsMap = presetsRepository.load()
                 }
             }
@@ -185,7 +177,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
 
     Column {
         Text(
-            text = "${(vm.effectValues[vm.selectedEffect]!! * 100).roundToInt()}",
+            text = "${(vm.filterValues[vm.selectedFilter]!! * 100).roundToInt()}",
             fontSize = 30.sp,
             modifier = Modifier
                     .offset(x = (-70).dp, y = (-40).dp)
@@ -197,7 +189,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row {
-                if (vm.effectValues[vm.selectedEffect] != 0.0) {
+                if (vm.filterValues[vm.selectedFilter] != 0.0) {
                     ElevatedButton(
                         modifier = Modifier.height(30.dp),
                         onClick = {
@@ -207,7 +199,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
 
                     }
                 }
-                if (vm.selectedEffect == Effect.Blur) {
+                if (vm.selectedFilter == Filter.Blur) {
                     ElevatedButton(
                         modifier = Modifier.height(30.dp),
                         onClick = { isBlurring2d = !isBlurring2d }) {
@@ -216,18 +208,18 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 }
             }
             Column {
-                Text(text = vm.selectedEffect.name, fontSize = 30.sp)
+                Text(text = vm.selectedFilter.name, fontSize = 30.sp)
             }
         }
 
         // the usual slider
         LedDotSlider(
-            value = vm.effectValues[vm.selectedEffect]!!.toFloat(),
+            value = vm.filterValues[vm.selectedFilter]!!.toFloat(),
             onValueChange = { value ->
                 vm.adjustEffect(value = value.toDouble())
                 // merge both blurring axes
                 if (!isBlurring2d) {
-                    vm.adjustEffect(effect = Effect.BlurSecondAxis, value = value.toDouble())
+                    vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
                 }
             },
             valueRange = -1f..1f,
@@ -236,9 +228,9 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         // the slider that appears when enabling 2d blur
         if (isBlurring2d) {
             LedDotSlider(
-                value = vm.effectValues[Effect.BlurSecondAxis]!!.toFloat(),
+                value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
                 onValueChange = { value ->
-                    vm.adjustEffect(effect = Effect.BlurSecondAxis, value = value.toDouble())
+                    vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
                 },
                 valueRange = -1f..1f
             )
@@ -251,32 +243,32 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         horizontalArrangement = Arrangement.Center
     ) {
         ElevatedButton(onClick = {
-            vm.changeSelectedEffect(Effect.Contrast)
+            vm.changeSelectedEffect(Filter.Contrast)
         }) {
             Icon(Icons.Filled.Contrast, contentDescription = "contrast")
         }
         ElevatedButton(onClick = {
-            vm.changeSelectedEffect(Effect.Blur)
+            vm.changeSelectedEffect(Filter.Blur)
         }) {
             Icon(Icons.Filled.LensBlur, contentDescription = "blur")
         }
         ElevatedButton(onClick = {
-            vm.changeSelectedEffect(Effect.Sharpness)
+            vm.changeSelectedEffect(Filter.Sharpness)
         }) {
             Icon(Icons.Filled.Deblur, contentDescription = "sharpen")
         }
         ElevatedButton(onClick = {
-            vm.changeSelectedEffect(Effect.Brightness)
+            vm.changeSelectedEffect(Filter.Brightness)
         }) {
             Icon(Icons.Filled.Brightness4, contentDescription = "brightness")
         }
         ElevatedButton(onClick = {
-            vm.changeSelectedEffect(Effect.LightBalance)
+            vm.changeSelectedEffect(Filter.LightBalance)
         }) {
             Icon(Icons.Filled.Lightbulb, contentDescription = "light balance")
         }
         ElevatedButton(onClick = {
-            vm.changeSelectedEffect(Effect.Hue)
+            vm.changeSelectedEffect(Filter.Hue)
         }) {
             Icon(Icons.Filled.InvertColors, contentDescription = "hue")
         }

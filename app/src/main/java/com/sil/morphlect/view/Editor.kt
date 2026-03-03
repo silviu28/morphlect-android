@@ -98,7 +98,7 @@ fun Editor(
         uri?.run {
             val bitmap = FormatConverters.uriToBitmap(ctx, uri)
             val mat = FormatConverters.bitmapToMat(bitmap)
-            vm.addLayer("new image", EditorLayer("new image", mat))
+            vm.addLayer(EditorLayer(mat))
             addingImage = false
         }
     }

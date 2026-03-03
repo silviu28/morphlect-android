@@ -10,6 +10,6 @@ class ContrastCommand(var factor: Double) : EditorCommand {
         get() = "Contrast ${"%.2f".format(factor)}"
 
     override fun execute(src: EditorLayer): EditorLayer {
-        return EditorLayer(src.name, Filtering.contrast(src.mat, factor))
+        return EditorLayer(Filtering.contrast(src.mat, factor))
     }
 }

@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sil.morphlect.data.Preset
-import com.sil.morphlect.enums.Effect
+import com.sil.morphlect.enums.Filter
 import kotlinx.coroutines.flow.first
 
 class PresetsRepository(private val context: Context) {
@@ -16,18 +16,18 @@ class PresetsRepository(private val context: Context) {
 
     private val defaults = mapOf(
         "Vintage" to mapOf(
-            Effect.Brightness to .2,
-            Effect.Contrast to -.1,
-            Effect.Hue to .3
+            Filter.Brightness to .2,
+            Filter.Contrast to -.1,
+            Filter.Hue to .3
         ),
         "Vibrant" to mapOf(
-            Effect.Brightness to .3,
-            Effect.Contrast to .2,
-            Effect.Hue to .5
+            Filter.Brightness to .3,
+            Filter.Contrast to .2,
+            Filter.Hue to .5
         )
     )
 
-    suspend fun load(): Map<String, Map<Effect, Double>> {
+    suspend fun load(): Map<String, Map<Filter, Double>> {
         return try {
             val prefs = context.dataStore.data.first()
             val json = prefs[PRESETS_KEY]
@@ -36,7 +36,7 @@ class PresetsRepository(private val context: Context) {
                 val jsonMap = gson.fromJson<Map<String, Map<String, Double>>>(json, type)
                 val presetsMap = jsonMap.mapValues { (_, preset) ->
                     preset.mapKeys { (effectName, _) ->
-                        Effect.valueOf(effectName)
+                        Filter.valueOf(effectName)
                     }
                 }
                 val finalMap = defaults + presetsMap
@@ -49,7 +49,7 @@ class PresetsRepository(private val context: Context) {
         }
     }
 
-    suspend fun save(presets: Map<String, Map<Effect, Double>>) {
+    suspend fun save(presets: Map<String, Map<Filter, Double>>) {
         try {
             val presetsMappedNames = presets.mapValues { (_, preset) ->
                 preset.mapKeys { (effect, _) ->
@@ -65,7 +65,7 @@ class PresetsRepository(private val context: Context) {
         }
     }
 
-    suspend fun addPreset(name: String, preset: Map<Effect, Double>) {
+    suspend fun addPreset(name: String, preset: Map<Filter, Double>) {
         save(load() + (name to preset))
     }
 

@@ -13,6 +13,6 @@ class BlurCommand(var xFactor: Double, var yFactor: Double) : EditorCommand {
         }"
 
     override fun execute(src: EditorLayer): EditorLayer {
-        return EditorLayer(src.name, Filtering.blur(src.mat, xFactor, yFactor))
+        return EditorLayer(Filtering.blur(src.mat, xFactor, yFactor))
     }
 }

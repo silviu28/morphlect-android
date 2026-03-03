@@ -10,6 +10,6 @@ class HueCommand(val factor: Double) : EditorCommand {
         get() = "Hue ${".2f".format(factor)}"
 
     override fun execute(src: EditorLayer): EditorLayer {
-        return EditorLayer(src.name, Filtering.hueShift(src.mat, factor))
+        return EditorLayer(Filtering.hueShift(src.mat, factor))
     }
 }
