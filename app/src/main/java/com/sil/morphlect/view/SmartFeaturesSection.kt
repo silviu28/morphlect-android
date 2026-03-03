@@ -37,7 +37,7 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                 confirmButton = {
                     TextButton(onClick = {
                         showStyleDialog = false
-                        navController.navigate("styletransfer")
+                        navController.navigate("style-transfer")
                     }) {
                         Text("yes")
                     }
@@ -59,7 +59,7 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                 confirmButton = {
                     TextButton(onClick = {
                         showEvalDialog = false
-                        navController.navigate("imageeval")
+                        navController.navigate("image-eval")
                     }) {
                         Text("yes")
                     }
@@ -81,7 +81,7 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                 confirmButton = {
                     TextButton(onClick = {
                         showVibeDialog = false
-                        navController.navigate("vibematch")
+                        navController.navigate("vibe-match")
                     }) {
                         Text("yes")
                     }

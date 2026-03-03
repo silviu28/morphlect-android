@@ -53,13 +53,13 @@ fun AppNavHost() {
                 configRepository
             )
         }
-        composable("vibematch") {
+        composable("vibe-match") {
             VibeMatcher(editorViewModel, navController)
         }
-        composable("imageeval") {
+        composable("image-eval") {
             ImageEvaluation(editorViewModel, navController)
         }
-        composable("styletransfer") {
+        composable("style-transfer") {
             StyleTransfer()
         }
         composable("save") {
@@ -71,7 +71,7 @@ fun AppNavHost() {
         composable("settings") {
             Settings(configRepository, navController)
         }
-        composable("modeldownload") {
+        composable("model-download") {
             ModelManager()
         }
     }

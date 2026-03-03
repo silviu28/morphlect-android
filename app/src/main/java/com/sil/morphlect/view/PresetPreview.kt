@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.logic.Filtering
 import com.sil.morphlect.logic.FormatConverters
@@ -27,8 +28,7 @@ import org.opencv.core.Mat
 
 @Composable
 fun PresetPreview(
-    name: String,
-    preset: Map<Filter, Double>,
+    preset: Preset,
     originalMat: Mat?,
     onPress: () -> Unit,
     onLongPress: () -> Unit
@@ -47,12 +47,12 @@ fun PresetPreview(
         try {
             var previewMat = originalMat.clone()
 
-            val blurValue = preset[Filter.Blur] ?: 0.0
+            val blurValue = preset.params[Filter.Blur] ?: 0.0
             if (blurValue != 0.0) {
                 previewMat = Filtering.blur(previewMat, blurValue / 10, blurValue / 10)
             }
 
-            val hueValue = preset[Filter.Hue] ?: 0.0
+            val hueValue = preset.params[Filter.Hue] ?: 0.0
             if (hueValue != 0.0) {
                 previewMat = Filtering.hueShift(previewMat, hueValue)
             }
@@ -77,7 +77,7 @@ fun PresetPreview(
         } else {
             Image(
                 bitmap = processedBitmap!!.asImageBitmap(),
-                contentDescription = name,
+                contentDescription = preset.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .pointerInput(Unit) {

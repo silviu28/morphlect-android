@@ -14,33 +14,30 @@ class PresetsRepository(private val context: Context) {
     private val gson = Gson()
     private val PRESETS_KEY = stringPreferencesKey("presets")
 
-    private val defaults = mapOf(
-        "Vintage" to mapOf(
+    private val defaults = listOf(
+        Preset("Vintage", mapOf(
             Filter.Brightness to .2,
             Filter.Contrast to -.1,
             Filter.Hue to .3
-        ),
-        "Vibrant" to mapOf(
+        )),
+        Preset("Vibrant", mapOf(
             Filter.Brightness to .3,
             Filter.Contrast to .2,
             Filter.Hue to .5
-        )
+        )),
     )
 
-    suspend fun load(): Map<String, Map<Filter, Double>> {
+    suspend fun load(): List<Preset> {
         return try {
             val prefs = context.dataStore.data.first()
             val json = prefs[PRESETS_KEY]
             if (json != null) {
                 val type = object : TypeToken<Map<String, Map<String, Double>>>() {}.type
                 val jsonMap = gson.fromJson<Map<String, Map<String, Double>>>(json, type)
-                val presetsMap = jsonMap.mapValues { (_, preset) ->
-                    preset.mapKeys { (effectName, _) ->
-                        Filter.valueOf(effectName)
-                    }
+                val presets = jsonMap.map { (name, preset) ->
+                    Preset(name, preset.mapKeys { (effectName, _) -> Filter.valueOf(effectName) })
                 }
-                val finalMap = defaults + presetsMap
-                finalMap
+                defaults + presets
             } else {
                 defaults
             }
@@ -49,14 +46,12 @@ class PresetsRepository(private val context: Context) {
         }
     }
 
-    suspend fun save(presets: Map<String, Map<Filter, Double>>) {
+    suspend fun save(presets: List<Preset>) {
         try {
-            val presetsMappedNames = presets.mapValues { (_, preset) ->
-                preset.mapKeys { (effect, _) ->
-                    effect.name
-                }
+            val mapped = presets.associate { preset ->
+                preset.name to preset.params.mapKeys { (effect, _) -> effect.name }
             }
-            val json = gson.toJson(presetsMappedNames)
+            val json = gson.toJson(mapped)
             context.dataStore.edit { preferences ->
                 preferences[PRESETS_KEY] = json
             }
@@ -65,15 +60,15 @@ class PresetsRepository(private val context: Context) {
         }
     }
 
-    suspend fun addPreset(name: String, preset: Map<Filter, Double>) {
-        save(load() + (name to preset))
+    suspend fun addPreset(name: String, params: Map<Filter, Double>) {
+        save(load() + Preset(name, params))
     }
 
     suspend fun addPreset(preset: Preset) {
-        save(load() + (preset.name to preset.params))
+        save(load() + preset)
     }
 
     suspend fun removePreset(name: String) {
-        save(load() - name)
+        save(load().filter { it.name != name })
     }
 }

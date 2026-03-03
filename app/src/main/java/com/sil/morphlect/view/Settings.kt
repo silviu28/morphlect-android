@@ -87,7 +87,7 @@ fun Settings(
             )
 
             SettingsEntry(title = "manage models") {
-                IconButton(onClick = { navController.navigate("modeldownload") }) {
+                IconButton(onClick = { navController.navigate("model-download") }) {
                     Icon(Icons.Default.Settings, contentDescription = "manage models")
                 }
             }

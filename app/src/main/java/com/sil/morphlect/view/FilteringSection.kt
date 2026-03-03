@@ -87,7 +87,7 @@ suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.I
 
 @Composable
 fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) {
-    var presetsMap         by remember { mutableStateOf<Map<String, Map<Filter, Double>>>(emptyMap()) }
+    var presets         by remember { mutableStateOf<List<Preset>>(listOf()) }
     var showAddDialog      by remember { mutableStateOf(false) }
     var showRemoveDialog   by remember { mutableStateOf(false) }
     var selectedPresetName by remember { mutableStateOf<String?>(null) }
@@ -97,14 +97,14 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
 
-    val applyPreset = { preset: Map<Filter, Double> ->
-        preset.forEach { (effect, value) ->
+    val applyPreset = { preset: Preset ->
+        preset.params.forEach { (effect, value) ->
             vm.adjustEffect(effect, value)
         }
     }
 
     LaunchedEffect(Unit) {
-        presetsMap = presetsRepository.load()
+        presets = presetsRepository.load()
     }
 
     if (showAddDialog) {
@@ -113,13 +113,13 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             onAddPreset = { preset ->
                 scope.launch {
                     presetsRepository.addPreset(preset)
-                    presetsMap = presetsRepository.load()
+                    presets = presetsRepository.load()
                 }
             },
             onAddPresetFromEditor = { name ->
                 scope.launch {
                     presetsRepository.addPreset(name, vm.filterValues)
-                    presetsMap = presetsRepository.load()
+                    presets = presetsRepository.load()
                 }
             }
         )
@@ -134,7 +134,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 TextButton(onClick = {
                     scope.launch {
                         presetsRepository.removePreset(selectedPresetName!!)
-                        presetsMap = presetsRepository.load()
+                        presets = presetsRepository.load()
                     }
                     showRemoveDialog = false
                 }) {
@@ -289,15 +289,14 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            presetsMap.forEach { (name, preset) -> // TODO NOT preset!!!!
+            presets.forEach { preset -> // TODO NOT preset!!!!
                 PresetPreview(
-                    name = name,
                     preset = preset,
                     originalMat = vm.originalMat,
                     onPress = { applyPreset(preset) },
                     onLongPress = {
-                        selectedPresetName = name
-                        selectedPreset = Preset(name, preset) // TODO CHANGE THIS!!!
+                        selectedPresetName = preset.name
+                        selectedPreset = preset
                     })
             }
             ElevatedButton(

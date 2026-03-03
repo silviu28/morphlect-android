@@ -103,12 +103,6 @@ private fun LayerInfo(
                 Icon(Icons.Default.VisibilityOff, contentDescription = "layer hidden")
         }
 
-        Text(
-            text = layer.name,
-            maxLines = 1,
-            modifier = Modifier.weight(1f),
-        )
-
         IconButton(onClick = { onInterchangeLayers(key, key - 1) }) {
             Icon(Icons.Default.ArrowDropUp, contentDescription = "move layer up")
         }
