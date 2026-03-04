@@ -12,9 +12,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -22,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.ZoomInMap
@@ -37,8 +43,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,8 +60,8 @@ import com.sil.morphlect.view.custom.ResizableCropRegion
 @Composable
 fun InteractiveThumbnail(
     layers: List<EditorLayer>,
-    width: Dp = 300.dp,
-    height: Dp = 300.dp,
+    width: Dp = 330.dp,
+    height: Dp = 330.dp,
     minZoomInRatio: Float = .1f,
     maxZoomOutRatio: Float = 5f,
     expandLayers: Boolean = false,
@@ -65,9 +73,14 @@ fun InteractiveThumbnail(
 ) {
     var zoomScale      by remember { mutableStateOf(1f) }
     var positionOffset by remember { mutableStateOf(Offset.Zero) }
+    var holdingClick   by remember { mutableStateOf(false) }
 
     val animatedZoom   by animateFloatAsState(zoomScale)
     val animatedOffset by animateOffsetAsState(positionOffset)
+    val borderAlpha    by animateFloatAsState(
+        targetValue = if (holdingClick) 1f else 0f,
+        animationSpec = tween(300)
+    )
 
     val thumbnailTransformState = rememberTransformableState { zoomChange, offsetChange, _ ->
         zoomScale = (zoomScale * zoomChange).coerceIn(minZoomInRatio, maxZoomOutRatio)
@@ -92,6 +105,26 @@ fun InteractiveThumbnail(
         modifier = Modifier
             .width(width)
             .height(height)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitFirstDown()
+                        holdingClick = true
+                        awaitFirstDown()
+                        holdingClick = false
+                    }
+                }
+            }
+            .then(
+                if (holdingClick)
+                    Modifier.border(
+                        width = 1.dp,
+                        color = Color(0xFFFF6600).copy(alpha = borderAlpha),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                else Modifier
+            )
+            .clip(RoundedCornerShape(8.dp))
     ) {
         Box(
             modifier = Modifier
@@ -118,12 +151,18 @@ fun InteractiveThumbnail(
                         contentDescription = "preview",
                         modifier = Modifier
                             .size(300.dp)
+                            .background(Color.Transparent)
                             .graphicsLayer {
                                 cameraDistance = 12 * density
                                 rotationX = tilt
                                 translationY = -offset
                                 alpha = if (expandLayers) 1f - (index * .08f) else 1f
                             }
+                            .then(
+                                if (expandLayers)
+                                    Modifier.border(BorderStroke(1.dp, Color.White))
+                                else Modifier
+                            )
                     )
                     if (croppingMode) {
                         ResizableCropRegion(cropUpCorner, cropDownCorner, onDragStart, onDrag)
