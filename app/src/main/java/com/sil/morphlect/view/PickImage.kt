@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sil.morphlect.viewmodel.EditorViewModel
 
-@RequiresApi(Build.VERSION_CODES.P)
 @Composable
 fun PickImage(navController: NavController, editorViewModel: EditorViewModel) {
     val ctx = LocalContext.current

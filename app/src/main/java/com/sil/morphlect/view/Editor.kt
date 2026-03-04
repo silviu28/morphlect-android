@@ -64,7 +64,6 @@ import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.dialog.LayeringDialog
 
 
-@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun Editor(
     navController:     NavController,
@@ -99,7 +98,7 @@ fun Editor(
         uri?.run {
             val bitmap = FormatConverters.uriToBitmap(ctx, uri)
             val mat = FormatConverters.bitmapToMat(bitmap)
-            vm.addLayer("new image", EditorLayer("new image", mat))
+            vm.addLayer(EditorLayer(mat))
             addingImage = false
         }
     }

@@ -1,6 +1,5 @@
 package com.sil.morphlect.data
 
-import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,15 +12,13 @@ import org.opencv.core.Mat
 import org.opencv.core.Rect
 import org.opencv.core.Size
 import kotlin.math.abs
-import kotlin.math.pow
-import kotlin.math.sqrt
-import androidx.core.graphics.createBitmap
 import org.opencv.core.Core
+import com.sil.morphlect.extension.extend
 
-class EditorLayer(var name: String, val mat: Mat) : Closeable {
+class EditorLayer(val mat: Mat) : Closeable {
     companion object {
-        fun emptyNamed(name: String) : EditorLayer {
-            return EditorLayer(name, Mat.zeros(300, 300, CvType.CV_8UC4))
+        fun empty() : EditorLayer {
+            return EditorLayer(Mat.zeros(300, 300, CvType.CV_8UC4))
         }
     }
 
@@ -57,7 +54,7 @@ class EditorLayer(var name: String, val mat: Mat) : Closeable {
         extendedOther.release()
         channels.forEach { it.release() }
 
-        return EditorLayer("$name + ${other.name}", extended)
+        return EditorLayer(extended)
     }
 
     /**
@@ -69,7 +66,7 @@ class EditorLayer(var name: String, val mat: Mat) : Closeable {
 
     fun clone(): EditorLayer {
         val matClone = mat.clone()
-        return EditorLayer(name, matClone)
+        return EditorLayer(matClone)
     }
 
     fun crop(upCorner: Offset, downCorner: Offset, size: androidx.compose.ui.geometry.Size): EditorLayer {
@@ -93,20 +90,8 @@ class EditorLayer(var name: String, val mat: Mat) : Closeable {
         val safeHeight = height.coerceIn(1, mat.height() - safeY)
 
         val roi = Rect(safeX, safeY, safeWidth, safeHeight)
-        return EditorLayer(name, mat.clone().submat(roi))
+        return EditorLayer(mat.clone().submat(roi))
     }
 }
 
-/**
- * returns a new `Mat` padded to fit given `size`.
- */
-fun Mat.extend(size: Size): Mat {
-    if (size == size()) return this
 
-    var dst = Mat.zeros(size, type())
-    val region = dst.submat(0, rows(), 0, cols())
-    copyTo(region)
-    region.release()
-
-    return dst
-}

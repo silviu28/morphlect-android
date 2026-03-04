@@ -10,6 +10,6 @@ class LightBalanceCommand(val factor: Double) : EditorCommand {
         get() = "LB ${".2f".format(factor)}"
 
     override fun execute(src: EditorLayer): EditorLayer {
-        return EditorLayer(src.name, Filtering.lightBalance(src.mat, factor))
+        return EditorLayer(Filtering.lightBalance(src.mat, factor))
     }
 }

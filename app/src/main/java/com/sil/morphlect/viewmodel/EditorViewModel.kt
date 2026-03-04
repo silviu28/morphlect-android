@@ -3,8 +3,6 @@ package com.sil.morphlect.viewmodel
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -24,7 +22,7 @@ import com.sil.morphlect.command.impl.HueCommand
 import com.sil.morphlect.command.impl.LightBalanceCommand
 import com.sil.morphlect.command.impl.SharpnessCommand
 import com.sil.morphlect.data.EditorLayer
-import com.sil.morphlect.enums.Effect
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Section
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.LayerManager
@@ -43,10 +41,10 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     private val layerManager = LayerManager(mutableStateListOf())
     val layers by derivedStateOf {
         layerManager.layers.map { layer ->
-            if (!layer.visible) return@map EditorLayer.emptyNamed("")
+            if (!layer.visible) return@map EditorLayer.empty()
             // TODO works but a bit verbose
             (undoStack +
-                EditorCommand.of(selectedEffect, effectValues[selectedEffect]!!)
+                EditorCommand.of(selectedFilter, filterValues[selectedFilter]!!)
             ).fold(layer) { layer, comm -> comm.execute(layer) }
     } }
     var originalLayers = mutableStateListOf<EditorLayer>()
@@ -76,8 +74,8 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 //            // undo stack + current adjustment
 //            if (hasActiveAdjustment) {
 //                val previewCommand = createCommandForEffect(
-//                    selectedEffect,
-//                    effectValues[selectedEffect] ?: .0
+//                    selectedFilter,
+//                    filterValues[selectedFilter] ?: .0
 //                )
 //                processed = processed.map { previewCommand.execute(it) }
 //            }
@@ -106,59 +104,59 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     var section by mutableStateOf(Section.Filtering)
         private set
 
-    var effectValues = mutableStateMapOf<Effect, Double>().apply {
-        Effect.entries.forEach { effect -> put(effect, .0) }
+    var filterValues = mutableStateMapOf<Filter, Double>().apply {
+        Filter.entries.forEach { effect -> put(effect, .0) }
     }
         private set
 
-    var selectedEffect by mutableStateOf(Effect.Contrast)
+    var selectedFilter by mutableStateOf(Filter.Contrast)
         private set
 
     fun changeSection(section: Section) {
         this.section = section
     }
 
-    private fun createCommandForEffect(effect: Effect, factor: Double): EditorCommand {
-        return when (effect) {
-            Effect.Contrast -> ContrastCommand(factor)
-            Effect.Brightness -> BrightnessCommand(factor)
-            Effect.Blur -> BlurCommand(
+    private fun createCommandForEffect(filter: Filter, factor: Double): EditorCommand {
+        return when (filter) {
+            Filter.Contrast -> ContrastCommand(factor)
+            Filter.Brightness -> BrightnessCommand(factor)
+            Filter.Blur -> BlurCommand(
                 xFactor = factor,
-                yFactor = effectValues[Effect.BlurSecondAxis] ?: .0
+                yFactor = filterValues[Filter.BlurSecondAxis] ?: .0
             )
-            Effect.Sharpness -> SharpnessCommand(factor)
-            Effect.Hue -> HueCommand(factor)
-            Effect.LightBalance -> LightBalanceCommand(factor)
+            Filter.Sharpness -> SharpnessCommand(factor)
+            Filter.Hue -> HueCommand(factor)
+            Filter.LightBalance -> LightBalanceCommand(factor)
             else -> ContrastCommand(.0)
         }
     }
 
-    fun changeSelectedEffect(selectedEffect: Effect) {
+    fun changeSelectedEffect(selectedFilter: Filter) {
         // apply current effect before switching (if it has a non-zero value)
         applyCurrentEffect()
-        this.selectedEffect = selectedEffect
+        this.selectedFilter = selectedFilter
 //        updatePreviewBitmapOnly() // update preview to show new effect
     }
 
-    fun adjustEffect(effect: Effect = selectedEffect, value: Double) {
-        effectValues[effect] = value
+    fun adjustEffect(filter: Filter = selectedFilter, value: Double) {
+        filterValues[filter] = value
 
         // update only preview (live adjustment)
-        if (effect == selectedEffect) {
+        if (filter == selectedFilter) {
 //            updatePreviewBitmapOnly()
         }
     }
 
     fun applyCurrentEffect() {
-        val effect = selectedEffect
-        val value = effectValues[effect] ?: .0
+        val effect = selectedFilter
+        val value = filterValues[effect] ?: .0
 
         // only add command if value is non-zero
         if (value != .0) {
             val command = createCommandForEffect(effect, value)
             runCommand(command)
             // reset the effect value after applying
-            effectValues[effect] = .0
+            filterValues[effect] = .0
             // clear redo stack since we made a new change
             redoStack.clear()
         }
@@ -175,9 +173,9 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 //            }
 //
 //            // Apply current adjustment on top
-//            val currentValue = effectValues[selectedEffect] ?: .0
+//            val currentValue = filterValues[selectedFilter] ?: .0
 //            if (currentValue != .0) {
-//                val previewCommand = createCommandForEffect(selectedEffect, currentValue)
+//                val previewCommand = createCommandForEffect(selectedFilter, currentValue)
 //                processed = previewCommand.execute(processed)
 //            }
 //
@@ -188,15 +186,14 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 //        }
 //    }
 
-    private val hasActiveAdjustment get() = (effectValues[selectedEffect] ?: .0) != .0
+    private val hasActiveAdjustment get() = (filterValues[selectedFilter] ?: .0) != .0
 
-    @RequiresApi(Build.VERSION_CODES.P)
     fun loadImage(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
             val mat = FormatConverters.bitmapToMat(bitmap)
 
-            layerManager.addLayer(EditorLayer("layer 1", mat))
+            layerManager.addLayer(EditorLayer(mat))
 
             // release old image if exists
             originalMat?.release()
@@ -209,7 +206,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             redoStack.clear()
 
             // reset effect values
-            effectValues.forEach { (effect, _) -> effectValues[effect] = .0 }
+            filterValues.forEach { (effect, _) -> filterValues[effect] = .0 }
 
             val initialBitmap = FormatConverters.matToBitmap(originalMat!!)
 
@@ -233,7 +230,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         layerManager.removeLayer(index)
     }
 
-    fun addLayer(name: String, layer: EditorLayer = EditorLayer.emptyNamed(name)) {
+    fun addLayer(layer: EditorLayer = EditorLayer.empty()) {
         layerManager.addLayer(layer)
         originalLayers.add(layer)
     }
@@ -251,7 +248,6 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     }
 
     fun toggleVisibilityOfLayer(index: Int) {
-//        layerManager.toggleVisibilityOf(index)
         layerManager.layers[index].apply { visible = !visible }
     }
 
