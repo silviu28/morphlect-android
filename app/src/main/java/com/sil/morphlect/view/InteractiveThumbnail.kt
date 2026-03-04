@@ -3,6 +3,8 @@ package com.sil.morphlect.view
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
@@ -64,6 +66,9 @@ fun InteractiveThumbnail(
     var zoomScale      by remember { mutableStateOf(1f) }
     var positionOffset by remember { mutableStateOf(Offset.Zero) }
 
+    val animatedZoom   by animateFloatAsState(zoomScale)
+    val animatedOffset by animateOffsetAsState(positionOffset)
+
     val thumbnailTransformState = rememberTransformableState { zoomChange, offsetChange, _ ->
         zoomScale = (zoomScale * zoomChange).coerceIn(minZoomInRatio, maxZoomOutRatio)
         positionOffset += offsetChange
@@ -95,10 +100,10 @@ fun InteractiveThumbnail(
                 .clip(RectangleShape)
                 .transformable(state = thumbnailTransformState)
                 .graphicsLayer(
-                    scaleX = zoomScale,
-                    scaleY = zoomScale,
-                    translationX = positionOffset.x,
-                    translationY = positionOffset.y
+                    scaleX = animatedZoom,
+                    scaleY = animatedZoom,
+                    translationX = animatedOffset.x,
+                    translationY = animatedOffset.y
                 ),
             contentAlignment = Alignment.Center,
         ) {
