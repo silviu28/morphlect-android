@@ -14,7 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.sil.morphlect.dto.ModelInfoDTO
 import com.sil.morphlect.logic.WebHelper
 import com.sil.morphlect.repository.ModelsRepository
+import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import kotlinx.coroutines.launch
 
@@ -58,7 +61,7 @@ fun ModelManager() {
         }
     }
 
-    Scaffold { _ ->
+    DecoratedContainer(Icons.Default.Science) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
@@ -90,13 +93,19 @@ fun ModelManager() {
                         ModelInfoView(
                             dto,
                             onDownload = {
-                                Toast.makeText(ctx, "installing ${dto.name}...", Toast.LENGTH_SHORT)
+                                Toast.makeText(
+                                    ctx,
+                                    "installing ${dto.name}...",
+                                    Toast.LENGTH_SHORT
+                                )
                                     .show()
                                 scope.launch {
                                     val model = WebHelper.downloadModel(dto.id, ctx, dto.name)
                                     if (model != null)
-                                        Toast.makeText(ctx, "model installed at ${model.absolutePath}",
-                                            Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            ctx, "model installed at ${model.absolutePath}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                 }
                             },
                         )
@@ -119,7 +128,11 @@ fun ModelManager() {
                                             }
                                         }
                                 }
-                                Toast.makeText(ctx, "${dto.name} has been removed.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    ctx,
+                                    "${dto.name} has been removed.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         )
                     }

@@ -1,4 +1,4 @@
-package com.sil.morphlect.view.dialog
+package com.sil.morphlect.view.dialog.impl
 
 import android.provider.OpenableColumns
 import android.widget.Toast
@@ -25,6 +25,8 @@ import com.sil.morphlect.data.Preset
 import org.json.JSONException
 import org.json.JSONObject
 import android.util.Log
+import androidx.compose.material.icons.filled.AddCircle
+import com.sil.morphlect.view.dialog.DialogScaffold
 
 @Composable
 fun AddPresetDialog(
@@ -67,7 +69,8 @@ fun AddPresetDialog(
 
     DialogScaffold(
         title = "add preset",
-        onDismissRequest
+        onDismissRequest,
+        icon = Icons.Default.AddCircle,
     ) {
         OutlinedTextField(
             value = presetName,

@@ -42,6 +42,9 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -67,7 +70,7 @@ import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
-import com.sil.morphlect.view.dialog.LayeringDialog
+import com.sil.morphlect.view.dialog.impl.LayeringDialog
 
 
 @Composable
@@ -79,7 +82,7 @@ fun Editor(
 ) {
     val vm = editorViewModel
 
-    val ctx    = LocalContext.current
+    val ctx     = LocalContext.current
     val density = LocalDensity.current
 
     val thumbnailSizePx = with(density) {

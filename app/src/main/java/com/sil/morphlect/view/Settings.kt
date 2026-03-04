@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.repository.AppConfigRepository
+import com.sil.morphlect.view.custom.DecoratedContainer
 import kotlinx.coroutines.launch
 
 /**
@@ -42,10 +43,7 @@ fun Settings(
 
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        modifier = Modifier.padding(18.dp),
-        bottomBar = { Text("morphlect 0.0.0") },
-    ) { _ ->
+    DecoratedContainer(Icons.Default.Settings) {
         Column(
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.Center
