@@ -8,6 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -17,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,7 +39,8 @@ import kotlinx.coroutines.launch
 private data class OnboardingPageContent(
     val title: String,
     val description: String,
-    val imageId: Int = -1
+    val imageBitmap: ImageBitmap? = null,
+    val imageVector: ImageVector? = null,
 )
 
 @Composable
@@ -41,32 +49,32 @@ fun OnboardingCarousel(navController: NavController) {
         OnboardingPageContent(
             title = "morphlect",
             description = "a modern approach to post-processing, right from the comfort of your pocket.",
-            imageId = R.drawable.placeholder,
+            imageVector = Icons.Default.CameraAlt,
         ),
         OnboardingPageContent(
             title = "personal fine-tuning",
             description = "apply any filters to your liking. combine them together and find ways to add style to your images.",
-            imageId = R.drawable.placeholder,
+            imageVector = Icons.Default.Person
         ),
         OnboardingPageContent(
             title = "intuitive effect application",
             description = "extend your creative potential using personalized machine-learning models, running efficiently right from your device.",
-            imageId = R.drawable.placeholder,
+            imageVector = Icons.Default.Animation,
         ),
         OnboardingPageContent(
             title = "extensible",
             description = "want to add a personal feature? just add your own pre-trained TFLite model and start experimenting.",
-            imageId = R.drawable.placeholder,
+            imageVector = Icons.Default.Extension,
         ),
         OnboardingPageContent(
             title = "transparent",
             description = "no telemetry collected. most things happen locally on your device, with minor friction between content servers.",
-            imageId = R.drawable.placeholder,
+            imageVector = Icons.Default.Star,
         ),
         OnboardingPageContent(
             title = "start creating",
             description = "that's all there is to know. now go ahead and make your pics truly yours!",
-            imageId = R.drawable.placeholder,
+            imageVector = Icons.Default.Star,
         )
     )
 
@@ -111,7 +119,10 @@ private fun OnboardingPage(pageContent: OnboardingPageContent) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        PixelatedGraphic(imageBitmap = ImageBitmap.imageResource(R.drawable.placeholder))
+        PixelatedGraphic(
+            imageBitmap = pageContent.imageBitmap,
+            imageVector = pageContent.imageVector,
+        )
 
         Text(
             text = pageContent.title,
