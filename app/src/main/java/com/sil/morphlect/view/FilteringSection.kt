@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
@@ -65,6 +66,7 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.view.custom.CircleOutlineButton
 import com.sil.morphlect.view.custom.LedDotSlider
+import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.view.dialog.impl.AddPresetDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -161,27 +163,23 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     }
 
     selectedPreset?.let {
-        Dialog(onDismissRequest = { selectedPreset = null }) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Text("options")
-                TextButton(onClick = {
-                    scope.launch { savePreset(ctx, it) }
-                }) {
-                    Icon(Icons.Default.Save, contentDescription = "save")
-                    Text("save preset")
-                }
-                TextButton(onClick = {
-                    selectedPreset = null
-                    showRemoveDialog = true
-                }) {
-                    Icon(Icons.Default.Delete, contentDescription = "remove")
-                    Text("remove preset")
-                }
+        DialogScaffold(
+            title = "options",
+            onDismissRequest = { selectedPreset = null },
+            icon = Icons.Default.QuestionMark,
+        ) {
+            TextButton(onClick = {
+                scope.launch { savePreset(ctx, it) }
+            }) {
+                Icon(Icons.Default.Save, contentDescription = "save")
+                Text("save preset")
+            }
+            TextButton(onClick = {
+                selectedPreset = null
+                showRemoveDialog = true
+            }) {
+                Icon(Icons.Default.Delete, contentDescription = "remove")
+                Text("remove preset")
             }
         }
     }
@@ -191,8 +189,8 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             text = "${(vm.filterValues[vm.selectedFilter]!! * 100).roundToInt()}",
             fontSize = 30.sp,
             modifier = Modifier
-                    .offset(x = (-20).dp, y = (-40).dp)
-                    .align(Alignment.End)
+                .offset(x = (-20).dp, y = (-40).dp)
+                .align(Alignment.End)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
