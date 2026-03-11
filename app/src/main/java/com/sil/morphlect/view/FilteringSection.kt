@@ -14,14 +14,17 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -49,11 +52,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.zIndex
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
@@ -115,8 +120,8 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         presets = presetsRepository.load()
     }
 
-    if (showAddDialog) {
-        AddPresetDialog(
+    when {
+        showAddDialog -> AddPresetDialog(
             onDismissRequest = { showAddDialog = false },
             onAddPreset = { preset ->
                 scope.launch {
@@ -131,10 +136,8 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 }
             }
         )
-    }
 
-    if (showRemoveDialog) {
-        AlertDialog(
+        showRemoveDialog -> AlertDialog(
             onDismissRequest = { showRemoveDialog = false },
             title = { Text("remove preset") },
             text = { Text("do you want to remove $selectedPresetName?") },
@@ -266,13 +269,21 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             }
         ) { isBlurring2d ->
             if (isBlurring2d) {
-                LedDotSlider(
-                    value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
-                    onValueChange = { value ->
-                        vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
-                    },
-                    valueRange = -1f..1f
-                )
+                // commented is an attempt to make the vertical blurring slider be, well, vertical... TODO
+//                Box(Modifier.size(1.dp)) {
+                    LedDotSlider(
+                        value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
+                        onValueChange = { value ->
+                            vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
+                        },
+                        valueRange = -1f..1f,
+//                        modifier = Modifier
+//                            .offset((-260).dp, (-260).dp)
+//                            .rotate(-90f)
+//                            .absoluteOffset(20.dp, 100.dp)
+//                            .zIndex(10f)
+                    )
+//                }
             }
         }
     }

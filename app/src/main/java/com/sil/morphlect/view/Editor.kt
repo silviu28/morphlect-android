@@ -120,18 +120,16 @@ fun Editor(
     }
 
     Scaffold { _ ->
-        if (showHistoryStack) {
-            History(
+        when {
+            showHistoryStack -> History(
                 onDismissRequest = { showHistoryStack = false },
                 undoStack = vm.undoStack,
                 redoStack = vm.redoStack,
                 onUndo = { vm.undoLastCommand() },
                 onRedo = { vm.redoLastCommand() },
             )
-        }
 
-        if (showLayering) {
-            LayeringDialog(
+            showLayering -> LayeringDialog(
                 layers = vm.layers,
                 onRemoveLayer = { _ -> vm.removeLayer(vm.layers.size - 1) },
                 onMergeLayerWithBelow = { i -> vm.mergeLayerWithAbove(i) },
@@ -139,17 +137,13 @@ fun Editor(
                 onInterchangeLayers = { l1, l2 -> vm.interchangeLayers(l1, l2) },
                 onVisibilityToggle = { vm.toggleVisibilityOfLayer(it) }
             )
-        }
 
-        if (showOptionsSheet) {
-            OptionsBottomSheet(
+            showOptionsSheet -> OptionsBottomSheet(
                 navController,
                 onDismiss = { showOptionsSheet = false }
             )
-        }
 
-        if (showExitDialog) {
-            AlertDialog(
+            showExitDialog -> AlertDialog(
                 onDismissRequest = { showExitDialog = false },
                 title = { Text("quit app?") },
                 text = { Text("all unsaved changes will be lost.") },
@@ -164,10 +158,8 @@ fun Editor(
                     }
                 }
             )
-        }
 
-        if (showHistogram) {
-            HistogramBottomSheet(
+            showHistogram -> HistogramBottomSheet(
                 onDismissRequest = { showHistogram = false },
                 colorReference = vm.previewBitmap!!
             )

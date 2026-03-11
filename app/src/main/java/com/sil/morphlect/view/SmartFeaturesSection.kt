@@ -25,11 +25,10 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
     var showAddFuncDialog by remember { mutableStateOf(false) }
 
     Column {
-        if (showAddFuncDialog) {
-            AddFunctionalityDialog(onDismissRequest = { showAddFuncDialog = false })
-        }
-        if (showStyleDialog) {
-            AlertDialog(
+        when {
+            showAddFuncDialog -> AddFunctionalityDialog(onDismissRequest = { showAddFuncDialog = false })
+
+            showStyleDialog -> AlertDialog(
                 onDismissRequest = { showStyleDialog = false },
                 title = { Text("style transfer") },
                 text = { Text("this option requires you to insert an image and apply modifications to your image to match the latter's style. continue?") },
@@ -49,9 +48,8 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                     }
                 }
             )
-        }
-        if (showEvalDialog) {
-            AlertDialog(
+
+            showEvalDialog -> AlertDialog(
                 onDismissRequest = { showEvalDialog = false },
                 title = { Text("image evaluation") },
                 text = { Text("this option will process your image and give you a style rating. continue?") },
@@ -71,9 +69,8 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                     }
                 }
             )
-        }
-        if (showVibeDialog) {
-            AlertDialog(
+
+            showVibeDialog -> AlertDialog(
                 onDismissRequest = { showVibeDialog = false },
                 title = { Text("vibe matcher") },
                 text = { Text("this option allows you to infer the vibe of an image, make changes to your liking, and modify your image accordingly. continue?") },
@@ -94,6 +91,7 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
                 }
             )
         }
+
         Row {
             TextButton(onClick = {
                 showVibeDialog = true
