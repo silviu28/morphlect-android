@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,8 +25,10 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -42,12 +45,16 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.sil.morphlect.view.dialog.impl.GlazeDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SaveImage(editorViewModel: EditorViewModel) {
+fun SaveImage(
+    editorViewModel: EditorViewModel,
+    navController: NavHostController,
+) {
     val vm = editorViewModel
     val ctx = LocalContext.current
 
@@ -104,7 +111,17 @@ fun SaveImage(editorViewModel: EditorViewModel) {
         }
     }
 
-    Scaffold(modifier = Modifier.padding(18.dp)) { _ ->
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { navController.popBackStack() },
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
+            }
+        },
+        modifier = Modifier.padding(18.dp)
+    ) { _ ->
         if (showGlazeInfo) {
             GlazeHelp(onDismissRequest = { showGlazeInfo = false })
         }

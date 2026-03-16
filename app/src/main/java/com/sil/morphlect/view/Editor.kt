@@ -171,9 +171,10 @@ fun Editor(
                 .padding(10.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Row(modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
             ) {
                 AnimatedVisibility(
                     visible = showLayersView,

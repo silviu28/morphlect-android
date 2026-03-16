@@ -9,11 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +28,8 @@ import androidx.navigation.NavController
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Scaffold
 
 /**
  the settings page, where the user can adjust any setting.
@@ -43,50 +46,61 @@ fun Settings(
 
     val scope = rememberCoroutineScope()
 
-    DecoratedContainer(Icons.Default.Settings) {
-        Column(
-            modifier = Modifier.fillMaxHeight(),
-            verticalArrangement = Arrangement.Center
-        ) {
-            SliderSettingsEntry(
-                title = "advanced mode",
-                description = "activate professional grade tooling, such as dynamic adjustable color levels using a dynamic histogram",
-                checked = advancedMode,
-                onCheckedChange = {
-                    scope.launch { configRepository.setAdvancedMode(it) }
-                }
-            )
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { navController.popBackStack() },
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
+            }
+        }
+    ) { _ ->
+        DecoratedContainer(Icons.Default.Settings) {
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                SliderSettingsEntry(
+                    title = "advanced mode",
+                    description = "activate professional grade tooling, such as dynamic adjustable color levels using a dynamic histogram",
+                    checked = advancedMode,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setAdvancedMode(it) }
+                    }
+                )
 
-            SliderSettingsEntry(
-                title = "hide primary bar",
-                description = "hide primary bar for sections that may have it",
-                checked = hidePrimaryBar,
-                onCheckedChange = {
-                    scope.launch { configRepository.setHidePrimaryBar(it) }
-                }
-            )
+                SliderSettingsEntry(
+                    title = "hide primary bar",
+                    description = "hide primary bar for sections that may have it",
+                    checked = hidePrimaryBar,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setHidePrimaryBar(it) }
+                    }
+                )
 
-            SliderSettingsEntry(
-                title = "local smart features",
-                description = "use smart features locally instead of offloading to server",
-                checked = localSmartFeatures,
-                onCheckedChange = {
-                    scope.launch { configRepository.setLocalSmartFeatures(it) }
-                }
-            )
+                SliderSettingsEntry(
+                    title = "local smart features",
+                    description = "use smart features locally instead of offloading to server",
+                    checked = localSmartFeatures,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setLocalSmartFeatures(it) }
+                    }
+                )
 
-            SliderSettingsEntry(
-                title = "cloud compute",
-                description = null,
-                checked = cloudCompute,
-                onCheckedChange = {
-                    scope.launch { configRepository.setCloudCompute(it) }
-                }
-            )
+                SliderSettingsEntry(
+                    title = "cloud compute",
+                    description = null,
+                    checked = cloudCompute,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setCloudCompute(it) }
+                    }
+                )
 
-            SettingsEntry(title = "manage models") {
-                IconButton(onClick = { navController.navigate("model-download") }) {
-                    Icon(Icons.Default.Settings, contentDescription = "manage models")
+                SettingsEntry(title = "manage models") {
+                    IconButton(onClick = { navController.navigate("model-download") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "manage models")
+                    }
                 }
             }
         }

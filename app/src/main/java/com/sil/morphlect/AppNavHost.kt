@@ -63,7 +63,7 @@ fun AppNavHost() {
             StyleTransfer()
         }
         composable("save") {
-            SaveImage(editorViewModel)
+            SaveImage(editorViewModel, navController)
         }
         composable("compare") {
             ImageComparison(editorViewModel, navController)
@@ -72,7 +72,7 @@ fun AppNavHost() {
             Settings(configRepository, navController)
         }
         composable("model-download") {
-            ModelManager()
+            ModelManager(navController)
         }
     }
 }
