@@ -255,4 +255,9 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
         if (index < layers.size)
             layerManager.mergeLayerWithAbove(index)
     }
+
+    fun addTextLayer(text: String) {
+        val textLayer = EditorLayer.withText(text)
+        layerManager.addLayer(textLayer)
+    }
 }

@@ -86,7 +86,7 @@ fun Editor(
     val density = LocalDensity.current
 
     val thumbnailSizePx = with(density) {
-        Size(300.dp.toPx(), 300.dp.toPx())
+        Size(330.dp.toPx(), 330.dp.toPx())
     }
 
     var showExitDialog   by remember { mutableStateOf(false) }
@@ -100,6 +100,7 @@ fun Editor(
     var cropUpCorner     by remember { mutableStateOf<Offset?>(null) }
     var cropDownCorner   by remember { mutableStateOf<Offset?>(null) }
     var addingImage      by remember { mutableStateOf(false) }
+    var addingText       by remember { mutableStateOf(false) }
 
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -162,6 +163,11 @@ fun Editor(
             showHistogram -> HistogramBottomSheet(
                 onDismissRequest = { showHistogram = false },
                 colorReference = vm.previewBitmap!!
+            )
+
+            addingText -> AddingTextOverlay(
+                onDismissRequest = { addingText = false },
+                onConfirm = { text -> vm.addTextLayer(text); addingText = false }
             )
         }
 
@@ -290,6 +296,8 @@ fun Editor(
                                 },
                                 addingImage,
                                 onImageAddToggle = { imagePickLauncher.launch("image/*") },
+                                addingText,
+                                onAddText = { addingText = true },
                             )
                         }
 
