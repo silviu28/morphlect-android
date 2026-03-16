@@ -4,17 +4,27 @@ import android.content.ContentValues
 import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +36,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
@@ -42,17 +53,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.zIndex
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Filter
+import com.sil.morphlect.view.custom.CircleOutlineButton
 import com.sil.morphlect.view.custom.LedDotSlider
-import com.sil.morphlect.view.dialog.AddPresetDialog
+import com.sil.morphlect.view.dialog.DialogScaffold
+import com.sil.morphlect.view.dialog.impl.AddPresetDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -107,8 +122,8 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         presets = presetsRepository.load()
     }
 
-    if (showAddDialog) {
-        AddPresetDialog(
+    when {
+        showAddDialog -> AddPresetDialog(
             onDismissRequest = { showAddDialog = false },
             onAddPreset = { preset ->
                 scope.launch {
@@ -123,10 +138,8 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 }
             }
         )
-    }
 
-    if (showRemoveDialog) {
-        AlertDialog(
+        showRemoveDialog -> AlertDialog(
             onDismissRequest = { showRemoveDialog = false },
             title = { Text("remove preset") },
             text = { Text("do you want to remove $selectedPresetName?") },
@@ -150,27 +163,23 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     }
 
     selectedPreset?.let {
-        Dialog(onDismissRequest = { selectedPreset = null }) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Text("options")
-                TextButton(onClick = {
-                    scope.launch { savePreset(ctx, it) }
-                }) {
-                    Icon(Icons.Default.Save, contentDescription = "save")
-                    Text("save preset")
-                }
-                TextButton(onClick = {
-                    selectedPreset = null
-                    showRemoveDialog = true
-                }) {
-                    Icon(Icons.Default.Delete, contentDescription = "remove")
-                    Text("remove preset")
-                }
+        DialogScaffold(
+            title = "options",
+            onDismissRequest = { selectedPreset = null },
+            icon = Icons.Default.QuestionMark,
+        ) {
+            TextButton(onClick = {
+                scope.launch { savePreset(ctx, it) }
+            }) {
+                Icon(Icons.Default.Save, contentDescription = "save")
+                Text("save preset")
+            }
+            TextButton(onClick = {
+                selectedPreset = null
+                showRemoveDialog = true
+            }) {
+                Icon(Icons.Default.Delete, contentDescription = "remove")
+                Text("remove preset")
             }
         }
     }
@@ -180,8 +189,8 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             text = "${(vm.filterValues[vm.selectedFilter]!! * 100).roundToInt()}",
             fontSize = 30.sp,
             modifier = Modifier
-                    .offset(x = (-70).dp, y = (-40).dp)
-                    .align(Alignment.End)
+                .offset(x = (-20).dp, y = (-40).dp)
+                .align(Alignment.End)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -189,26 +198,51 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row {
-                if (vm.filterValues[vm.selectedFilter] != 0.0) {
-                    ElevatedButton(
-                        modifier = Modifier.height(30.dp),
-                        onClick = {
-                        vm.adjustEffect(value = 0.0)
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "undo effect")
+                AnimatedContent(
+                    targetState = vm.filterValues[vm.selectedFilter] != 0.0,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut() using SizeTransform(clip = false)
+                    }
+                ) { filterUsed ->
+                    if (filterUsed) {
+                        ElevatedButton(
+                            modifier = Modifier.height(30.dp),
+                            onClick = {
+                                vm.adjustEffect(value = 0.0)
+                            }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "undo effect"
+                            )
 
+                        }
                     }
                 }
-                if (vm.selectedFilter == Filter.Blur) {
-                    ElevatedButton(
-                        modifier = Modifier.height(30.dp),
-                        onClick = { isBlurring2d = !isBlurring2d }) {
-                        if (isBlurring2d) Text("XY") else Text("X")
+                AnimatedContent(
+                    targetState = vm.selectedFilter == Filter.Blur,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                ) { isBlurring ->
+                    if (isBlurring) {
+                        ElevatedButton(
+                            modifier = Modifier.height(30.dp),
+                            onClick = { isBlurring2d = !isBlurring2d }) {
+                            if (isBlurring2d) Text("..") else Text(".")
+                        }
                     }
                 }
             }
+
             Column {
-                Text(text = vm.selectedFilter.name, fontSize = 30.sp)
+                AnimatedContent(
+                    targetState = vm.selectedFilter.name,
+                    transitionSpec = {
+                        slideInVertically { it } togetherWith slideOutVertically { it }
+                    }
+                ) { filterName ->
+                    Text(text = filterName.lowercase(), fontSize = 30.sp)
+                }
             }
         }
 
@@ -226,14 +260,29 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         )
 
         // the slider that appears when enabling 2d blur
-        if (isBlurring2d) {
-            LedDotSlider(
-                value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
-                onValueChange = { value ->
-                    vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
-                },
-                valueRange = -1f..1f
-            )
+        AnimatedContent(
+            targetState = isBlurring2d,
+            transitionSpec = {
+                fadeIn() togetherWith fadeOut()
+            }
+        ) { isBlurring2d ->
+            if (isBlurring2d) {
+                // commented is an attempt to make the vertical blurring slider be, well, vertical... TODO
+//                Box(Modifier.size(1.dp)) {
+                    LedDotSlider(
+                        value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
+                        onValueChange = { value ->
+                            vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
+                        },
+                        valueRange = -1f..1f,
+//                        modifier = Modifier
+//                            .offset((-260).dp, (-260).dp)
+//                            .rotate(-90f)
+//                            .absoluteOffset(20.dp, 100.dp)
+//                            .zIndex(10f)
+                    )
+//                }
+            }
         }
     }
     Row(
@@ -242,32 +291,32 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.Center
     ) {
-        ElevatedButton(onClick = {
+        CircleOutlineButton(onClick = {
             vm.changeSelectedEffect(Filter.Contrast)
         }) {
             Icon(Icons.Filled.Contrast, contentDescription = "contrast")
         }
-        ElevatedButton(onClick = {
+        CircleOutlineButton(onClick = {
             vm.changeSelectedEffect(Filter.Blur)
         }) {
             Icon(Icons.Filled.LensBlur, contentDescription = "blur")
         }
-        ElevatedButton(onClick = {
+        CircleOutlineButton(onClick = {
             vm.changeSelectedEffect(Filter.Sharpness)
         }) {
             Icon(Icons.Filled.Deblur, contentDescription = "sharpen")
         }
-        ElevatedButton(onClick = {
+        CircleOutlineButton(onClick = {
             vm.changeSelectedEffect(Filter.Brightness)
         }) {
             Icon(Icons.Filled.Brightness4, contentDescription = "brightness")
         }
-        ElevatedButton(onClick = {
+        CircleOutlineButton(onClick = {
             vm.changeSelectedEffect(Filter.LightBalance)
         }) {
             Icon(Icons.Filled.Lightbulb, contentDescription = "light balance")
         }
-        ElevatedButton(onClick = {
+        CircleOutlineButton(onClick = {
             vm.changeSelectedEffect(Filter.Hue)
         }) {
             Icon(Icons.Filled.InvertColors, contentDescription = "hue")
@@ -289,7 +338,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            presets.forEach { preset -> // TODO NOT preset!!!!
+            presets.forEach { preset ->
                 PresetPreview(
                     preset = preset,
                     originalMat = vm.originalMat,
@@ -301,6 +350,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             }
             ElevatedButton(
                 modifier = Modifier.size(60.dp),
+                shape = RoundedCornerShape(16.dp),
                 onClick = { showAddDialog = true }
             ) {
                 Text("+")

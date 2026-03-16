@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 fun AnimatedSectionButton(
     isSelected: Boolean,
     onClick: () -> Unit,
-    children: @Composable() () -> Unit,
+    children: @Composable (() -> Unit),
 ) {
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.2f else 1f,

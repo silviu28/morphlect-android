@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,14 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.sil.morphlect.dto.ModelInfoDTO
 import com.sil.morphlect.logic.WebHelper
 import com.sil.morphlect.repository.ModelsRepository
+import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import kotlinx.coroutines.launch
 
 @Composable
-fun ModelManager() {
+fun ModelManager(navController: NavHostController) {
     var onDownloads by remember { mutableStateOf(false) }
     var modelInfo by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
     var query by remember { mutableStateOf("") }
@@ -58,79 +63,100 @@ fun ModelManager() {
         }
     }
 
-    Scaffold { _ ->
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text("model manager")
-
-            if (onDownloads) {
-                // downloads section
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text("search") },
-                )
-                Button(onClick = {
-                    scope.launch { modelInfo = WebHelper.fetchModelData(query) }
-                }) {
-                    Icon(Icons.Default.Search, contentDescription = "search")
-                }
-
-                if (modelInfo.isEmpty()) {
-                    FlickeringLedDotProgressIndicator()
-                    Text("fetching data...")
-                } else {
-                    modelInfo.map { dto ->
-                        ModelInfoView(
-                            dto,
-                            onDownload = {
-                                Toast.makeText(ctx, "installing ${dto.name}...", Toast.LENGTH_SHORT)
-                                    .show()
-                                scope.launch {
-                                    val model = WebHelper.downloadModel(dto.id, ctx, dto.name)
-                                    if (model != null)
-                                        Toast.makeText(ctx, "model installed at ${model.absolutePath}",
-                                            Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                        )
-                    }
-                }
-            } else {
-                // installed section
-                if (installed.isEmpty()) {
-                    Text("no models yet. try installing some.")
-                } else {
-                    installed.map { dto ->
-                        ModelInfoView(
-                            dto,
-                            onRemove = {
-                                scope.launch {
-                                    modelsRepository.delete(dto.name)
-                                        .also {
-                                            installed = modelsRepository.readContents().map {
-                                                ModelInfoDTO(0, it, "", 0)
-                                            }
-                                        }
-                                }
-                                Toast.makeText(ctx, "${dto.name} has been removed.", Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    }
-                }
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { navController.popBackStack() },
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
             }
-            Row {
-                TextButton(onClick = { onDownloads = true }) {
-                    Text("download")
+        }
+    ) { _ ->
+        DecoratedContainer(Icons.Default.Science) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("model manager")
+
+                if (onDownloads) {
+                    // downloads section
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text("search") },
+                    )
+                    Button(onClick = {
+                        scope.launch { modelInfo = WebHelper.fetchModelData(query) }
+                    }) {
+                        Icon(Icons.Default.Search, contentDescription = "search")
+                    }
+
+                    if (modelInfo.isEmpty()) {
+                        FlickeringLedDotProgressIndicator()
+                        Text("fetching data...")
+                    } else {
+                        modelInfo.map { dto ->
+                            ModelInfoView(
+                                dto,
+                                onDownload = {
+                                    Toast.makeText(
+                                        ctx,
+                                        "installing ${dto.name}...",
+                                        Toast.LENGTH_SHORT
+                                    )
+                                        .show()
+                                    scope.launch {
+                                        val model = WebHelper.downloadModel(dto.id, ctx, dto.name)
+                                        if (model != null)
+                                            Toast.makeText(
+                                                ctx, "model installed at ${model.absolutePath}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                    }
+                                },
+                            )
+                        }
+                    }
+                } else {
+                    // installed section
+                    if (installed.isEmpty()) {
+                        Text("no models yet. try installing some.")
+                    } else {
+                        installed.forEach { dto ->
+                            ModelInfoView(
+                                dto,
+                                onRemove = {
+                                    scope.launch {
+                                        modelsRepository.delete(dto.name)
+                                            .also {
+                                                installed = modelsRepository.readContents().map {
+                                                    ModelInfoDTO(0, it, "", 0)
+                                                }
+                                            }
+                                    }
+                                    Toast.makeText(
+                                        ctx,
+                                        "${dto.name} has been removed.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        }
+                    }
                 }
-                TextButton(onClick = { onDownloads = false }) {
-                    Text("view installed")
+                Row {
+                    TextButton(onClick = { onDownloads = true }) {
+                        Text("download")
+                    }
+                    TextButton(onClick = { onDownloads = false }) {
+                        Text("view installed")
+                    }
                 }
             }
         }

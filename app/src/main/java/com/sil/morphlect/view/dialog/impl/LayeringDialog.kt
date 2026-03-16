@@ -1,4 +1,4 @@
-package com.sil.morphlect.view.dialog
+package com.sil.morphlect.view.dialog.impl
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.view.dialog.DialogScaffold
 
 @Composable
 fun LayeringDialog(
@@ -40,7 +42,11 @@ fun LayeringDialog(
     onInterchangeLayers: (Int, Int) -> Unit,
     onVisibilityToggle: (Int) -> Unit,
 ) {
-    DialogScaffold("layers", onDismissRequest) {
+    DialogScaffold(
+        title = "layers",
+        onDismissRequest,
+        icon = Icons.Default.Layers,
+    ) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -59,7 +65,10 @@ fun LayeringDialog(
             if (layers.size > 5)
                 Row {
                     Icon(Icons.Default.Warning, contentDescription = null)
-                    Text(" working with too many layers may cause performance issues.", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        " working with too many layers may cause performance issues.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
         }
     }
@@ -70,7 +79,7 @@ private fun LayerInfo(
     key: Int,
     layer: EditorLayer,
     onRemoveLayer: (EditorLayer) -> Unit,
-    onMergeLayerWithAbove: (Int) -> Unit,
+    onMergeLayerWithBelow: (Int) -> Unit,
     onInterchangeLayers: (Int, Int) -> Unit,
     onVisibilityToggle: (Int) -> Unit
 ) {
@@ -109,7 +118,7 @@ private fun LayerInfo(
         IconButton(onClick = { onInterchangeLayers(key, key + 1) }) {
             Icon(Icons.Default.ArrowDropDown, contentDescription = "move layer down")
         }
-        IconButton(onClick = { onMergeLayerWithAbove(key) }) {
+        IconButton(onClick = { onMergeLayerWithBelow(key) }) {
             Icon(Icons.Default.Merge, contentDescription = "merge with layer above")
         }
         IconButton(onClick = { onRemoveLayer(layer) }) {

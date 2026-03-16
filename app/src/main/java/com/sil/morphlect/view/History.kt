@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.sil.morphlect.command.EditorCommand
+import com.sil.morphlect.view.dialog.DialogScaffold
 
 private enum class HistoryEntryAction { Undo, Redo }
 
@@ -36,36 +37,22 @@ fun History(
     undoStack: List<EditorCommand>,
     redoStack: List<EditorCommand>,
 ) {
-    Dialog(onDismissRequest) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Icon(Icons.Default.History, contentDescription = "history")
-                Text("history")
+    DialogScaffold(
+        "history",
+        onDismissRequest,
+        icon = Icons.Default.History,
+    ) {
+        if (undoStack.isEmpty() && redoStack.isEmpty()) {
+            Text("no recent history")
+        } else {
+            if (undoStack.isNotEmpty()) {
+                Text("undo")
+                undoStack.forEach { HistoryEntry(it, onUndo, HistoryEntryAction.Undo) }
+            }
 
-                if (undoStack.isEmpty() && redoStack.isEmpty()) {
-                    Text("no recent history")
-                } else {
-                    if (undoStack.isNotEmpty()) {
-                        Text("undo")
-                        undoStack.map { HistoryEntry(it, onUndo, HistoryEntryAction.Undo) }
-                    }
-
-                    if (redoStack.isNotEmpty()) {
-                        Text("redo")
-                        redoStack.map { HistoryEntry(it, onRedo, HistoryEntryAction.Redo) }
-                    }
-                }
+            if (redoStack.isNotEmpty()) {
+                Text("redo")
+                redoStack.forEach { HistoryEntry(it, onRedo, HistoryEntryAction.Redo) }
             }
         }
     }

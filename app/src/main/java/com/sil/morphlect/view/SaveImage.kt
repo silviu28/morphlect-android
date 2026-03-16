@@ -3,7 +3,6 @@ package com.sil.morphlect.view
 import android.content.ContentValues
 import android.graphics.Bitmap
 import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -16,25 +15,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,14 +45,16 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.sil.morphlect.view.dialog.GlazeDialog
+import androidx.navigation.NavHostController
+import com.sil.morphlect.view.dialog.impl.GlazeDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
-import java.io.File
-import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SaveImage(editorViewModel: EditorViewModel) {
+fun SaveImage(
+    editorViewModel: EditorViewModel,
+    navController: NavHostController,
+) {
     val vm = editorViewModel
     val ctx = LocalContext.current
 
@@ -111,7 +111,17 @@ fun SaveImage(editorViewModel: EditorViewModel) {
         }
     }
 
-    Scaffold(modifier = Modifier.padding(18.dp)) { _ ->
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { navController.popBackStack() },
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
+            }
+        },
+        modifier = Modifier.padding(18.dp)
+    ) { _ ->
         if (showGlazeInfo) {
             GlazeHelp(onDismissRequest = { showGlazeInfo = false })
         }

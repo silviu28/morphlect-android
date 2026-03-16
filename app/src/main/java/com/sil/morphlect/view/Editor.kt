@@ -7,9 +7,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +42,9 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,12 +64,13 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
-import com.sil.morphlect.view.dialog.LayeringDialog
+import com.sil.morphlect.view.dialog.impl.LayeringDialog
 
 
 @Composable
@@ -73,7 +82,7 @@ fun Editor(
 ) {
     val vm = editorViewModel
 
-    val ctx    = LocalContext.current
+    val ctx     = LocalContext.current
     val density = LocalDensity.current
 
     val thumbnailSizePx = with(density) {
@@ -111,18 +120,16 @@ fun Editor(
     }
 
     Scaffold { _ ->
-        if (showHistoryStack) {
-            History(
+        when {
+            showHistoryStack -> History(
                 onDismissRequest = { showHistoryStack = false },
                 undoStack = vm.undoStack,
                 redoStack = vm.redoStack,
                 onUndo = { vm.undoLastCommand() },
                 onRedo = { vm.redoLastCommand() },
             )
-        }
 
-        if (showLayering) {
-            LayeringDialog(
+            showLayering -> LayeringDialog(
                 layers = vm.layers,
                 onRemoveLayer = { _ -> vm.removeLayer(vm.layers.size - 1) },
                 onMergeLayerWithBelow = { i -> vm.mergeLayerWithAbove(i) },
@@ -130,17 +137,13 @@ fun Editor(
                 onInterchangeLayers = { l1, l2 -> vm.interchangeLayers(l1, l2) },
                 onVisibilityToggle = { vm.toggleVisibilityOfLayer(it) }
             )
-        }
 
-        if (showOptionsSheet) {
-            OptionsBottomSheet(
+            showOptionsSheet -> OptionsBottomSheet(
                 navController,
                 onDismiss = { showOptionsSheet = false }
             )
-        }
 
-        if (showExitDialog) {
-            AlertDialog(
+            showExitDialog -> AlertDialog(
                 onDismissRequest = { showExitDialog = false },
                 title = { Text("quit app?") },
                 text = { Text("all unsaved changes will be lost.") },
@@ -155,10 +158,8 @@ fun Editor(
                     }
                 }
             )
-        }
 
-        if (showHistogram) {
-            HistogramBottomSheet(
+            showHistogram -> HistogramBottomSheet(
                 onDismissRequest = { showHistogram = false },
                 colorReference = vm.previewBitmap!!
             )
@@ -170,16 +171,28 @@ fun Editor(
                 .padding(10.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Row(modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
             ) {
-                if (showLayersView) {
-                    FloatingActionButton(onClick = { showLayering = true }) {
+                AnimatedVisibility(
+                    visible = showLayersView,
+                    enter = slideInHorizontally { it },
+                    exit = slideOutHorizontally { it }
+                ) {
+                    FloatingActionButton(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        onClick = { showLayering = true },
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.Sort, "layering")
                     }
                 }
-                FloatingActionButton(onClick = { showLayersView = !showLayersView }) {
+                Spacer(Modifier.size(2.dp))
+                FloatingActionButton(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    onClick = { showLayersView = !showLayersView }
+                ) {
                     if (showLayersView)
                         Icon(Icons.Default.LayersClear, "layers")
                     else
@@ -192,12 +205,7 @@ fun Editor(
                 verticalArrangement = Arrangement.Center,
 
             ) {
-                Row(modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            shape = RoundedCornerShape(36.dp)
-                        )
-                ) {
+                Row {
                     AnimatedSectionButton(
                         onClick = { vm.changeSection(Section.Filtering) },
                         isSelected = vm.section == Section.Filtering,
