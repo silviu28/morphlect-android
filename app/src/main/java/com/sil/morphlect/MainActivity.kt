@@ -11,6 +11,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.ui.theme.MorphlectTheme
+import com.sil.morphlect.view.FatalErrorScreen
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.opencv.android.OpenCVLoader
@@ -21,24 +22,30 @@ class MainActivity : ComponentActivity() {
 
         val configRepository = AppConfigRepository(this)
         val developerMode = runBlocking { configRepository.developerMode.first() }
-        if (developerMode)
-            Debug.startMethodTracing("trace")
+        // makes the app SUPER SLOW
+//        if (developerMode)
+//            Debug.startMethodTracing("trace")
 
         enableEdgeToEdge()
         window.isNavigationBarContrastEnforced = false
-        setContent {
-            MorphlectTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
-                    AppNavHost()
+
+        val moduleLoadResult = runCatching {
+            val opencvLoaded = OpenCVLoader.initLocal()
+            Log.d("OpenCVLoader", "OPENCV STATUS: $opencvLoaded")
+        }
+        moduleLoadResult.onSuccess {
+            setContent {
+                MorphlectTheme {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
+                        AppNavHost()
+                    }
                 }
             }
         }
-
-        try {
-            val opencvLoaded = OpenCVLoader.initLocal()
-            Log.d("OpenCV", "=============> OPENCV STATUS: $opencvLoaded")
-        } catch (e: Exception) {
-            Log.e("Error", e.toString())
+        moduleLoadResult.onFailure { cause ->
+            setContent {
+                MorphlectTheme { FatalErrorScreen(cause) }
+            }
         }
     }
 }
