@@ -104,7 +104,11 @@ fun SmartFeaturesSection(
             )
         }
 
-        FlowRow {
+        FlowRow(
+            verticalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             TextButton(onClick = { showVibeDialog = true }) {
                 Text("vibe matcher")
             }
