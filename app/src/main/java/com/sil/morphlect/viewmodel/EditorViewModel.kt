@@ -22,16 +22,22 @@ import com.sil.morphlect.command.impl.HueCommand
 import com.sil.morphlect.command.impl.LightBalanceCommand
 import com.sil.morphlect.command.impl.SharpnessCommand
 import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Section
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.LayerManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
 
 class EditorViewModel : ViewModel(), EditorCommandManager {
+    private val _evaluationResult = MutableSharedFlow<EvaluationResult>()
+    val evaluationResult = _evaluationResult.asSharedFlow()
+
     override var undoStack = mutableStateListOf<EditorCommand>()
     override var redoStack = mutableStateListOf<EditorCommand>()
 
@@ -259,5 +265,11 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     fun addTextLayer(text: String) {
         val textLayer = EditorLayer.withText(text)
         layerManager.addLayer(textLayer)
+    }
+
+    fun emitEvaluationResult(result: EvaluationResult) {
+        viewModelScope.launch {
+            _evaluationResult.emit(result)
+        }
     }
 }

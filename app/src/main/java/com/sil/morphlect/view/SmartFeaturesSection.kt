@@ -2,6 +2,7 @@ package com.sil.morphlect.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
@@ -14,8 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.sil.morphlect.data.EvaluationResult
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.view.dialog.impl.AddFunctionalityDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
+import kotlin.random.Random
 
 @Composable
 fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
@@ -92,21 +96,18 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
             )
         }
 
-        Row {
-            TextButton(onClick = {
-                showVibeDialog = true
-            }) {
+        FlowRow {
+            TextButton(onClick = { showVibeDialog = true }) {
                 Text("vibe matcher")
             }
-            TextButton(onClick = {
-                showEvalDialog = true
-            }) {
+            TextButton(onClick = { showEvalDialog = true }) {
                 Text("image evaluation")
             }
-            TextButton(onClick = {
-                showStyleDialog = true
-            }) {
+            TextButton(onClick = { showStyleDialog = true }) {
                 Text("style transfer")
+            }
+            TextButton(onClick = { vm.emitEvaluationResult(generateRandomResult()) }) {
+                Text("[DEBUG] verify animation")
             }
         }
         Row(
@@ -119,3 +120,7 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
         }
     }
 }
+
+fun generateRandomResult(): EvaluationResult = EvaluationResult(
+    Filter.entries.associate { filter -> filter to Random.nextDouble() }
+)

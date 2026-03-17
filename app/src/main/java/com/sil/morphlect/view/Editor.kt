@@ -1,6 +1,7 @@
 package com.sil.morphlect.view
 
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -8,6 +9,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -51,9 +58,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -71,6 +80,8 @@ import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.dialog.impl.LayeringDialog
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -102,6 +113,8 @@ fun Editor(
     var addingImage      by remember { mutableStateOf(false) }
     var addingText       by remember { mutableStateOf(false) }
 
+    val animatedValues    = remember { mutableStateMapOf<String, Animatable<Float, AnimationVector1D>>() }
+
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -118,6 +131,38 @@ fun Editor(
     // listen for back gesture - in case if it's accidental
     BackHandler {
         showExitDialog = true
+    }
+
+    // listen to emissions of evaluation results.
+    // apply filtering with keyframing
+    LaunchedEffect(Unit) {
+        vm.evaluationResult.collect { result ->
+            vm.changeSection(Section.Filtering)
+            delay(100L)
+
+            result.filters.entries.forEachIndexed { index, (key, targetValue) ->
+                delay(index * 400L)
+                vm.changeSelectedEffect(key)
+                delay(150L)
+
+                val animatable = Animatable(vm.filterValues[key]!!.toFloat())
+
+                launch {
+                    animatable.animateTo(
+                        targetValue = targetValue.toFloat(),
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
+                }
+
+                launch {
+                    snapshotFlow { animatable.value }
+                        .collect { vm.adjustEffect(value = it.toDouble()) }
+                }
+            }
+        }
     }
 
     Scaffold { _ ->
