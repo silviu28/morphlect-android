@@ -1,9 +1,12 @@
 package com.sil.morphlect.view
 
+import android.app.DownloadManager
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.os.Environment
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
@@ -11,6 +14,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.border
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +37,7 @@ import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Deblur
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.Lightbulb
@@ -41,6 +46,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,13 +59,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.zIndex
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.EditorViewModel
@@ -73,31 +76,46 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
-// TODO
-suspend fun savePreset(ctx: Context, preset: Preset) = withContext(Dispatchers.IO) {
-    val resolver = ctx.contentResolver
+suspend fun savePreset(ctx: Context, preset: Preset) {
+    val uri = withContext(Dispatchers.IO) {
+        val resolver = ctx.contentResolver
 
-    val contentValues = ContentValues().apply {
-        put(MediaStore.Downloads.DISPLAY_NAME, "${preset.name}.preset")
-        put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Morphlect")
-        put(MediaStore.Downloads.IS_PENDING, 1)
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, "${preset.name}.preset")
+            put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Morphlect")
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+
+        // Use Downloads instead of Files
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            ?: return@withContext null
+
+        resolver.openOutputStream(uri)?.use { out ->
+            out.write(
+                preset.toJSON()
+                    .toString(2)
+                    .toByteArray()
+            )
+        }
+
+        contentValues.clear()
+        contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+        resolver.update(uri, contentValues, null, null)
+
+        // redirect the user to the directory in which the preset is saved
+        ctx.run {
+            val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
+            startActivity(intent)
+        }
+        return@withContext uri
     }
-
-    // Use Downloads instead of Files
-    val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-        ?: return@withContext
-
-    resolver.openOutputStream(uri)?.use { out ->
-        out.write(
-            preset.toJSON()
-                .toString(2)
-                .toByteArray()
-        )
+    uri?.let {
+        Toast.makeText(
+            ctx,
+            "preset saved at ${it.path}",
+            Toast.LENGTH_LONG
+        ).show()
     }
-
-    contentValues.clear()
-    contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
-    resolver.update(uri, contentValues, null, null)
 }
 
 @Composable
@@ -164,10 +182,17 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
 
     selectedPreset?.let {
         DialogScaffold(
-            title = "options",
+            title = it.name,
             onDismissRequest = { selectedPreset = null },
-            icon = Icons.Default.QuestionMark,
+            icon = Icons.Default.Image,
         ) {
+            PresetPreview(
+                preset = it,
+                originalMat = vm.originalMat!!,
+                onPress = { /* nothing */ },
+                onLongPress = { /* nothing */ },
+                expanded = true,
+            )
             TextButton(onClick = {
                 scope.launch { savePreset(ctx, it) }
             }) {
@@ -349,7 +374,9 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                     })
             }
             ElevatedButton(
-                modifier = Modifier.size(60.dp),
+                modifier = Modifier
+                    .size(60.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp),
                 onClick = { showAddDialog = true }
             ) {
