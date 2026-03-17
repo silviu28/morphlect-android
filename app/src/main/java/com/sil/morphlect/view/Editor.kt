@@ -331,7 +331,7 @@ fun Editor(
                     ) {
                         when (targetState) {
                             Section.Filtering -> FilteringSection(vm, presetsRepository)
-                            Section.SmartFeatures -> SmartFeaturesSection(navController, vm)
+                            Section.SmartFeatures -> SmartFeaturesSection(navController, vm, configRepository)
                             Section.ImageManipulation -> ImageManipulationSection(
                                 vm = vm,
                                 croppingMode,

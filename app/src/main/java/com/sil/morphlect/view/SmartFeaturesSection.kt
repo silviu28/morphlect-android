@@ -9,6 +9,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,16 +18,23 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
+import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.dialog.impl.AddFunctionalityDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 import kotlin.random.Random
 
 @Composable
-fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
-    var showVibeDialog by remember { mutableStateOf(false) }
-    var showEvalDialog by remember { mutableStateOf(false) }
-    var showStyleDialog by remember { mutableStateOf(false) }
+fun SmartFeaturesSection(
+    navController: NavController,
+    vm: EditorViewModel,
+    configRepository: AppConfigRepository
+) {
+    var showVibeDialog    by remember { mutableStateOf(false) }
+    var showEvalDialog    by remember { mutableStateOf(false) }
+    var showStyleDialog   by remember { mutableStateOf(false) }
     var showAddFuncDialog by remember { mutableStateOf(false) }
+
+    val developerMode by configRepository.developerMode.collectAsState(initial = false)
 
     Column {
         when {
@@ -106,9 +114,10 @@ fun SmartFeaturesSection(navController: NavController, vm: EditorViewModel) {
             TextButton(onClick = { showStyleDialog = true }) {
                 Text("style transfer")
             }
-            TextButton(onClick = { vm.emitEvaluationResult(generateRandomResult()) }) {
-                Text("[DEBUG] verify animation")
-            }
+            if (developerMode)
+                TextButton(onClick = { vm.emitEvaluationResult(generateRandomResult()) }) {
+                    Text("[DEBUG] verify animation")
+                }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
