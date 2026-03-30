@@ -55,10 +55,11 @@ fun PickImage(navController: NavController, editorViewModel: EditorViewModel) {
                         fontSize = 24.sp
                     )
                     Spacer(modifier = Modifier.height(20.dp))
-                    TextButton(onClick = {
-                        imagePickLauncher.launch("image/*")
-                    }) {
+                    TextButton(onClick = { imagePickLauncher.launch("image/*") }) {
                         Text("pick image", fontSize = 18.sp)
+                    }
+                    TextButton(onClick = { navController.navigate("camera") }) {
+                        Text("camera mode", fontSize = 18.sp)
                     }
                 }
             }
