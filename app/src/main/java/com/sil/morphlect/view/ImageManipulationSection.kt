@@ -4,6 +4,11 @@ import android.graphics.Point
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,30 +38,44 @@ fun ImageManipulationSection(
     onCropApply: () -> Unit,
     addingImage: Boolean,
     onImageAddToggle: () -> Unit,
+    addingText: Boolean,
+    onAddText: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        if (croppingMode || addingImage) {
-            Button(onClick = {
-                if (croppingMode) {
-                    onCropApply()
-                    onCropToggle()
-                }
-                if (addingImage)
-                    onImageAddToggle()
-            }) {
-                Icon(Icons.Default.Check, contentDescription = "apply crop")
-            }
+    AnimatedContent(
+        targetState = croppingMode || addingImage || addingText,
+        transitionSpec = {
+            fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
         }
-        else {
-            TextButton(onClick = onCropToggle) {
-                Text("crop")
-            }
-            TextButton(onClick = onImageAddToggle) {
-                Text("add image")
-            }
+    ) { isWorking ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                if (isWorking) {
+                    Button(onClick = {
+                        when {
+                            croppingMode -> {
+                                onCropApply()
+                                onCropToggle()
+                            }
+                            addingImage -> {
+                                onImageAddToggle()
+                            }
+                        }
+                    }) {
+                        Icon(Icons.Default.Check, contentDescription = "apply crop")
+                    }
+                } else {
+                    TextButton(onClick = onCropToggle) {
+                        Text("crop")
+                    }
+                    TextButton(onClick = onImageAddToggle) {
+                        Text("add image")
+                    }
+                    TextButton(onClick = onAddText) {
+                        Text("add text")
+                    }
+                }
         }
     }
 }

@@ -31,7 +31,8 @@ fun PresetPreview(
     preset: Preset,
     originalMat: Mat?,
     onPress: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: () -> Unit,
+    expanded: Boolean = false,
 ) {
     var processedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var scope = rememberCoroutineScope()
@@ -69,7 +70,7 @@ fun PresetPreview(
 
     Box(
         modifier = Modifier
-            .size(60.dp)
+            .size(if (expanded) 200.dp else 60.dp)
             .clip(RoundedCornerShape(8.dp)),
     ) {
         if (processedBitmap == null) {

@@ -14,6 +14,7 @@ class AppConfigRepository(private val context: Context) {
         val HIDE_PRIMARY_BAR = booleanPreferencesKey("hide_primary_bar")
         val LOCAL_SMART_FEATURES = booleanPreferencesKey("local_smart")
         val CLOUD_COMPUTE = booleanPreferencesKey("cloud_compute")
+        val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
     }
 
     val advancedMode: Flow<Boolean> = context.dataStore.data.map {
@@ -27,6 +28,9 @@ class AppConfigRepository(private val context: Context) {
     }
     val cloudCompute: Flow<Boolean> = context.dataStore.data.map {
             prefs -> prefs[CLOUD_COMPUTE] ?: false
+    }
+    val developerMode: Flow<Boolean> = context.dataStore.data.map {
+        prefs -> prefs[DEVELOPER_MODE] ?: false
     }
 
     suspend fun setAdvancedMode(enabled: Boolean) {
@@ -50,4 +54,9 @@ class AppConfigRepository(private val context: Context) {
         }
     }
 
+    suspend fun setDeveloperMode(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[DEVELOPER_MODE] = enabled
+        }
+    }
 }

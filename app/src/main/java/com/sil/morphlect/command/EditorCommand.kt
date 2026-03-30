@@ -27,7 +27,7 @@ interface EditorCommand {
             return when (filter) {
                 Filter.Contrast -> ContrastCommand(factors[0])
                 Filter.Brightness -> BrightnessCommand(factors[0])
-                Filter.Blur ->
+                Filter.Blur, Filter.BlurSecondAxis ->
                     BlurCommand(
                         xFactor = factors[0],
                         yFactor = if (factors.size == 2) factors[1] else factors[0]

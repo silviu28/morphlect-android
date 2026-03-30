@@ -39,10 +39,12 @@ fun Settings(
     configRepository: AppConfigRepository,
     navController: NavController,
 ) {
-    val advancedMode by configRepository.advancedMode.collectAsState(initial = false)
-    val hidePrimaryBar by configRepository.hidePrimaryBar.collectAsState(initial = false)
+    val advancedMode       by configRepository.advancedMode.collectAsState(initial = false)
+    val hidePrimaryBar     by configRepository.hidePrimaryBar.collectAsState(initial = false)
     val localSmartFeatures by configRepository.localSmartFeatures.collectAsState(initial = false)
-    val cloudCompute by configRepository.cloudCompute.collectAsState(initial = false)
+    val cloudCompute       by configRepository.cloudCompute.collectAsState(initial = false)
+    val developerMode      by configRepository.developerMode.collectAsState(initial = false)
+
 
     val scope = rememberCoroutineScope()
 
@@ -94,6 +96,15 @@ fun Settings(
                     checked = cloudCompute,
                     onCheckedChange = {
                         scope.launch { configRepository.setCloudCompute(it) }
+                    }
+                )
+
+                SliderSettingsEntry(
+                    title = "developer mode",
+                    description = "enable app insights and several hidden features",
+                    checked = developerMode,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setDeveloperMode(it) }
                     }
                 )
 
