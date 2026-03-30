@@ -14,6 +14,9 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -131,22 +135,35 @@ private fun CameraFeed(
     onImageCaptured: (Uri) -> Unit
 ) {
     var isCapturing by remember { mutableStateOf(false) }
+    val shutterAlpha by animateFloatAsState(
+        targetValue = if (isCapturing) 0f else 1f,
+        animationSpec = tween(50),
+        finishedListener = { if (it == 1f) isCapturing = false }
+    )
+
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             bindToLifecycle(lifecycleOwner)
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                PreviewView(ctx).apply {
-                    controller = cameraController
-                    scaleType = PreviewView.ScaleType.FILL_CENTER
-                }
-            },
-            modifier = Modifier.fillMaxSize(),
-        )
+    Box {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = shutterAlpha }
+                .background(Color.Black)
+        ) {
+            AndroidView(
+                factory = { ctx ->
+                    PreviewView(ctx).apply {
+                        controller = cameraController
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
 
         IconButton(
             onClick = {
