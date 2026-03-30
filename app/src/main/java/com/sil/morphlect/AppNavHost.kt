@@ -9,6 +9,7 @@ import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.PresetsRepository
+import com.sil.morphlect.view.CameraMode
 import com.sil.morphlect.view.Editor
 import com.sil.morphlect.view.Frontpage
 import com.sil.morphlect.view.ImageComparison
@@ -20,12 +21,14 @@ import com.sil.morphlect.view.Settings
 import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.view.OnboardingCarousel
+import com.sil.morphlect.viewmodel.CameraModeViewModel
 import com.sil.morphlect.viewmodel.EditorViewModel
 
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
     val editorViewModel: EditorViewModel = viewModel()
+    val cameraModeViewModel: CameraModeViewModel = viewModel()
     val ctx = LocalContext.current
     val configRepository = remember { AppConfigRepository(ctx) }
     val presetsRepository = remember { PresetsRepository(ctx) }
@@ -44,6 +47,9 @@ fun AppNavHost() {
         }
         composable("pick") {
             PickImage(navController, editorViewModel)
+        }
+        composable("camera") {
+            CameraMode(navController, cameraModeViewModel)
         }
         composable("editor") {
             Editor(
