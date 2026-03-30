@@ -337,7 +337,8 @@ fun Editor(
                                 croppingMode,
                                 onCropToggle = { croppingMode = !croppingMode },
                                 onCropApply = {
-                                    vm.cropLayers(cropUpCorner!!, cropDownCorner!!, thumbnailSizePx)
+                                    if (cropUpCorner != null && cropDownCorner != null)
+                                        vm.cropLayers(cropUpCorner!!, cropDownCorner!!, thumbnailSizePx)
                                 },
                                 addingImage,
                                 onImageAddToggle = { imagePickLauncher.launch("image/*") },
