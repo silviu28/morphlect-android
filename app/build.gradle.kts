@@ -107,6 +107,8 @@ dependencies {
 
     // https://mvnrepository.com/artifact/androidx.compose.material/material-icons-extended
     implementation(libs.androidx.compose.material.icons.extended)
+
+    implementation(project(":layerproc"))
 }
 
 
