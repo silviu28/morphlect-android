@@ -27,12 +27,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
 fun AppNavHost() {
-    val navController = rememberNavController()
-    val editorViewModel: EditorViewModel = viewModel()
+    val navController                            = rememberNavController()
+    val editorViewModel: EditorViewModel         = viewModel()
     val cameraModeViewModel: CameraModeViewModel = viewModel()
-    val ctx = LocalContext.current
-    val configRepository = remember { AppConfigRepository(ctx) }
-    val presetsRepository = remember { PresetsRepository(ctx) }
+    val ctx                                      = LocalContext.current
+    val configRepository                         = remember { AppConfigRepository(ctx) }
+    val presetsRepository                        = remember { PresetsRepository(ctx) }
+    val analyzerFeedFlow                         = remember { MutableSharedFlow<String>() }
 
     NavHost(
         navController = navController,
@@ -50,7 +51,7 @@ fun AppNavHost() {
             PickImage(navController, editorViewModel)
         }
         composable("camera") {
-            CameraMode(navController, cameraModeViewModel, MutableSharedFlow<String>())
+            CameraMode(navController, cameraModeViewModel, analyzerFeedFlow)
         }
         composable("editor") {
             Editor(
