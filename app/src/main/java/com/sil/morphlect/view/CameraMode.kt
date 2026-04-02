@@ -15,9 +15,11 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,10 +27,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,6 +40,8 @@ import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.TextFormat
 import androidx.compose.material.icons.filled.Textsms
@@ -59,6 +65,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -165,7 +172,8 @@ private fun CameraFeed(
     var lastFeedMessage by remember { mutableStateOf("") }
     var isCapturing     by remember { mutableStateOf(false) }
     var showGrid        by remember { mutableStateOf(false) }
-    var showFeed        by remember { mutableStateOf(false) }
+    var showFeed        by remember { mutableStateOf(true) }
+    var showSliders     by remember { mutableStateOf(true) }
     val shutterAlpha    by animateFloatAsState(
         targetValue = if (isCapturing) 0f else 1f,
         animationSpec = tween(50),
@@ -199,39 +207,47 @@ private fun CameraFeed(
                 },
                 modifier = Modifier.fillMaxSize(),
             )
-            if (showGrid)
+
+            // rule of thirds grid
+            AnimatedVisibility(
+                visible = showGrid,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 RuleOfThirdsGrid(modifier = Modifier.fillMaxSize())
+            }
         }
 
         // top right sliders
-        Column() {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
-            ) {
-                Icon(Icons.Default.GridOn, contentDescription = null, tint = Color.White)
-                Switch(
-                    checked = showGrid,
-                    onCheckedChange = { showGrid = it },
-                    modifier = Modifier.padding(start = 16.dp)
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 30.dp)
+        ) {
+            AnimatedVisibility(visible = showSliders) {
+                Column {
+                    SettingsRow(Icons.Default.GridOn) {
+                        Switch(checked = showGrid, onCheckedChange = { showGrid = it })
+                    }
+                    SettingsRow(Icons.Default.TextFormat) {
+                        Switch(checked = showFeed, onCheckedChange = { showFeed = it })
+                    }
+                }
             }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                Icon(Icons.Default.TextFormat, contentDescription = null, tint = Color.White)
-                Switch(
-                    checked = showFeed,
-                    onCheckedChange = { showFeed = it },
-                    modifier = Modifier.padding(start = 16.dp)
-                )
+                IconButton(onClick = { showSliders = !showSliders }) {
+                    Icon(
+                        imageVector = if (showSliders) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = "toggle slider visibility",
+                        tint = Color.White,
+                    )
+                }
             }
         }
 
@@ -306,7 +322,11 @@ private fun CameraFeed(
         }
 
         // analyzer feed
-        if (showFeed)
+        AnimatedVisibility(
+            visible = showFeed,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
             Text(
                 text = lastFeedMessage,
                 modifier = Modifier
@@ -315,6 +335,7 @@ private fun CameraFeed(
                 color = Color.White,
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
     }
 }
 
@@ -354,4 +375,22 @@ fun CameraFeedPreview() {
         onGoBack = { },
         analyzerFeedFlow = previewFeedFlow
     )
+}
+
+@Composable
+private fun SettingsRow(
+    icon: ImageVector,
+    content: @Composable (() -> Unit)
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        Icon(icon, contentDescription = null, tint = Color.White)
+        Spacer(modifier = Modifier.width(8.dp))
+        content()
+    }
 }
