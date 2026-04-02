@@ -16,6 +16,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
@@ -41,6 +42,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.CropSquare
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -93,6 +95,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 import kotlin.collections.listOf
 
 private suspend fun saveImage(context: Context, uri: Uri) {
@@ -220,32 +224,44 @@ private fun CameraFeed(
     analyzerFeedFlow: MutableSharedFlow<String>
 ) {
     val mainExecutor = ContextCompat.getMainExecutor(context)
-    var lastFeedMessage by remember { mutableStateOf("") }
-    var isCapturing     by remember { mutableStateOf(false) }
-    var showGrid        by remember { mutableStateOf(false) }
-    var showFeed        by remember { mutableStateOf(true) }
-    var showSliders     by remember { mutableStateOf(true) }
-    val shutterAlpha    by animateFloatAsState(
+    val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    var lastFeedMessage    by remember { mutableStateOf("") }
+
+    var isCapturing        by remember { mutableStateOf(false) }
+    var showGrid           by remember { mutableStateOf(false) }
+    var showFeed           by remember { mutableStateOf(true) }
+    var showSliders        by remember { mutableStateOf(true) }
+    var showClassification by remember { mutableStateOf(true) }
+
+    var imageWidth         by remember { mutableStateOf(1) }
+    var imageHeight        by remember { mutableStateOf(1) }
+
+    val shutterAlpha       by animateFloatAsState(
         targetValue = if (isCapturing) 0f else 1f,
         animationSpec = tween(50),
         finishedListener = { if (it == 1f) isCapturing = false }
     )
-    var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
+    var boundingBoxes   by remember { mutableStateOf<List<android.graphics.Rect>>(emptyList()) }
 
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             bindToLifecycle(lifecycleOwner)
-            setImageAnalysisAnalyzer(mainExecutor) { imageProxy ->
+            setEnabledUseCases(CameraController.IMAGE_CAPTURE or CameraController.IMAGE_ANALYSIS)
+            setImageAnalysisAnalyzer(classificationExecutor) { imageProxy ->
                 val mediaImage = imageProxy.image ?: return@setImageAnalysisAnalyzer
                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
                 objectDetector
                     .process(image)
                     .addOnSuccessListener { detectedObjects ->
+                        imageWidth = imageProxy.width
+                        imageHeight = imageProxy.height
                         Log.i("CAMERA", "Detected ${detectedObjects.size} objects.")
-                        detectedObjects.forEach { obj ->
-                            val box = obj.boundingBox
-                        }
+                        // take only the objects with high confidence
+                        boundingBoxes = detectedObjects
+                            .filter { it.labels.any { label -> label.confidence >= 0.5f } }
+                            .map { it.boundingBox }
                     }
                     .addOnCompleteListener {
                         imageProxy.close()
@@ -287,7 +303,9 @@ private fun CameraFeed(
         }
 
         // bounding-box canvas
-        BoundingBoxCanvas(boundingBoxes)
+        // TODO - disabling 'showClassification' should also disable the analyzer for performance
+        if (showClassification)
+            BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight)
 
         // top right sliders
         Column(
@@ -302,6 +320,9 @@ private fun CameraFeed(
                     }
                     SettingsRow(Icons.Default.TextFormat) {
                         Switch(checked = showFeed, onCheckedChange = { showFeed = it })
+                    }
+                    SettingsRow(Icons.Default.CropSquare) {
+                        Switch(showClassification, onCheckedChange = { showClassification = it })
                     }
                 }
             }
@@ -465,14 +486,21 @@ private fun SettingsRow(
 }
 
 @Composable
-private fun BoundingBoxCanvas(boxes: List<Rect>) {
+private fun BoundingBoxCanvas(
+    boxes: List<android.graphics.Rect>,
+    imageWidth: Int,
+    imageHeight: Int,
+) {
     Canvas(modifier = Modifier.fillMaxSize()) {
+        val scaleX = size.width / imageWidth
+        val scaleY = size.height / imageHeight
+
         boxes.forEach { box ->
             drawRect(
-                color = Color.Green,
-                topLeft = box.topLeft,
-                size = Size(1f, 1f),
-                style = Stroke(width = 2.dp.toPx())
+                color = Color.White.copy(alpha = .5f),
+                topLeft = Offset(box.left * scaleX, box.top * scaleY),
+                size = Size(box.width() * scaleX, box.height() * scaleY),
+                style = Stroke(width = .5.dp.toPx())
             )
         }
     }
