@@ -11,7 +11,9 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.view.LifecycleCameraController
@@ -55,6 +57,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,6 +65,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -75,7 +80,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
+import com.google.mlkit.vision.common.InputImage
 import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.logic.objectDetector
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
@@ -86,6 +93,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.collections.listOf
 
 private suspend fun saveImage(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
@@ -202,6 +210,7 @@ fun CameraMode(
     }
 }
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 private fun CameraFeed(
     context: Context,
@@ -210,6 +219,7 @@ private fun CameraFeed(
     onGoBack: () -> Unit,
     analyzerFeedFlow: MutableSharedFlow<String>
 ) {
+    val mainExecutor = ContextCompat.getMainExecutor(context)
     var lastFeedMessage by remember { mutableStateOf("") }
     var isCapturing     by remember { mutableStateOf(false) }
     var showGrid        by remember { mutableStateOf(false) }
@@ -220,10 +230,27 @@ private fun CameraFeed(
         animationSpec = tween(50),
         finishedListener = { if (it == 1f) isCapturing = false }
     )
+    var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
 
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             bindToLifecycle(lifecycleOwner)
+            setImageAnalysisAnalyzer(mainExecutor) { imageProxy ->
+                val mediaImage = imageProxy.image ?: return@setImageAnalysisAnalyzer
+                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+                objectDetector
+                    .process(image)
+                    .addOnSuccessListener { detectedObjects ->
+                        Log.i("CAMERA", "Detected ${detectedObjects.size} objects.")
+                        detectedObjects.forEach { obj ->
+                            val box = obj.boundingBox
+                        }
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
+            }
         }
     }
 
@@ -258,6 +285,9 @@ private fun CameraFeed(
                 RuleOfThirdsGrid(modifier = Modifier.fillMaxSize())
             }
         }
+
+        // bounding-box canvas
+        BoundingBoxCanvas(boundingBoxes)
 
         // top right sliders
         Column(
@@ -317,7 +347,7 @@ private fun CameraFeed(
 
                         cameraController.takePicture(
                             outputFileOptions,
-                            ContextCompat.getMainExecutor(context),
+                            mainExecutor,
                             object : ImageCapture.OnImageSavedCallback {
                                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                                     isCapturing = false
@@ -431,5 +461,19 @@ private fun SettingsRow(
         Icon(icon, contentDescription = null, tint = Color.White)
         Spacer(modifier = Modifier.width(8.dp))
         content()
+    }
+}
+
+@Composable
+private fun BoundingBoxCanvas(boxes: List<Rect>) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        boxes.forEach { box ->
+            drawRect(
+                color = Color.Green,
+                topLeft = box.topLeft,
+                size = Size(1f, 1f),
+                style = Stroke(width = 2.dp.toPx())
+            )
+        }
     }
 }
