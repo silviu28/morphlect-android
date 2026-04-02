@@ -120,7 +120,7 @@ suspend fun savePreset(ctx: Context, preset: Preset) {
 
 @Composable
 fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) {
-    var presets         by remember { mutableStateOf<List<Preset>>(listOf()) }
+    var presets            by remember { mutableStateOf<List<Preset>>(listOf()) }
     var showAddDialog      by remember { mutableStateOf(false) }
     var showRemoveDialog   by remember { mutableStateOf(false) }
     var selectedPresetName by remember { mutableStateOf<String?>(null) }

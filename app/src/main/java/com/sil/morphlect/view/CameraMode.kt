@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -28,6 +29,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +40,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -59,7 +62,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,7 +69,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -83,8 +84,11 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.google.mlkit.vision.common.InputImage
+import com.sil.morphlect.R
+import com.sil.morphlect.data.Preset
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.objectDetector
+import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
@@ -95,9 +99,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.concurrent.Executor
 import java.util.concurrent.Executors
-import kotlin.collections.listOf
 
 private suspend fun saveImage(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
@@ -134,17 +136,22 @@ fun CameraMode(
     vm: CameraModeViewModel,
     analyzerFeedFlow: MutableSharedFlow<String>,
     onCaptureConfirm: (Uri) -> Unit,
+    presetsRepository: PresetsRepository,
 ) {
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
-
-    var cameraPermissionGranted by remember { mutableStateOf(
+    var cameraPermissionGranted  by remember { mutableStateOf(
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED
     ) }
     var cameraPermissionPrompted by remember { mutableStateOf(!cameraPermissionGranted) }
-    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var capturedImageUri         by remember { mutableStateOf<Uri?>(null) }
+    var presets                  by remember { mutableStateOf<List<Preset>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        presets = presetsRepository.load()
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -210,6 +217,7 @@ fun CameraMode(
             onImageCaptured = { imageUri -> capturedImageUri = imageUri },
             onGoBack = { navController.popBackStack() },
             analyzerFeedFlow,
+            presets
         )
     }
 }
@@ -221,8 +229,14 @@ private fun CameraFeed(
     lifecycleOwner: LifecycleOwner,
     onImageCaptured: (Uri) -> Unit,
     onGoBack: () -> Unit,
-    analyzerFeedFlow: MutableSharedFlow<String>
+    analyzerFeedFlow: MutableSharedFlow<String>,
+    presets: List<Preset>
 ) {
+    val presetDefaultImage = remember {
+        FormatConverters.bitmapToMat(
+            BitmapFactory.decodeResource(context.resources, R.drawable.preset_default)
+        )
+    }
     val mainExecutor = ContextCompat.getMainExecutor(context)
     val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
 
@@ -336,7 +350,9 @@ private fun CameraFeed(
             ) {
                 IconButton(onClick = { showSliders = !showSliders }) {
                     Icon(
-                        imageVector = if (showSliders) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        imageVector =
+                            if (showSliders) Icons.Default.KeyboardArrowUp
+                            else Icons.Default.KeyboardArrowDown,
                         contentDescription = "toggle slider visibility",
                         tint = Color.White,
                     )
@@ -344,70 +360,95 @@ private fun CameraFeed(
             }
         }
 
-        // bottom controls - go back, shutter, reverse camera
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly,
+                .padding(bottom = 32.dp)
         ) {
-            IconButton(onClick = onGoBack) {
-                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "back")
-            }
-            IconButton(
-                onClick = {
-                    if (!isCapturing) {
-                        isCapturing = true
-                        val file = File(context.cacheDir, "photo_${System.currentTimeMillis()}.jpg")
-                        val outputFileOptions = ImageCapture
-                            .OutputFileOptions
-                            .Builder(file)
-                            .build()
-
-                        cameraController.takePicture(
-                            outputFileOptions,
-                            mainExecutor,
-                            object : ImageCapture.OnImageSavedCallback {
-                                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                    isCapturing = false
-                                    onImageCaptured(Uri.fromFile(file))
-                                }
-
-                                override fun onError(exception: ImageCaptureException) {
-                                    isCapturing = false
-                                    Log.e("CAMERA", exception.stackTraceToString())
-                                }
-                            }
-                        )
-                    }
-                },
+            // presets bar
+            Row(
                 modifier = Modifier
-                    .size(72.dp)
-                    .background(Color.White, CircleShape)
-                    .border(3.dp, Color.White, CircleShape)
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isCapturing)
-                    FlickeringLedDotProgressIndicator()
-                else
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(Color.White, CircleShape)
+                presets.forEach { preset ->
+                    PresetPreview(
+                        preset = preset,
+                        originalMat = presetDefaultImage,
+                        onPress = { },
+                        onLongPress = { },
                     )
+                }
             }
 
-            IconButton(
-                onClick = {
-                    cameraController.cameraSelector =
-                        if (cameraController.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
-                            CameraSelector.DEFAULT_FRONT_CAMERA
-                        else
-                            CameraSelector.DEFAULT_BACK_CAMERA
-                }
+            // bottom controls
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Icon(Icons.Default.Cameraswitch, contentDescription = "switch to opposite facing camera")
+                IconButton(onClick = onGoBack) {
+                    Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "back")
+                }
+                IconButton(
+                    onClick = {
+                        if (!isCapturing) {
+                            isCapturing = true
+                            val file =
+                                File(context.cacheDir, "photo_${System.currentTimeMillis()}.jpg")
+                            val outputFileOptions = ImageCapture
+                                .OutputFileOptions
+                                .Builder(file)
+                                .build()
+
+                            cameraController.takePicture(
+                                outputFileOptions,
+                                mainExecutor,
+                                object : ImageCapture.OnImageSavedCallback {
+                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                        isCapturing = false
+                                        onImageCaptured(Uri.fromFile(file))
+                                    }
+
+                                    override fun onError(exception: ImageCaptureException) {
+                                        isCapturing = false
+                                        Log.e("CAMERA", exception.stackTraceToString())
+                                    }
+                                }
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .size(72.dp)
+                        .background(Color.White, CircleShape)
+                        .border(3.dp, Color.White, CircleShape)
+                ) {
+                    if (isCapturing)
+                        FlickeringLedDotProgressIndicator()
+                    else
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(Color.White, CircleShape)
+                        )
+                }
+                IconButton(
+                    onClick = {
+                        cameraController.cameraSelector =
+                            if (cameraController.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
+                                CameraSelector.DEFAULT_FRONT_CAMERA
+                            else
+                                CameraSelector.DEFAULT_BACK_CAMERA
+                    }
+                ) {
+                    Icon(Icons.Default.Cameraswitch, contentDescription = "switch camera")
+                }
             }
         }
 
@@ -432,7 +473,7 @@ private fun CameraFeed(
 @Composable
 fun RuleOfThirdsGrid(modifier: Modifier = Modifier) {
     Canvas(modifier) {
-        val gridStroke = Stroke(width = 1.dp.toPx()).width
+        val gridStroke = 1.dp.toPx()
         drawLine(Color.White, Offset(size.width / 3, 0f), Offset(size.width / 3, size.height), gridStroke)
         drawLine(Color.White, Offset(size.width * 2 / 3, 0f), Offset(size.width * 2 / 3, size.height), gridStroke)
         drawLine(Color.White, Offset(0f, size.height / 3), Offset(size.width, size.height / 3), gridStroke)
@@ -463,7 +504,8 @@ fun CameraFeedPreview() {
         lifecycleOwner,
         onImageCaptured = { _ -> },
         onGoBack = { },
-        analyzerFeedFlow = previewFeedFlow
+        analyzerFeedFlow = previewFeedFlow,
+        presets = emptyList()
     )
 }
 
