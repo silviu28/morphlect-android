@@ -51,7 +51,15 @@ fun AppNavHost() {
             PickImage(navController, editorViewModel)
         }
         composable("camera") {
-            CameraMode(navController, cameraModeViewModel, analyzerFeedFlow)
+            CameraMode(
+                navController,
+                cameraModeViewModel,
+                analyzerFeedFlow,
+                onCaptureConfirm = { uri ->
+                    editorViewModel.loadImage(ctx, uri)
+                    navController.navigate("editor")
+                }
+            )
         }
         composable("editor") {
             Editor(
