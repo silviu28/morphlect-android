@@ -58,7 +58,8 @@ fun AppNavHost() {
                 onCaptureConfirm = { uri ->
                     editorViewModel.loadImage(ctx, uri)
                     navController.navigate("editor")
-                }
+                },
+                presetsRepository
             )
         }
         composable("editor") {
