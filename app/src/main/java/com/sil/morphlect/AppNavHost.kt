@@ -23,6 +23,7 @@ import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.view.OnboardingCarousel
 import com.sil.morphlect.viewmodel.CameraModeViewModel
 import com.sil.morphlect.viewmodel.EditorViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
 fun AppNavHost() {
@@ -49,7 +50,7 @@ fun AppNavHost() {
             PickImage(navController, editorViewModel)
         }
         composable("camera") {
-            CameraMode(navController, cameraModeViewModel)
+            CameraMode(navController, cameraModeViewModel, MutableSharedFlow<String>())
         }
         composable("editor") {
             Editor(
