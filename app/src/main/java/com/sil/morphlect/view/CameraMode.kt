@@ -9,12 +9,14 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.view.CameraController
@@ -35,11 +37,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -99,6 +104,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
 
 private suspend fun saveImage(context: Context, uri: Uri) {
@@ -250,6 +256,7 @@ private fun CameraFeed(
 
     var imageWidth         by remember { mutableStateOf(1) }
     var imageHeight        by remember { mutableStateOf(1) }
+    var focusIndicatorPoint by remember { mutableStateOf<Offset?>(null) }
 
     val shutterAlpha       by animateFloatAsState(
         targetValue = if (isCapturing) 0f else 1f,
@@ -287,6 +294,12 @@ private fun CameraFeed(
     LaunchedEffect(analyzerFeedFlow) {
         analyzerFeedFlow.collect { lastFeedMessage = it }
     }
+    LaunchedEffect(focusIndicatorPoint) {
+        if (focusIndicatorPoint != null) {
+            delay(900)
+            focusIndicatorPoint = null
+        }
+    }
 
     Box {
         // the feed itself
@@ -301,6 +314,26 @@ private fun CameraFeed(
                     PreviewView(ctx).apply {
                         controller = cameraController
                         scaleType = PreviewView.ScaleType.FILL_CENTER
+                        setOnTouchListener { _, event ->
+                            performClick()
+                            if (event.action != MotionEvent.ACTION_UP) {
+                                return@setOnTouchListener true
+                            }
+
+                            val meteringPoint = meteringPointFactory.createPoint(event.x, event.y)
+                            val focusMeteringAction = FocusMeteringAction.Builder(
+                                meteringPoint,
+                                FocusMeteringAction.FLAG_AF or
+                                        FocusMeteringAction.FLAG_AE or
+                                        FocusMeteringAction.FLAG_AWB
+                            )
+                                .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                                .build()
+
+                            cameraController.cameraControl?.startFocusAndMetering(focusMeteringAction)
+                            focusIndicatorPoint = Offset(event.x, event.y)
+                            true
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxSize(),
@@ -313,6 +346,23 @@ private fun CameraFeed(
                 exit = fadeOut()
             ) {
                 RuleOfThirdsGrid(modifier = Modifier.fillMaxSize())
+            }
+
+            AnimatedVisibility(
+                visible = focusIndicatorPoint != null,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    focusIndicatorPoint?.let { tapPoint ->
+                        drawCircle(
+                            color = Color.White,
+                            radius = 32.dp.toPx(),
+                            center = tapPoint,
+                            style = Stroke(width = 2.dp.toPx())
+                        )
+                    }
+                }
             }
         }
 
@@ -364,7 +414,9 @@ private fun CameraFeed(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .background(Color.Black.copy(alpha = .7f))
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(top = 12.dp, bottom = 12.dp)
         ) {
             // presets bar
             Row(
