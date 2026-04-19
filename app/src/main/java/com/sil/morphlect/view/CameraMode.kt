@@ -91,6 +91,7 @@ import androidx.navigation.NavController
 import com.google.mlkit.vision.common.InputImage
 import com.sil.morphlect.R
 import com.sil.morphlect.data.Preset
+import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.objectDetector
 import com.sil.morphlect.repository.PresetsRepository
@@ -270,9 +271,24 @@ private fun CameraFeed(
             bindToLifecycle(lifecycleOwner)
             setEnabledUseCases(CameraController.IMAGE_CAPTURE or CameraController.IMAGE_ANALYSIS)
             setImageAnalysisAnalyzer(classificationExecutor) { imageProxy ->
-                val mediaImage = imageProxy.image ?: return@setImageAnalysisAnalyzer
+                val mediaImage = imageProxy.image
+                if (mediaImage == null) {
+                    imageProxy.close()
+                    return@setImageAnalysisAnalyzer
+                }
                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
+                // section 1 - performs conversion to Cv::Mat
+                if (mediaImage.planes.size == 3) {
+                    val mat = mediaImage.yuvToRgba()
+                    try {
+                        Log.i("MAT", "Processed frame ${mat.hashCode()}")
+                    } finally {
+                        mat.release()
+                    }
+                }
+
+                // section 2 - performs object detection through ObjectDetector instance
                 objectDetector
                     .process(image)
                     .addOnSuccessListener { detectedObjects ->
@@ -283,6 +299,9 @@ private fun CameraFeed(
                         boundingBoxes = detectedObjects
                             .filter { it.labels.any { label -> label.confidence >= 0.5f } }
                             .map { it.boundingBox }
+                    }
+                    .addOnFailureListener { error ->
+                        Log.e("CAMERA", "Object detection failed", error)
                     }
                     .addOnCompleteListener {
                         imageProxy.close()
