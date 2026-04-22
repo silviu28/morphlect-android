@@ -307,7 +307,7 @@ fun Editor(
 
                 // thumbnail
                 InteractiveThumbnail(
-                    layers = vm.layers,
+                    layers = vm.previewLayers,
                     expandLayers = showLayersView,
                     croppingMode = croppingMode,
                     cropUpCorner = cropUpCorner,

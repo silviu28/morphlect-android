@@ -43,8 +43,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     override var undoStack = mutableStateListOf<EditorCommand>()
     override var redoStack = mutableStateListOf<EditorCommand>()
 
-    var originalMat by mutableStateOf<Mat?>(null)
-        private set
+    lateinit var originalMat: Mat
 
     private val layerManager = LayerManager(mutableStateListOf())
     val layers by derivedStateOf {
@@ -55,6 +54,14 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
                 EditorCommand.of(selectedFilter, filterValues[selectedFilter]!!)
             ).fold(layer) { layer, comm -> comm.execute(layer) }
     } }
+    val previewLayers by derivedStateOf {
+        layerManager.downscaledLayers.value.map { layer ->
+            if (!layer.visible) return@map EditorLayer.empty()
+            (undoStack +
+                    EditorCommand.of(selectedFilter, filterValues[selectedFilter]!!)
+                    ).fold(layer) { layer, comm -> comm.execute(layer) }
+        }
+    }
     var originalLayers = mutableStateListOf<EditorLayer>()
 
     override fun redoLastCommand() {
@@ -198,17 +205,6 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
 
     fun loadImage(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.Default) {
-            val bitmap = FormatConverters.uriToBitmap(context, uri)
-            var mat = FormatConverters.bitmapToMat(bitmap)
-            mat = Filtering.uniformDownscale(mat)
-            layerManager.addLayer(EditorLayer(mat))
-
-            // release old image if exists
-            originalMat?.release()
-
-            // store original
-            originalMat = mat.clone()
-
             // clear all state
             undoStack.clear()
             redoStack.clear()
@@ -216,8 +212,15 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             // reset effect values
             filterValues.forEach { (effect, _) -> filterValues[effect] = .0 }
 
-            val initialBitmap = FormatConverters.matToBitmap(originalMat!!)
+            // release old image if exists
+//            originalMat?.release()
 
+            val bitmap = FormatConverters.uriToBitmap(context, uri)
+            originalMat = FormatConverters.bitmapToMat(bitmap)
+
+            layerManager.addLayer(EditorLayer(originalMat))
+
+            val initialBitmap = FormatConverters.matToBitmap(originalMat)
             withContext(Dispatchers.Main) {
                 processedBitmap = initialBitmap
                 previewBitmap = initialBitmap

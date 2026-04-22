@@ -19,8 +19,8 @@ import kotlin.math.abs
 import org.opencv.core.Core
 import com.sil.morphlect.extension.extend
 import com.sil.morphlect.extension.toCvScalar
+import com.sil.morphlect.logic.Filtering
 import org.opencv.core.Point
-import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 
 class EditorLayer(val mat: Mat) : Closeable {
@@ -128,6 +128,10 @@ class EditorLayer(val mat: Mat) : Closeable {
 
         val roi = Rect(safeX, safeY, safeWidth, safeHeight)
         return EditorLayer(mat.clone().submat(roi))
+    }
+
+    fun downscaledUniformly(maxDimension: Int = 800) : EditorLayer {
+        return EditorLayer(Filtering.uniformDownscale(mat))
     }
 }
 
