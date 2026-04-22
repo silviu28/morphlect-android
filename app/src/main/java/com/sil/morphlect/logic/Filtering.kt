@@ -97,4 +97,15 @@ object Filtering {
         channels.forEach { it.release() }
         return src
     }
+
+    // uniformly downscales CV mats. the bigger the resolution -> the bigger the downscale
+    fun uniformDownscale(src: Mat, maxDimension: Int = 800): Mat {
+        val largest = maxOf(src.rows(), src.cols())
+        if (largest <= maxDimension) return src.clone()
+
+        val scale = maxDimension / largest.toDouble()
+        val dst = Mat()
+        Imgproc.resize(src, dst, Size(), scale, scale, Imgproc.INTER_CUBIC)
+        return dst
+    }
 }

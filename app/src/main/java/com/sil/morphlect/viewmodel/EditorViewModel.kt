@@ -25,6 +25,7 @@ import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Section
+import com.sil.morphlect.logic.Filtering
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.LayerManager
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
+import org.opencv.imgproc.Imgproc
 
 class EditorViewModel : ViewModel(), EditorCommandManager {
     private val _evaluationResult = MutableSharedFlow<EvaluationResult>()
@@ -197,8 +199,8 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     fun loadImage(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
-            val mat = FormatConverters.bitmapToMat(bitmap)
-
+            var mat = FormatConverters.bitmapToMat(bitmap)
+            mat = Filtering.uniformDownscale(mat)
             layerManager.addLayer(EditorLayer(mat))
 
             // release old image if exists
