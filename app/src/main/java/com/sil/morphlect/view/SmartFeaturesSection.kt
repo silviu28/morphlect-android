@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.sil.morphlect.data.EvaluationResult
@@ -23,6 +24,7 @@ import com.sil.morphlect.view.dialog.impl.AddFunctionalityDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 import kotlin.random.Random
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SmartFeaturesSection(
     navController: NavController,
