@@ -1,5 +1,6 @@
 package com.sil.morphlect.logic
 
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import com.sil.morphlect.data.EditorLayer
@@ -10,6 +11,7 @@ import java.io.Closeable
  */
 class LayerManager : Closeable {
     var layers: MutableList<EditorLayer>
+    var downscaledLayers = derivedStateOf { layers.map { it.downscaledUniformly() } }
 
     constructor(layers: MutableList<EditorLayer>) {
         this.layers = layers
