@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -49,6 +50,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddBox
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.CropSquare
 import androidx.compose.material.icons.filled.Error
@@ -61,6 +64,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -94,6 +98,7 @@ import com.sil.morphlect.data.Preset
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.objectDetector
+import com.sil.morphlect.repository.ModelsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
@@ -144,6 +149,7 @@ fun CameraMode(
     analyzerFeedFlow: MutableSharedFlow<String>,
     onCaptureConfirm: (Uri) -> Unit,
     presetsRepository: PresetsRepository,
+    modelsRepository: ModelsRepository,
 ) {
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -155,9 +161,12 @@ fun CameraMode(
     var cameraPermissionPrompted by remember { mutableStateOf(!cameraPermissionGranted) }
     var capturedImageUri         by remember { mutableStateOf<Uri?>(null) }
     var presets                  by remember { mutableStateOf<List<Preset>>(emptyList()) }
+    var models                   by remember { mutableStateOf<List<String>>(emptyList()) }
+
 
     LaunchedEffect(Unit) {
         presets = presetsRepository.load()
+        models = modelsRepository.readContents()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -224,7 +233,8 @@ fun CameraMode(
             onImageCaptured = { imageUri -> capturedImageUri = imageUri },
             onGoBack = { navController.popBackStack() },
             analyzerFeedFlow,
-            presets
+            presets,
+            models
         )
     }
 }
@@ -237,7 +247,8 @@ private fun CameraFeed(
     onImageCaptured: (Uri) -> Unit,
     onGoBack: () -> Unit,
     analyzerFeedFlow: MutableSharedFlow<String>,
-    presets: List<Preset>
+    presets: List<Preset>,
+    models: List<String>,
 ) {
     val presetDefaultImage = remember {
         FormatConverters.bitmapToMat(
@@ -254,6 +265,7 @@ private fun CameraFeed(
     var showFeed           by remember { mutableStateOf(true) }
     var showSliders        by remember { mutableStateOf(true) }
     var showClassification by remember { mutableStateOf(true) }
+    var showModelsDialog   by remember { mutableStateOf(false) }
 
     var imageWidth         by remember { mutableStateOf(1) }
     var imageHeight        by remember { mutableStateOf(1) }
@@ -264,7 +276,7 @@ private fun CameraFeed(
         animationSpec = tween(50),
         finishedListener = { if (it == 1f) isCapturing = false }
     )
-    var boundingBoxes   by remember { mutableStateOf<List<android.graphics.Rect>>(emptyList()) }
+    var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
 
     val cameraController = remember {
         LifecycleCameraController(context).apply {
@@ -320,6 +332,23 @@ private fun CameraFeed(
         }
     }
 
+    if (showModelsDialog) {
+        DialogScaffold(
+            title = "downloaded models",
+            onDismissRequest = { showModelsDialog = false },
+            icon = Icons.Default.Camera,
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                models.forEach {
+                   Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                       Text(it)
+                       Switch(false, { })
+                   }
+                }
+            }
+        }
+    }
+
     Box {
         // the feed itself
         Box(
@@ -341,11 +370,11 @@ private fun CameraFeed(
 
                             val meteringPoint = meteringPointFactory.createPoint(event.x, event.y)
                             val focusMeteringAction = FocusMeteringAction.Builder(
-                                meteringPoint,
-                                FocusMeteringAction.FLAG_AF or
-                                        FocusMeteringAction.FLAG_AE or
-                                        FocusMeteringAction.FLAG_AWB
-                            )
+                                    meteringPoint,
+                            FocusMeteringAction.FLAG_AF or
+                                    FocusMeteringAction.FLAG_AE or
+                                    FocusMeteringAction.FLAG_AWB
+                                )
                                 .setAutoCancelDuration(3, TimeUnit.SECONDS)
                                 .build()
 
@@ -406,6 +435,13 @@ private fun CameraFeed(
                     }
                     SettingsRow(Icons.Default.CropSquare) {
                         Switch(showClassification, onCheckedChange = { showClassification = it })
+                    }
+
+                    IconButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { showModelsDialog = true }
+                    ) {
+                        Icon(Icons.Default.AddBox, contentDescription = "use a model")
                     }
                 }
             }
@@ -576,7 +612,8 @@ fun CameraFeedPreview() {
         onImageCaptured = { _ -> },
         onGoBack = { },
         analyzerFeedFlow = previewFeedFlow,
-        presets = emptyList()
+        presets = emptyList(),
+        models = emptyList(),
     )
 }
 
@@ -600,7 +637,7 @@ private fun SettingsRow(
 
 @Composable
 private fun BoundingBoxCanvas(
-    boxes: List<android.graphics.Rect>,
+    boxes: List<Rect>,
     imageWidth: Int,
     imageHeight: Int,
 ) {

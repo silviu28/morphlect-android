@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sil.morphlect.repository.AppConfigRepository
+import com.sil.morphlect.repository.ModelsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.CameraMode
 import com.sil.morphlect.view.Editor
@@ -33,6 +34,7 @@ fun AppNavHost() {
     val ctx                                      = LocalContext.current
     val configRepository                         = remember { AppConfigRepository(ctx) }
     val presetsRepository                        = remember { PresetsRepository(ctx) }
+    val modelsRepository                         = remember { ModelsRepository(ctx) }
     val analyzerFeedFlow                         = remember { MutableSharedFlow<String>() }
 
     NavHost(
@@ -59,7 +61,8 @@ fun AppNavHost() {
                     editorViewModel.loadImage(ctx, uri)
                     navController.navigate("editor")
                 },
-                presetsRepository
+                presetsRepository,
+                modelsRepository
             )
         }
         composable("editor") {
