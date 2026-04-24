@@ -11,5 +11,5 @@ data class MXTManifestRef(
 @Serializable
 data class MXTAfterArgs(
     val applyResult: Boolean,
-    val next: MXTManifestRef?,
+    val next: MXTManifestRef? = null,
 )

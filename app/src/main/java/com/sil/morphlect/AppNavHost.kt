@@ -5,6 +5,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
@@ -20,6 +22,7 @@ import com.sil.morphlect.view.Settings
 import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.view.OnboardingCarousel
+import com.sil.morphlect.view.mxt.MXTComposedView
 import com.sil.morphlect.viewmodel.CameraModeViewModel
 import com.sil.morphlect.viewmodel.EditorViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -68,7 +71,8 @@ fun AppNavHost() {
                 navController,
                 editorViewModel,
                 presetsRepository,
-                configRepository
+                configRepository,
+                extensionsRepository,
             )
         }
         composable("vibe-match") {
@@ -91,6 +95,15 @@ fun AppNavHost() {
         }
         composable("model-download") {
             ModelManager(navController)
+        }
+        composable(
+            route = "extension-view/{extensionName}",
+            arguments = listOf(navArgument("extensionName") {
+                type = NavType.StringType
+            })
+        ) { backStackEntry ->
+            val extensionName = backStackEntry.arguments?.getString("extensionName") ?: throw Exception()
+            MXTComposedView(extensionName, { })
         }
     }
 }

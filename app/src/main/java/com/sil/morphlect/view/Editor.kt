@@ -78,6 +78,7 @@ import androidx.compose.ui.platform.LocalDensity
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
+import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.dialog.impl.LayeringDialog
 import kotlinx.coroutines.delay
@@ -89,7 +90,8 @@ fun Editor(
     navController:     NavController,
     editorViewModel:   EditorViewModel,
     presetsRepository: PresetsRepository,
-    configRepository:  AppConfigRepository
+    configRepository:  AppConfigRepository,
+    extensionsRepository: ExtensionsRepository,
 ) {
     val vm = editorViewModel
 
@@ -331,7 +333,12 @@ fun Editor(
                     ) {
                         when (targetState) {
                             Section.Filtering -> FilteringSection(vm, presetsRepository)
-                            Section.SmartFeatures -> SmartFeaturesSection(navController, vm, configRepository)
+                            Section.SmartFeatures -> SmartFeaturesSection(
+                                navController,
+                                vm,
+                                configRepository,
+                                extensionsRepository
+                            )
                             Section.ImageManipulation -> ImageManipulationSection(
                                 vm = vm,
                                 croppingMode,

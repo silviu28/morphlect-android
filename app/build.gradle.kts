@@ -121,6 +121,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.0")
 
     implementation(project(":mxtengine"))
+
+    // Source: https://mvnrepository.com/artifact/net.mamoe.yamlkt/yamlkt
+    implementation("net.mamoe.yamlkt:yamlkt:0.13.0")
 }
 
 

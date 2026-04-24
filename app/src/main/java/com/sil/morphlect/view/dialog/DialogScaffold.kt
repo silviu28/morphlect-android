@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QuestionMark
@@ -41,7 +42,7 @@ fun DialogScaffold(
     title: String,
     onDismissRequest: () -> Unit,
     icon: ImageVector? = null,
-    content: @Composable (() -> Unit),
+    content: @Composable (ColumnScope.() -> Unit),
 ) {
     Dialog(onDismissRequest) {
         Card(

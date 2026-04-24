@@ -22,6 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.view.dialog.DialogScaffold
+import com.sil.morphlect.view.mxt.loadExtension
+
+//import com.sil.morphlect.view.mxt.loadExtension
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +53,7 @@ fun AddFunctionalityDialog(
         ) {
             OutlinedTextField(
                 value = selectedModel ?: "select a model",
-                onValueChange = { },
+                onValueChange = { selectedModel = it },
                 readOnly = true,
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
@@ -83,7 +86,7 @@ fun AddFunctionalityDialog(
                 Text("cancel")
             }
             TextButton(
-                onClick = { }
+                onClick = { /*selectedModel?.run { loadExtension(ctx, this) }*/ }
             ) {
                 Text("add")
             }

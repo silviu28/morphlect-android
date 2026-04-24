@@ -9,6 +9,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,8 +21,11 @@ import androidx.navigation.NavController
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.repository.AppConfigRepository
+import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.view.dialog.impl.AddFunctionalityDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.mxtengine.data.MXTManifest
+import kotlin.collections.listOf
 import kotlin.random.Random
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -29,18 +33,24 @@ import kotlin.random.Random
 fun SmartFeaturesSection(
     navController: NavController,
     vm: EditorViewModel,
-    configRepository: AppConfigRepository
+    configRepository: AppConfigRepository,
+    extensionsRepository: ExtensionsRepository,
 ) {
     var showVibeDialog    by remember { mutableStateOf(false) }
     var showEvalDialog    by remember { mutableStateOf(false) }
     var showStyleDialog   by remember { mutableStateOf(false) }
-    var showAddFuncDialog by remember { mutableStateOf(false) }
+    var extensions        by remember { mutableStateOf<List<String>>(listOf()) }
+//    var showAddFuncDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        extensions = extensionsRepository.readExtensionNames()
+    }
 
     val developerMode by configRepository.developerMode.collectAsState(initial = false)
 
     Column {
         when {
-            showAddFuncDialog -> AddFunctionalityDialog(onDismissRequest = { showAddFuncDialog = false })
+//            showAddFuncDialog -> AddFunctionalityDialog(onDismissRequest = { showAddFuncDialog = false })
 
             showStyleDialog -> AlertDialog(
                 onDismissRequest = { showStyleDialog = false },
@@ -129,8 +139,13 @@ fun SmartFeaturesSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
         ) {
-            TextButton(onClick = { showAddFuncDialog = true }) {
-                Text("new functionality...")
+//            TextButton(onClick = { showAddFuncDialog = true }) {
+//                Text("new functionality...")
+//            }
+            extensions.forEach {
+                TextButton(onClick = { navController.navigate("extension-view/$it") }) {
+                    Text(it)
+                }
             }
         }
     }
