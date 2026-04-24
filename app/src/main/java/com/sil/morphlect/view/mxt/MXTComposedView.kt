@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,16 +33,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sil.mxtengine.data.ComposerElementType
 import com.sil.mxtengine.data.MXTManifest
+import com.sil.mxtengine.data.Shape
 import kotlin.collections.forEach
-import kotlin.collections.toMutableMap
+import androidx.core.graphics.scale
 
-fun Uri.getImage(context: Context): Bitmap? =
-    BitmapFactory.decodeStream(context.contentResolver.openInputStream(this))
+fun Uri.getImage(context: Context, conversionShape: Shape? = null): Bitmap? {
+    val res = BitmapFactory.decodeStream(context.contentResolver.openInputStream(this))
+    return if (conversionShape != null)
+        res.scale(conversionShape[0], conversionShape[1], false)
+    else res
+}
 
-fun Uri.getAudio(context: Context): ByteArray? =
-    context.contentResolver.openInputStream(this)?.use { it.readBytes() }
+// we'll see if this might be needed...
+fun ByteArray.compress(shape: Shape) = this
 
-// TODO
+fun Uri.getAudio(context: Context, conversionShape: Shape? = null): ByteArray? {
+    val res = context.contentResolver
+        .openInputStream(this)
+        ?.use { it.readBytes() }
+    return if (conversionShape != null)
+        res?.compress(conversionShape)
+    else res
+}
+
 @Composable
 fun MXTComposedView(
     extensionName: String,
@@ -59,7 +71,11 @@ fun MXTComposedView(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.run {
-            val img = getImage(ctx)
+            val shape = manifest
+                ?.inputs
+                ?.find { it.name == receivingBindingKey }
+                ?.shape
+            val img = getImage(ctx, shape)
             img?.let { bindings[receivingBindingKey ?: return@let] = it }
         }
     }
@@ -68,7 +84,11 @@ fun MXTComposedView(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.run {
-            val audio = getAudio(ctx)
+            val shape = manifest
+                ?.inputs
+                ?.find { it.name == receivingBindingKey }
+                ?.shape
+            val audio = getAudio(ctx, shape)
             audio?.let { bindings[receivingBindingKey ?: return@let] = it }
         }
     }
