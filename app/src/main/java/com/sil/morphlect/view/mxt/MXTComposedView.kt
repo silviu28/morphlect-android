@@ -36,6 +36,7 @@ import com.sil.mxtengine.data.MXTManifest
 import com.sil.mxtengine.data.Shape
 import kotlin.collections.forEach
 import androidx.core.graphics.scale
+import com.sil.morphlect.ml._ModelLoader
 
 fun Uri.getImage(context: Context, conversionShape: Shape? = null): Bitmap? {
     val res = BitmapFactory.decodeStream(context.contentResolver.openInputStream(this))
@@ -65,6 +66,7 @@ fun MXTComposedView(
 
     var manifest by remember { mutableStateOf<MXTManifest?>(null) }
     var receivingBindingKey by remember { mutableStateOf<String?>(null) }
+    var loader by remember { mutableStateOf<_ModelLoader?>(null) }
     val bindings = remember { mutableStateMapOf<String, Any?>() }
 
     val imagePickLauncher = rememberLauncherForActivityResult(
@@ -98,6 +100,13 @@ fun MXTComposedView(
         manifest?.run {
             ui.filter { it.parameterBindingRef != null }
               .forEach { bindings[it.parameterBindingRef!!] = null }
+
+            loader = _ModelLoader.Builder()
+                .named(name)
+                .withInputs(inputs)
+                .withOutputs(outputs)
+                .build()
+                .apply { initialize(ctx) }
         }
     }
 
@@ -115,7 +124,9 @@ fun MXTComposedView(
             Text(manifest.description)
             manifest.ui.forEach { component ->
                 when (component.type) {
-                    ComposerElementType.RunButton -> TextButton(onClick = onRun) {
+                    ComposerElementType.RunButton -> TextButton(onClick = {
+                        loader?.run { infer(bindings) }
+                    }) {
                         Text("run inference")
                     }
 
