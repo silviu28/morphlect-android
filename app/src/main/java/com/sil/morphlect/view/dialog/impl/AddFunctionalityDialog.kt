@@ -20,7 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.sil.morphlect.repository.ModelsRepository
+import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.view.dialog.DialogScaffold
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,14 +29,14 @@ fun AddFunctionalityDialog(
     onDismissRequest: () -> Unit,
 ) {
     val ctx = LocalContext.current
-    val modelsRepository = ModelsRepository(ctx)
+    val extensionsRepository = ExtensionsRepository(ctx)
 
     var dropdownExpanded by remember { mutableStateOf(false) }
     var modelNames by remember { mutableStateOf<List<String>>(listOf()) }
     var selectedModel by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        modelNames = modelsRepository.readContents()
+        modelNames = extensionsRepository.readExtensionNames()
     }
 
     DialogScaffold(

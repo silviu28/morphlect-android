@@ -64,7 +64,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -98,7 +97,7 @@ import com.sil.morphlect.data.Preset
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.objectDetector
-import com.sil.morphlect.repository.ModelsRepository
+import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
@@ -149,7 +148,7 @@ fun CameraMode(
     analyzerFeedFlow: MutableSharedFlow<String>,
     onCaptureConfirm: (Uri) -> Unit,
     presetsRepository: PresetsRepository,
-    modelsRepository: ModelsRepository,
+    extensionsRepository: ExtensionsRepository,
 ) {
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -166,7 +165,7 @@ fun CameraMode(
 
     LaunchedEffect(Unit) {
         presets = presetsRepository.load()
-        models = modelsRepository.readContents()
+        models = extensionsRepository.readExtensionNames()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(

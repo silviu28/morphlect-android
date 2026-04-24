@@ -18,6 +18,7 @@ import java.io.File
 */
 object WebHelper {
     private val http by lazy { OkHttpClient() }
+    var providerUrl = WebConstants.SERVER_BASE
 
 /**
  * retrieve a page of model information from the server.
@@ -28,7 +29,7 @@ object WebHelper {
         page: Int = 0,
     ): List<ModelInfoDTO> = withContext(Dispatchers.IO) {
         val url = StringBuilder()
-            .append("${WebConstants.SERVER_BASE}/models?")
+            .append("$providerUrl/models?")
             .append(if (!query.isNullOrEmpty()) "query=$query&" else "")
             .append("limit=$limit&page=$page")
             .toString()
@@ -61,7 +62,7 @@ object WebHelper {
 
     // TODO might be used in the future?
     suspend fun fetchOneModelData(id: Int): ModelInfoDTO? = withContext(Dispatchers.IO) {
-        val url = "${WebConstants.SERVER_BASE}/models/$id"
+        val url = "$providerUrl/models/$id"
         val request = Request.Builder()
             .url(url)
             .build()
@@ -86,7 +87,7 @@ object WebHelper {
     }
 
     suspend fun downloadModel(id: Int, context: Context, name: String): File? = withContext(Dispatchers.IO) {
-        val url = "${WebConstants.SERVER_BASE}/models/$id/download"
+        val url = "$providerUrl/models/$id/download"
         val request = Request.Builder()
             .url(url)
             .build()
@@ -95,7 +96,7 @@ object WebHelper {
             if (!response.isSuccessful)
                 return@withContext null
 
-            val file = File(context.filesDir.toString() + "/models", "$name.tflite")
+            val file = File(context.filesDir.toString() + "/models", "$name.mxt")
             file.parentFile?.mkdirs()
 
             response.body?.run {
