@@ -4,14 +4,17 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -28,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +42,7 @@ import com.sil.mxtengine.data.Shape
 import kotlin.collections.forEach
 import androidx.core.graphics.scale
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
+import com.sil.morphlect.viewmodel.EditorViewModel
 
 fun Uri.getImage(context: Context, conversionShape: Shape? = null): Bitmap? {
     val res = BitmapFactory.decodeStream(context.contentResolver.openInputStream(this))
@@ -59,6 +65,7 @@ fun Uri.getAudio(context: Context, conversionShape: Shape? = null): ByteArray? {
 
 @Composable
 fun MXTComposedView(
+    editorViewModel: EditorViewModel,
     extensionName: String,
     onRun: () -> Unit
 ) {
@@ -69,6 +76,8 @@ fun MXTComposedView(
     var loader by remember { mutableStateOf<ExtensionModelLoader?>(null) }
     val bindings = remember { mutableStateMapOf<String, Any?>() }
     var inferenceResult by remember { mutableStateOf<Any?>(null) }
+
+    val allFieldsCompleted = { !bindings.containsValue(null) }
 
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -111,8 +120,7 @@ fun MXTComposedView(
         }
     }
 
-    // crazy inference kotlin....
-    manifest?.let { manifest ->
+    manifest?.let { mnfst ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -121,13 +129,26 @@ fun MXTComposedView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(manifest.name)
-            Text(manifest.description)
-            manifest.ui.forEach { component ->
+            Text(mnfst.name)
+            Text(mnfst.description)
+
+            editorViewModel.previewBitmap?.asImageBitmap()?.let {
+                Image(
+                    bitmap = it,
+                    contentDescription = "preview",
+                    modifier = Modifier.size(300.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            mnfst.ui.forEach { component ->
                 when (component.type) {
                     ComposerElementType.RunButton -> TextButton(onClick = {
                         loader?.run {
-                            inferenceResult = infer(bindings)
+                            if (allFieldsCompleted())
+                                inferenceResult = infer(bindings)
+                            else
+                                Toast.makeText(ctx, "Complete all inputs!", Toast.LENGTH_SHORT).show()
                         }
                     }) {
                         Text("run inference")
@@ -172,6 +193,7 @@ fun MXTComposedView(
                     }
                 }
             }
+
             inferenceResult?.let {
                 when (it) {
                     is Map<*, *> -> Text(

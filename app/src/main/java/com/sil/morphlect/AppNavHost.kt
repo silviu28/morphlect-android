@@ -103,7 +103,11 @@ fun AppNavHost() {
             })
         ) { backStackEntry ->
             val extensionName = backStackEntry.arguments?.getString("extensionName") ?: throw Exception()
-            MXTComposedView(extensionName, { })
+            MXTComposedView(
+                editorViewModel,
+                extensionName,
+                onRun = { },
+            )
         }
     }
 }
