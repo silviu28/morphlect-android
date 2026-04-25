@@ -44,23 +44,24 @@ fun PickImage(navController: NavController, editorViewModel: EditorViewModel) {
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = null,
-                        modifier = Modifier.size(100.dp)
-                    )
-                    Text(
-                        text = "no image",
-                        fontSize = 24.sp
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-                    TextButton(onClick = { imagePickLauncher.launch("image/*") }) {
-                        Text("pick image", fontSize = 18.sp)
-                    }
-                    TextButton(onClick = { navController.navigate("camera") }) {
-                        Text("camera mode", fontSize = 18.sp)
-                    }
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = null,
+                    modifier = Modifier.size(100.dp)
+                )
+                Text(
+                    text = "no image",
+                    fontSize = 24.sp
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                TextButton(onClick = { imagePickLauncher.launch("image/*") }) {
+                    Text("pick image", fontSize = 18.sp)
+                }
+                TextButton(onClick = { navController.navigate("camera") }) {
+                    Text("camera mode", fontSize = 18.sp)
+                }
+                TextButton(onClick = { navController.navigate("model-download") }) {
+                    Text("manage extensions", fontSize = 18.sp)
                 }
             }
         }

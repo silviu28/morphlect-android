@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
@@ -43,7 +44,7 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
     override var undoStack = mutableStateListOf<EditorCommand>()
     override var redoStack = mutableStateListOf<EditorCommand>()
 
-    lateinit var originalMat: Mat
+    var originalMat by mutableStateOf<Mat?>(null)
 
     private val layerManager = LayerManager(mutableStateListOf())
     val layers by derivedStateOf {
@@ -218,9 +219,9 @@ class EditorViewModel : ViewModel(), EditorCommandManager {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
             originalMat = FormatConverters.bitmapToMat(bitmap)
 
-            layerManager.addLayer(EditorLayer(originalMat))
+            layerManager.addLayer(EditorLayer(originalMat!!))
 
-            val initialBitmap = FormatConverters.matToBitmap(originalMat)
+            val initialBitmap = FormatConverters.matToBitmap(originalMat!!)
             withContext(Dispatchers.Main) {
                 processedBitmap = initialBitmap
                 previewBitmap = initialBitmap

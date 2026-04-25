@@ -13,10 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -40,26 +42,52 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.sil.morphlect.dto.ModelInfoDTO
 import com.sil.morphlect.logic.WebHelper
-import com.sil.morphlect.repository.ModelsRepository
+import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
+import com.sil.morphlect.view.dialog.DialogScaffold
 import kotlinx.coroutines.launch
 
 @Composable
 fun ModelManager(navController: NavHostController) {
     var onDownloads by remember { mutableStateOf(false) }
+    var providerUrl by remember { mutableStateOf(WebHelper.providerUrl) }
+    var showProviderSwitch by remember { mutableStateOf(false) }
     var modelInfo by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
     var query by remember { mutableStateOf("") }
     var installed by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
 
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
-    val modelsRepository = ModelsRepository(ctx)
+    val extensionsRepository = ExtensionsRepository(ctx)
 
     LaunchedEffect(Unit) {
         modelInfo = WebHelper.fetchModelData()
-        installed = modelsRepository.readContents().map {
+        installed = extensionsRepository.readExtensionNames().map {
             ModelInfoDTO(0, it, "", 0)
+        }
+    }
+
+    if (showProviderSwitch) {
+        DialogScaffold(
+            title = "switch extension provider",
+            icon = Icons.Default.Settings,
+            onDismissRequest = {
+                showProviderSwitch = false
+                providerUrl = WebHelper.providerUrl
+            }) {
+                OutlinedTextField(
+                    value = providerUrl,
+                    onValueChange = { providerUrl = it },
+                    label = { Text("provider url") },
+                )
+                IconButton(onClick = {
+                    showProviderSwitch = false
+                    WebHelper.providerUrl = providerUrl
+                }) {
+                    Icon(Icons.Default.Check, contentDescription = "apply provider")
+                }
+                Text("make sure you trust the provider that you're switching to!")
         }
     }
 
@@ -133,9 +161,9 @@ fun ModelManager(navController: NavHostController) {
                                 dto,
                                 onRemove = {
                                     scope.launch {
-                                        modelsRepository.delete(dto.name)
+                                        extensionsRepository.delete(dto.name)
                                             .also {
-                                                installed = modelsRepository.readContents().map {
+                                                installed = extensionsRepository.readExtensionNames().map {
                                                     ModelInfoDTO(0, it, "", 0)
                                                 }
                                             }
@@ -157,6 +185,9 @@ fun ModelManager(navController: NavHostController) {
                     TextButton(onClick = { onDownloads = false }) {
                         Text("view installed")
                     }
+                }
+                TextButton(onClick = { showProviderSwitch = true }) {
+                    Text("switch provider...")
                 }
             }
         }

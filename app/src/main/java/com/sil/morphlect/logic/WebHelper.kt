@@ -5,19 +5,25 @@ import android.util.Log
 import com.sil.morphlect.BuildConfig
 import com.sil.morphlect.constant.WebConstants
 import com.sil.morphlect.dto.ModelInfoDTO
+import com.sil.morphlect.view.mxt.MXTManifestDTO
+import com.sil.mxtengine.data.MXTManifest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import net.mamoe.yamlkt.Yaml
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.util.zip.ZipInputStream
 
 /**
  * contains helper methods for working with server IO.
 */
 object WebHelper {
     private val http by lazy { OkHttpClient() }
+    var providerUrl = WebConstants.SERVER_BASE
 
 /**
  * retrieve a page of model information from the server.
@@ -28,7 +34,7 @@ object WebHelper {
         page: Int = 0,
     ): List<ModelInfoDTO> = withContext(Dispatchers.IO) {
         val url = StringBuilder()
-            .append("${WebConstants.SERVER_BASE}/models?")
+            .append("$providerUrl/models?")
             .append(if (!query.isNullOrEmpty()) "query=$query&" else "")
             .append("limit=$limit&page=$page")
             .toString()
@@ -61,7 +67,7 @@ object WebHelper {
 
     // TODO might be used in the future?
     suspend fun fetchOneModelData(id: Int): ModelInfoDTO? = withContext(Dispatchers.IO) {
-        val url = "${WebConstants.SERVER_BASE}/models/$id"
+        val url = "$providerUrl/models/$id"
         val request = Request.Builder()
             .url(url)
             .build()
@@ -86,27 +92,38 @@ object WebHelper {
     }
 
     suspend fun downloadModel(id: Int, context: Context, name: String): File? = withContext(Dispatchers.IO) {
-        val url = "${WebConstants.SERVER_BASE}/models/$id/download"
+        val url = "$providerUrl/models/$id/download"
         val request = Request.Builder()
             .url(url)
             .build()
         try {
+            // receive
             val response = http.newCall(request).execute()
             if (!response.isSuccessful)
                 return@withContext null
 
-            val file = File(context.filesDir.toString() + "/models", "$name.tflite")
-            file.parentFile?.mkdirs()
-
-            response.body?.run {
-                byteStream().use { input ->
-                    file.outputStream().use {
-                        input.copyTo(it)
-                    }
-                }
+            // download
+            val mxtBundle = File(context.cacheDir, "$name.mxt")
+            response.body?.byteStream()?.use { input ->
+                mxtBundle.outputStream().use { input.copyTo(it) }
             } ?: return@withContext null
 
-            return@withContext file
+            // unzip
+            val destination = File(context.filesDir, "models/$name")
+            destination.mkdirs()
+
+            ZipInputStream(mxtBundle.inputStream()).use { mxt ->
+                var entry = mxt.nextEntry
+                while (entry != null) {
+                    File(destination, entry.name).outputStream()
+                        .use { mxt.copyTo(it) }
+                    entry = mxt.nextEntry
+                }
+            }
+
+            // dispose and return
+            mxtBundle.delete()
+            return@withContext destination
         } catch (e: Exception) {
             Log.e("Model download", "Unable to download model - $e")
             return@withContext null

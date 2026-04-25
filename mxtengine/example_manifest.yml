@@ -1,0 +1,29 @@
+name: AlteredMobileNetV3
+description: "A mobile-friendly ML model that allows analysis of the composition of an image."
+
+inputs:
+  - name: "image"
+    type: Image
+    shape: [225, 225, 3]
+
+outputs:
+  - name: "out_text"
+    type: Text
+    shape: [200]
+
+  - name: "effect"
+    type: FilterParams
+    shape: [0]
+
+ui:
+  - type: ImageUpload
+    label: "upload image"
+    parameterBindingRef: "image"
+  - type: TextInput
+    label: "what should i think of this image?"
+    parameterBindingRef: "prompt"
+  - type: RunButton
+    label: "run inference"
+
+after:
+  applyResult: true

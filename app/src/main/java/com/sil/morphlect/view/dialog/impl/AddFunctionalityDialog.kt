@@ -20,8 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.sil.morphlect.repository.ModelsRepository
+import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.view.dialog.DialogScaffold
+import com.sil.morphlect.view.mxt.loadExtension
+
+//import com.sil.morphlect.view.mxt.loadExtension
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,14 +32,14 @@ fun AddFunctionalityDialog(
     onDismissRequest: () -> Unit,
 ) {
     val ctx = LocalContext.current
-    val modelsRepository = ModelsRepository(ctx)
+    val extensionsRepository = ExtensionsRepository(ctx)
 
     var dropdownExpanded by remember { mutableStateOf(false) }
     var modelNames by remember { mutableStateOf<List<String>>(listOf()) }
     var selectedModel by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        modelNames = modelsRepository.readContents()
+        modelNames = extensionsRepository.readExtensionNames()
     }
 
     DialogScaffold(
@@ -50,7 +53,7 @@ fun AddFunctionalityDialog(
         ) {
             OutlinedTextField(
                 value = selectedModel ?: "select a model",
-                onValueChange = { },
+                onValueChange = { selectedModel = it },
                 readOnly = true,
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
@@ -83,7 +86,7 @@ fun AddFunctionalityDialog(
                 Text("cancel")
             }
             TextButton(
-                onClick = { }
+                onClick = { /*selectedModel?.run { loadExtension(ctx, this) }*/ }
             ) {
                 Text("add")
             }
