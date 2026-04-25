@@ -31,7 +31,7 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 @Composable
 fun ImageComparison(vm: EditorViewModel, navController: NavController) {
     var dividerRatio by remember { mutableStateOf(.5) }
-    val original = FormatConverters.matToBitmap(vm.originalMat)
+    val original = FormatConverters.matToBitmap(vm.originalMat!!)
     val edited = vm.layers
         .reduce { allMerge, layer -> allMerge.mergeWith(layer) }
         .visual

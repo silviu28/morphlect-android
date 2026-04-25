@@ -18,10 +18,10 @@ outputs:
 ui:
   - type: ImageUpload
     label: "upload image"
-    binding: "image"
+    parameterBindingRef: "image"
   - type: TextInput
     label: "what should i think of this image?"
-    binding: prompt
+    parameterBindingRef: "prompt"
   - type: RunButton
     label: "run inference"
 

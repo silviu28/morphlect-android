@@ -9,5 +9,5 @@ data class MXTManifest(
     val inputs: List<ModelInteractor>,
     val outputs: List<ModelInteractor>,
     val ui: List<MXTComposerElement>,
-    val after: MXTAfterArgs
+    val after: MXTAfterArgs,
 )

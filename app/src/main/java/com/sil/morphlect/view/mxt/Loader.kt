@@ -1,7 +1,6 @@
 package com.sil.morphlect.view.mxt
 
 import android.content.Context
-import android.net.Uri
 import com.sil.mxtengine.data.MXTManifest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,9 +16,8 @@ data class MXTManifestDTO(
 suspend fun loadExtension(context: Context, extensionName: String): MXTManifestDTO
     = withContext(Dispatchers.IO) {
     val cd = File(context.filesDir, "models/$extensionName")
-
     val manifest = Yaml.decodeFromString<MXTManifest>(
         File(cd, "extension_manifest.yml").readText()
     )
-    MXTManifestDTO(manifest, "$cd/${manifest}")
+    MXTManifestDTO(manifest, "$cd/${manifest.name}")
 }

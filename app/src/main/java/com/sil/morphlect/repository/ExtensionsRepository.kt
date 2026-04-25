@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.tensorflow.lite.support.common.FileUtil
 import java.io.File
 
 class ExtensionsRepository(private val context: Context) {
@@ -28,8 +27,7 @@ class ExtensionsRepository(private val context: Context) {
         return@withContext try {
             for (file in dir.listFiles()) {
                 if (file.name.equals(name)) {
-                    file.delete()
-                    true
+                    file.deleteRecursively()
                 }
             }
             false
