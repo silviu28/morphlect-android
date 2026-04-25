@@ -119,9 +119,9 @@ class _ModelLoader (
         val fmtOutputs = mutableMapOf<Int, Any>()
         outputs.forEachIndexed { index, outputSpec ->
             fmtOutputs[index] = when (outputSpec.type) {
-                InteractorType.FilterParams -> FloatArray(Output.entries.size)
-                InteractorType.Text -> FloatArray(outputSpec.shape[0])
-                else -> FloatArray(1)
+                InteractorType.FilterParams -> Array(1) { FloatArray(Output.entries.size) }
+                InteractorType.Text -> Array(1) { FloatArray(outputSpec.shape[0]) }
+                else -> Array(1) { FloatArray(1) }
             }
         }
 
@@ -133,7 +133,7 @@ class _ModelLoader (
         }
 
         // map results back to Output enum
-        val resultBuffer = fmtOutputs[0] as FloatArray
+        val resultBuffer = (fmtOutputs[0] as Array<FloatArray>)[0]
         return Output.entries.associate { it to resultBuffer[it.ordinal] }
     }
 
@@ -142,10 +142,3 @@ class _ModelLoader (
         interpreter = null
     }
 }
-
-//val x = _ModelLoader.Builder()
-//    .withThreads(4)
-//    .withInputs(listOf())
-//    .withOutputs(listOf())
-//    .named("AlteredMobileNetV3")
-//    .build()

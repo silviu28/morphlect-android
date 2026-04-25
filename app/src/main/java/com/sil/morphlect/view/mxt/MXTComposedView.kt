@@ -68,6 +68,7 @@ fun MXTComposedView(
     var receivingBindingKey by remember { mutableStateOf<String?>(null) }
     var loader by remember { mutableStateOf<_ModelLoader?>(null) }
     val bindings = remember { mutableStateMapOf<String, Any?>() }
+    var inferenceResult by remember { mutableStateOf<Any?>(null) }
 
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -125,7 +126,9 @@ fun MXTComposedView(
             manifest.ui.forEach { component ->
                 when (component.type) {
                     ComposerElementType.RunButton -> TextButton(onClick = {
-                        loader?.run { infer(bindings) }
+                        loader?.run {
+                            inferenceResult = infer(bindings)
+                        }
                     }) {
                         Text("run inference")
                     }
@@ -167,6 +170,15 @@ fun MXTComposedView(
                             )
                         }
                     }
+                }
+            }
+            inferenceResult?.let {
+                when (it) {
+                    is Map<*, *> -> Text(
+                        (it as Map<*, *>).map { (k, v) -> "$k: $v" }
+                            .joinToString(",\n")
+                    )
+                    else -> it.toString()
                 }
             }
         }
