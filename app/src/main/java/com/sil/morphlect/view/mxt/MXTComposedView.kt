@@ -36,7 +36,7 @@ import com.sil.mxtengine.data.MXTManifest
 import com.sil.mxtengine.data.Shape
 import kotlin.collections.forEach
 import androidx.core.graphics.scale
-import com.sil.morphlect.ml._ModelLoader
+import com.sil.morphlect.ml.impl.ExtensionModelLoader
 
 fun Uri.getImage(context: Context, conversionShape: Shape? = null): Bitmap? {
     val res = BitmapFactory.decodeStream(context.contentResolver.openInputStream(this))
@@ -66,7 +66,7 @@ fun MXTComposedView(
 
     var manifest by remember { mutableStateOf<MXTManifest?>(null) }
     var receivingBindingKey by remember { mutableStateOf<String?>(null) }
-    var loader by remember { mutableStateOf<_ModelLoader?>(null) }
+    var loader by remember { mutableStateOf<ExtensionModelLoader?>(null) }
     val bindings = remember { mutableStateMapOf<String, Any?>() }
     var inferenceResult by remember { mutableStateOf<Any?>(null) }
 
@@ -102,7 +102,7 @@ fun MXTComposedView(
             ui.filter { it.parameterBindingRef != null }
               .forEach { bindings[it.parameterBindingRef!!] = null }
 
-            loader = _ModelLoader.Builder()
+            loader = ExtensionModelLoader.Builder()
                 .named(name)
                 .withInputs(inputs)
                 .withOutputs(outputs)

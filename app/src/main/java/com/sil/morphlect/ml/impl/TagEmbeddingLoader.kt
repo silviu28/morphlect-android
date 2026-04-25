@@ -4,10 +4,10 @@ import android.content.Context
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.ml.ModelLoader
 
-class TagEmbeddingLoader(private val context: Context) : ModelLoader<List<String>, Map<Output, Double>> {
-    override val modelName = "tag_embedding.tflite"
+class TagEmbeddingLoader: ModelLoader<List<String>, Map<Output, Double>> {
+    override val name = "tag_embedding.tflite"
 
-    override fun initialize(): Boolean {
+    override fun initialize(context: Context): Boolean {
         TODO("Not yet implemented")
     }
 
@@ -15,7 +15,7 @@ class TagEmbeddingLoader(private val context: Context) : ModelLoader<List<String
         TODO("Not yet implemented")
     }
 
-    override fun dispose() {
+    override fun close() {
         TODO("Not yet implemented")
     }
 }

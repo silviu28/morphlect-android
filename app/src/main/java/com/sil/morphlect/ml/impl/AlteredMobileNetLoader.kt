@@ -10,12 +10,11 @@ import com.sil.morphlect.exception.ModelLoaderException
 import com.sil.morphlect.ml.ModelLoader
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
-import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class AlteredMobileNetLoader(private val context: Context) : ModelLoader<Bitmap, Map<Output, Float>> {
+class AlteredMobileNetLoader : ModelLoader<Bitmap, Map<Output, Float>> {
     companion object {
         private const val IMAGE_SIZE = 224
         private const val CHANNELS = 3
@@ -23,12 +22,12 @@ class AlteredMobileNetLoader(private val context: Context) : ModelLoader<Bitmap,
         private const val MODEL_NAME = "altered_mobilenet.tflite"
     }
 
-    override val modelName = "altered_mobilenet.tflite"
+    override val name = "altered_mobilenet.tflite"
 
-    override fun initialize(): Boolean {
+    override fun initialize(context: Context): Boolean {
         return try {
             val options = Interpreter.Options()
-            val model = FileUtil.loadMappedFile(context, modelName)
+            val model = FileUtil.loadMappedFile(context, name)
             interpreter = Interpreter(model, options)
             true
         } catch (e: IOException) {
@@ -59,8 +58,7 @@ class AlteredMobileNetLoader(private val context: Context) : ModelLoader<Bitmap,
 
     override fun infer(bitmap: Bitmap): Map<Output, Float> {
         if (interpreter == null) {
-            if (!initialize())
-                throw ModelLoaderException("Unable to load the model with given properties.")
+            throw ModelLoaderException("Unable to load the model with given properties.")
         }
 
         val input = bitmapToByteBuffer(bitmap)
@@ -71,7 +69,7 @@ class AlteredMobileNetLoader(private val context: Context) : ModelLoader<Bitmap,
         return Output.entries.associate { it to actualOutput[it.ordinal] }
     }
 
-    override fun dispose() {
+    override fun close() {
         interpreter?.close()
         interpreter = null
     }

@@ -1,4 +1,4 @@
-package com.sil.morphlect.ml
+package com.sil.morphlect.ml.impl
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.core.graphics.get
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.exception.ModelLoaderException
+import com.sil.morphlect.ml.ModelLoader
 import com.sil.mxtengine.data.InteractorType
 import com.sil.mxtengine.data.ModelInteractor
 import org.tensorflow.lite.Interpreter
@@ -16,12 +17,14 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class _ModelLoader (
-    val name: String,
+typealias BindingMap = Map<String, Any?>
+
+class ExtensionModelLoader (
+    override val name: String,
     val inputs: List<ModelInteractor>,
     val outputs: List<ModelInteractor>,
     val threadCount: Int = 4,
-) : AutoCloseable {
+) : ModelLoader<BindingMap, Map<Output, Float>> {
     class Builder {
         private var name: String = "none"
         private var inputs: List<ModelInteractor> = listOf()
@@ -48,12 +51,12 @@ class _ModelLoader (
             return this
         }
 
-        fun build(): _ModelLoader {
-            return _ModelLoader(name, inputs, outputs, threadCount)
+        fun build(): ExtensionModelLoader {
+            return ExtensionModelLoader(name, inputs, outputs, threadCount)
         }
     }
 
-    fun initialize(context: Context): Boolean {
+    override fun initialize(context: Context): Boolean {
         return try {
             val options = Interpreter.Options().apply {
                 addDelegate(NnApiDelegate())
@@ -88,7 +91,7 @@ class _ModelLoader (
         return buffer
     }
 
-    fun infer(inputVals: Map<String, Any?>): Map<Output, Float> {
+    override fun infer(inputVals: BindingMap): Map<Output, Float> {
         if (interpreter == null) {
             throw ModelLoaderException("Unable to load the model with given properties.")
         }

@@ -8,7 +8,7 @@ import okio.IOException
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
 
-class RatingMaximizerLoader(private val context: Context) : ModelLoader<Map<Output, Double>, Double> {
+class RatingMaximizerLoader : ModelLoader<Map<Output, Double>, Double> {
     companion object {
         private const val IMAGE_SIZE = 224
         private const val CHANNELS = 3
@@ -16,14 +16,14 @@ class RatingMaximizerLoader(private val context: Context) : ModelLoader<Map<Outp
         private const val MODEL_NAME = "ratingmaximizer.tflite"
     }
 
-    override val modelName = "ratingmaximizer.tflite"
+    override val name = "ratingmaximizer.tflite"
 
     private var interpreter: Interpreter? = null
 
-    override fun initialize(): Boolean {
+    override fun initialize(context: Context): Boolean {
         return try {
             val options = Interpreter.Options()
-            val model = FileUtil.loadMappedFile(context, modelName)
+            val model = FileUtil.loadMappedFile(context, name)
             interpreter = Interpreter(model, options)
             true
         } catch (e: IOException) {
@@ -34,8 +34,7 @@ class RatingMaximizerLoader(private val context: Context) : ModelLoader<Map<Outp
 
     override fun infer(input: Map<Output, Double>): Double {
         if (interpreter == null) {
-            if (!initialize())
-                throw ModelLoaderException("Unable to load the model with given properties.")
+            throw ModelLoaderException("Unable to load the model with given properties.")
         }
 
         val output = arrayOf(doubleArrayOf(0.0))
@@ -44,7 +43,7 @@ class RatingMaximizerLoader(private val context: Context) : ModelLoader<Map<Outp
         return output[0][0]
     }
 
-    override fun dispose() {
+    override fun close() {
         interpreter?.close()
         interpreter = null
     }

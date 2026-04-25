@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ImageEvaluation(vm: EditorViewModel, navController: NavController) {
     val ctx = LocalContext.current.applicationContext
-    val loader = remember { AlteredMobileNetLoader(ctx) }
+    val loader = remember { AlteredMobileNetLoader().apply { initialize(ctx) } }
     var values by remember { mutableStateOf<Map<Output, Float>>(mapOf()) }
     var infoText by remember { mutableStateOf("processing...") }
     var keepParamsDialogActive by remember { mutableStateOf(false) }
