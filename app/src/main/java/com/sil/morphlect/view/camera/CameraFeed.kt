@@ -493,14 +493,21 @@ fun CameraFeed(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            Text(
-                text = lastFeedMessage,
+            Column(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(20.dp),
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
-            )
+                    .width(200.dp)
+                    .padding(20.dp)
+                    .padding(top = 30.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = lastFeedMessage,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                HorizontalDivider()
+                Text("running ${imageOnlyLoadedModels.size} analyzers.")
+            }
         }
     }
 }
