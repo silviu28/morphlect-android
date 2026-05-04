@@ -10,7 +10,6 @@ import androidx.navigation.navArgument
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
-import com.sil.morphlect.view.CameraMode
 import com.sil.morphlect.view.Editor
 import com.sil.morphlect.view.Frontpage
 import com.sil.morphlect.view.ImageComparison
@@ -22,6 +21,7 @@ import com.sil.morphlect.view.Settings
 import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.view.OnboardingCarousel
+import com.sil.morphlect.view.camera.CameraMode
 import com.sil.morphlect.view.mxt.MXTComposedView
 import com.sil.morphlect.viewmodel.CameraModeViewModel
 import com.sil.morphlect.viewmodel.EditorViewModel

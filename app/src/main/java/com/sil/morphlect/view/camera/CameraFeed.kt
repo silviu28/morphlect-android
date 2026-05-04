@@ -1,27 +1,18 @@
-package com.sil.morphlect.view
+package com.sil.morphlect.view.camera
 
-import android.Manifest
-import android.content.ContentValues
+import com.sil.morphlect.view.PresetPreview
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.net.Uri
-import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
 import android.view.MotionEvent
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -56,37 +47,30 @@ import androidx.compose.material.icons.filled.AddBox
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.CropSquare
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Filter
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.TextFormat
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -94,7 +78,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavController
 import com.google.mlkit.vision.common.InputImage
 import com.sil.morphlect.R
 import com.sil.morphlect.data.EditorLayer
@@ -102,151 +85,18 @@ import com.sil.morphlect.data.Preset
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.objectDetector
-import com.sil.morphlect.repository.ExtensionsRepository
-import com.sil.morphlect.repository.PresetsRepository
-import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
-import com.sil.morphlect.viewmodel.CameraModeViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.opencv.core.Mat
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
 
-private suspend fun saveImage(context: Context, uri: Uri) {
-    withContext(Dispatchers.IO) {
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "morphlect_${System.currentTimeMillis()}.jpg")
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-            put(MediaStore.Images.Media.IS_PENDING, 1)
-        }
-
-        val resolver = context.contentResolver
-        val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-        imageUri?.let {
-            resolver.openOutputStream(it)?.use { output ->
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    input.copyTo(output)
-                }
-            }
-            contentValues.clear()
-            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
-            resolver.update(it, contentValues, null, null)
-        }
-
-    }
-
-    Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_LONG).show()
-}
-
 // TODO the camera mode should also receive the state of filter values in order to apply them to the camera feed.
-@Composable
-fun CameraMode(
-    navController: NavController,
-    vm: CameraModeViewModel,
-    analyzerFeedFlow: MutableSharedFlow<String>,
-    onCaptureConfirm: (Uri) -> Unit,
-    presetsRepository: PresetsRepository,
-    extensionsRepository: ExtensionsRepository,
-) {
-    val ctx = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val coroutineScope = rememberCoroutineScope()
-    var cameraPermissionGranted  by remember { mutableStateOf(
-        ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED
-    ) }
-    var cameraPermissionPrompted by remember { mutableStateOf(!cameraPermissionGranted) }
-    var capturedImageUri         by remember { mutableStateOf<Uri?>(null) }
-    var presets                  by remember { mutableStateOf<List<Preset>>(emptyList()) }
-    var models                   by remember { mutableStateOf<List<String>>(emptyList()) }
-
-
-    LaunchedEffect(Unit) {
-        presets = presetsRepository.load()
-        models = extensionsRepository.readExtensionNames()
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { permGranted -> cameraPermissionGranted = permGranted }
-
-    capturedImageUri?.let {
-        val img = FormatConverters.uriToBitmap(ctx, it)
-        DialogScaffold(
-            title = "capture",
-            onDismissRequest = { capturedImageUri = null },
-        ) {
-            Image(
-                bitmap = img.asImageBitmap(),
-                contentDescription = "captured image",
-                modifier = Modifier.size(300.dp),
-            )
-            Row {
-                TextButton(onClick = { capturedImageUri = null }) {
-                    Text("discard")
-                }
-                TextButton(onClick = {
-                    coroutineScope.launch {
-                        saveImage(ctx, it)
-                    }
-                }) {
-                    Text("save")
-                }
-                TextButton(onClick = { onCaptureConfirm(it) } ) {
-                    Text("go to editor")
-                }
-            }
-        }
-    }
-
-    if (!cameraPermissionGranted) {
-        DecoratedContainer(icon = Icons.Default.Error) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(50.dp),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text("cannot continue as camera permissions have not been given.")
-                Button(onClick = { navController.popBackStack() }) { Text("back") }
-            }
-        }
-        if (cameraPermissionPrompted) {
-            DialogScaffold(
-                title = "camera mode",
-                onDismissRequest = { cameraPermissionPrompted = false },
-                icon = Icons.Default.QuestionMark
-            ) {
-                Text("welcome to camera mode! please provide morphlect the permission to access your camera")
-                Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                    Text("give access to camera")
-                }
-            }
-        }
-    } else {
-        CameraFeed(
-            context = ctx,
-            lifecycleOwner = lifecycleOwner,
-            onImageCaptured = { imageUri -> capturedImageUri = imageUri },
-            onGoBack = { navController.popBackStack() },
-            analyzerFeedFlow,
-            presets,
-            models
-        )
-    }
-}
-
 @OptIn(ExperimentalGetImage::class)
 @Composable
-private fun CameraFeed(
+fun CameraFeed(
     context: Context,
     lifecycleOwner: LifecycleOwner,
     onImageCaptured: (Uri) -> Unit,
@@ -297,16 +147,11 @@ private fun CameraFeed(
                 }
                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-                 // section 1 - performs conversion to Cv::Mat
+                // section 1 - performs conversion to Cv::Mat
                 if (mediaImage.planes.size == 3) {
                     val mat = mediaImage.yuvToRgba()
                     currentFrame?.close()
                     currentFrame = EditorLayer(mat)
-                    try {
-                        Log.i("MAT", "Processed frame ${mat.hashCode()}")
-                    } finally {
-//                        mat.release()
-                    }
                 }
 
                 // section 2 - performs object detection through ObjectDetector instance
@@ -315,7 +160,7 @@ private fun CameraFeed(
                     .addOnSuccessListener { detectedObjects ->
                         imageWidth = imageProxy.width
                         imageHeight = imageProxy.height
-                        Log.i("CAMERA", "Detected ${detectedObjects.size} objects.")
+//                        Log.i("CAMERA", "Detected ${detectedObjects.size} objects.")
                         // take only the objects with high confidence
                         boundingBoxes = detectedObjects
                             .filter { it.labels.any { label -> label.confidence >= 0.5f } }
@@ -334,6 +179,7 @@ private fun CameraFeed(
     LaunchedEffect(analyzerFeedFlow) {
         analyzerFeedFlow.collect { lastFeedMessage = it }
     }
+
     LaunchedEffect(focusIndicatorPoint) {
         if (focusIndicatorPoint != null) {
             delay(900)
@@ -349,10 +195,10 @@ private fun CameraFeed(
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 models.forEach {
-                   Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                       Text(it)
-                       Switch(false, { })
-                   }
+                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(it)
+                        Switch(false, { })
+                    }
                 }
             }
         }
@@ -362,7 +208,7 @@ private fun CameraFeed(
         // the feed itself
         Box(
             modifier = Modifier
-                .fillMaxSize()
+//                .fillMaxSize()
                 .graphicsLayer { alpha = shutterAlpha }
                 .background(Color.Black)
         ) {
@@ -379,11 +225,11 @@ private fun CameraFeed(
 
                             val meteringPoint = meteringPointFactory.createPoint(event.x, event.y)
                             val focusMeteringAction = FocusMeteringAction.Builder(
-                                    meteringPoint,
-                            FocusMeteringAction.FLAG_AF or
-                                    FocusMeteringAction.FLAG_AE or
-                                    FocusMeteringAction.FLAG_AWB
-                                )
+                                meteringPoint,
+                                FocusMeteringAction.FLAG_AF or
+                                        FocusMeteringAction.FLAG_AE or
+                                        FocusMeteringAction.FLAG_AWB
+                            )
                                 .setAutoCancelDuration(3, TimeUnit.SECONDS)
                                 .build()
 
@@ -597,16 +443,6 @@ private fun CameraFeed(
     }
 }
 
-@Composable
-fun RuleOfThirdsGrid(modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val gridStroke = 1.dp.toPx()
-        drawLine(Color.White, Offset(size.width / 3, 0f), Offset(size.width / 3, size.height), gridStroke)
-        drawLine(Color.White, Offset(size.width * 2 / 3, 0f), Offset(size.width * 2 / 3, size.height), gridStroke)
-        drawLine(Color.White, Offset(0f, size.height / 3), Offset(size.width, size.height / 3), gridStroke)
-        drawLine(Color.White, Offset(0f, size.height * 2 / 3), Offset(size.width, size.height * 2 / 3), gridStroke)
-    }
-}
 
 @Preview
 @Composable
