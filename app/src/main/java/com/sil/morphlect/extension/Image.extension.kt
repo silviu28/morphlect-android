@@ -2,6 +2,7 @@ package com.sil.morphlect.extension
 
 import android.graphics.ImageFormat
 import android.media.Image
+import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
@@ -77,5 +78,7 @@ fun Image.yuvToRgba(): Mat {
             Imgproc.cvtColor(yuvMat, rgbaMat, Imgproc.COLOR_YUV2RGBA_I420, 4)
         }
     }
-    return rgbaMat
+    return rgbaMat.apply {
+        Core.rotate(rgbaMat, rgbaMat, Core.ROTATE_90_CLOCKWISE)
+    }
 }

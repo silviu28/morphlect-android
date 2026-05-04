@@ -20,6 +20,8 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -55,6 +57,7 @@ import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.CropSquare
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Filter
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -83,6 +86,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -93,6 +97,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.google.mlkit.vision.common.InputImage
 import com.sil.morphlect.R
+import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
@@ -108,6 +113,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.opencv.core.Mat
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
@@ -265,6 +271,7 @@ private fun CameraFeed(
     var showSliders        by remember { mutableStateOf(true) }
     var showClassification by remember { mutableStateOf(true) }
     var showModelsDialog   by remember { mutableStateOf(false) }
+    var applyFiltering     by remember { mutableStateOf(false) }
 
     var imageWidth         by remember { mutableStateOf(1) }
     var imageHeight        by remember { mutableStateOf(1) }
@@ -276,6 +283,7 @@ private fun CameraFeed(
         finishedListener = { if (it == 1f) isCapturing = false }
     )
     var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
+    var currentFrame by remember { mutableStateOf<EditorLayer?>(null) }
 
     val cameraController = remember {
         LifecycleCameraController(context).apply {
@@ -289,13 +297,15 @@ private fun CameraFeed(
                 }
                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-                // section 1 - performs conversion to Cv::Mat
+                 // section 1 - performs conversion to Cv::Mat
                 if (mediaImage.planes.size == 3) {
                     val mat = mediaImage.yuvToRgba()
+                    currentFrame?.close()
+                    currentFrame = EditorLayer(mat)
                     try {
                         Log.i("MAT", "Processed frame ${mat.hashCode()}")
                     } finally {
-                        mat.release()
+//                        mat.release()
                     }
                 }
 
@@ -385,6 +395,14 @@ private fun CameraFeed(
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+            if (applyFiltering)
+                currentFrame?.let {
+                    Image(
+                        bitmap = it.visual,
+                        contentDescription = "frame",
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
             // rule of thirds grid
             AnimatedVisibility(
@@ -434,6 +452,9 @@ private fun CameraFeed(
                     }
                     SettingsRow(Icons.Default.CropSquare) {
                         Switch(showClassification, onCheckedChange = { showClassification = it })
+                    }
+                    SettingsRow(Icons.Default.Filter) {
+                        Switch(checked = applyFiltering, onCheckedChange = { applyFiltering = it })
                     }
 
                     IconButton(
