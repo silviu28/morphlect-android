@@ -52,9 +52,11 @@ import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.TextFormat
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -139,13 +141,16 @@ fun CameraFeed(
     var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
     var currentFrame by remember { mutableStateOf<EditorLayer?>(null) }
     var reanalyzeTriggerKey by remember { mutableStateOf(false) }
+    var inferenceRefreshInterval by remember { mutableStateOf(2.seconds) }
+
+    val inferenceRefreshTimes = remember { listOf(1.seconds, 2.seconds, 4.seconds, 5.seconds) }
 
     // this signals models to reanalyze in a given interval
     LaunchedEffect(Unit) {
         analyzerFeedFlow.emit("awaiting output...")
         while (true) {
             reanalyzeTriggerKey = !reanalyzeTriggerKey
-            delay(2.seconds)
+            delay(inferenceRefreshInterval)
         }
     }
 
@@ -237,7 +242,25 @@ fun CameraFeed(
                 imageOnlyLoadedModels.forEach {
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(it.name)
+                        Spacer(Modifier.weight(1f))
                         Switch(false, { })
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Column {
+                    Text("inference refresh timeout")
+                    HorizontalDivider()
+                    inferenceRefreshTimes.forEach {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("$it")
+                            RadioButton(
+                                selected = inferenceRefreshInterval == it,
+                                onClick = { inferenceRefreshInterval = it },
+                            )
+                        }
                     }
                 }
             }

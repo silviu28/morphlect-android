@@ -121,14 +121,6 @@ fun CameraMode(
                     .build()
                     .apply { initialize(ctx) }
             }
-
-//        while (true) {
-//            analyzerFeedFlow.emit(".")
-//            delay(1.seconds)
-//            analyzerFeedFlow.emit("..")
-//            delay(1.seconds)
-//            analyzerFeedFlow.emit("...")
-//        }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
