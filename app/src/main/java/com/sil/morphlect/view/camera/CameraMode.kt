@@ -39,11 +39,14 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.dialog.DialogScaffold
+import com.sil.morphlect.view.mxt.loadExtension
 import com.sil.morphlect.viewmodel.CameraModeViewModel
+import com.sil.mxtengine.data.InteractorType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -99,18 +102,33 @@ fun CameraMode(
     var capturedImageUri         by remember { mutableStateOf<Uri?>(null) }
     var presets                  by remember { mutableStateOf<List<Preset>>(emptyList()) }
     var models                   by remember { mutableStateOf<List<String>>(emptyList()) }
-
+    var imageOnlyLoadedModels    by remember { mutableStateOf<List<ExtensionModelLoader>>(listOf()) }
 
     LaunchedEffect(Unit) {
         presets = presetsRepository.load()
         models = extensionsRepository.readExtensionNames()
-        while (true) {
-            analyzerFeedFlow.emit(".")
-            delay(1.seconds)
-            analyzerFeedFlow.emit("..")
-            delay(1.seconds)
-            analyzerFeedFlow.emit("...")
-        }
+
+        imageOnlyLoadedModels = models
+            .map { loadExtension(ctx, it).manifest }
+            .filter { manifest -> // here we want only the extensions that take in an image
+                manifest.inputs.firstOrNull { it.type != InteractorType.Image } == null
+            }
+            .map { // then construct them
+                ExtensionModelLoader.Builder()
+                    .named(it.name)
+                    .withInputs(it.inputs)
+                    .withOutputs(it.outputs)
+                    .build()
+                    .apply { initialize(ctx) }
+            }
+
+//        while (true) {
+//            analyzerFeedFlow.emit(".")
+//            delay(1.seconds)
+//            analyzerFeedFlow.emit("..")
+//            delay(1.seconds)
+//            analyzerFeedFlow.emit("...")
+//        }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -178,7 +196,7 @@ fun CameraMode(
             onGoBack = { navController.popBackStack() },
             analyzerFeedFlow,
             presets,
-            models
+            imageOnlyLoadedModels
         )
     }
 }

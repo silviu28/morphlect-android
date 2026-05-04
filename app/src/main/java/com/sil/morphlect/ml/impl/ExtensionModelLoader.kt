@@ -91,6 +91,7 @@ class ExtensionModelLoader (
         return buffer
     }
 
+    @Throws(ModelLoaderException::class, Exception::class)
     override fun infer(inputVals: BindingMap): Map<Output, Float> {
         if (interpreter == null) {
             throw ModelLoaderException("Unable to load the model with given properties.")

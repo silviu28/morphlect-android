@@ -68,6 +68,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -76,6 +77,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.scale
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
@@ -85,6 +87,7 @@ import com.sil.morphlect.data.Preset
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.objectDetector
+import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
 import kotlinx.coroutines.delay
@@ -92,6 +95,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.seconds
 
 // TODO the camera mode should also receive the state of filter values in order to apply them to the camera feed.
 @OptIn(ExperimentalGetImage::class)
@@ -103,7 +107,7 @@ fun CameraFeed(
     onGoBack: () -> Unit,
     analyzerFeedFlow: MutableSharedFlow<String>,
     presets: List<Preset>,
-    models: List<String>,
+    imageOnlyLoadedModels: List<ExtensionModelLoader>,
 ) {
     val presetDefaultImage = remember {
         FormatConverters.bitmapToMat(
@@ -134,7 +138,41 @@ fun CameraFeed(
     )
     var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
     var currentFrame by remember { mutableStateOf<EditorLayer?>(null) }
+    var reanalyzeTriggerKey by remember { mutableStateOf(false) }
 
+    // this signals models to reanalyze in a given interval
+    LaunchedEffect(Unit) {
+        analyzerFeedFlow.emit("awaiting output...")
+        while (true) {
+            reanalyzeTriggerKey = !reanalyzeTriggerKey
+            delay(2.seconds)
+        }
+    }
+
+    // this calls inference on all models and aggregates their output
+    LaunchedEffect(reanalyzeTriggerKey) {
+            try {
+                // analyze the current frame through all models and join their output
+                analyzerFeedFlow.emit(
+                    currentFrame?.let { frame ->
+                        imageOnlyLoadedModels.map { model ->
+                            model.infer(
+                                mapOf(
+                                    model.inputs[0].name to frame.visual
+                                        .asAndroidBitmap()
+                                        .scale(224, 224)
+                                )
+                            )
+                            .map { (k, v) -> "$k: ${v*100}" }
+                        }.joinToString("\n")
+                    } ?: return@LaunchedEffect
+                )
+            } catch (_: Exception) {
+                analyzerFeedFlow.emit(":(")
+            }
+    }
+
+    // this controls the camera and attaches the necessary analyzers (not the extensions!!)
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             bindToLifecycle(lifecycleOwner)
@@ -150,7 +188,7 @@ fun CameraFeed(
                 // section 1 - performs conversion to Cv::Mat
                 if (mediaImage.planes.size == 3) {
                     val mat = mediaImage.yuvToRgba()
-                    currentFrame?.close()
+//                    currentFrame?.close()
                     currentFrame = EditorLayer(mat)
                 }
 
@@ -176,10 +214,12 @@ fun CameraFeed(
         }
     }
 
+    // this collects the messages to be viewed on the screen
     LaunchedEffect(analyzerFeedFlow) {
         analyzerFeedFlow.collect { lastFeedMessage = it }
     }
 
+    // this is for the indicator that appears when tapping the screen
     LaunchedEffect(focusIndicatorPoint) {
         if (focusIndicatorPoint != null) {
             delay(900)
@@ -194,9 +234,9 @@ fun CameraFeed(
             icon = Icons.Default.Camera,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                models.forEach {
+                imageOnlyLoadedModels.forEach {
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(it)
+                        Text(it.name)
                         Switch(false, { })
                     }
                 }
@@ -208,7 +248,6 @@ fun CameraFeed(
         // the feed itself
         Box(
             modifier = Modifier
-//                .fillMaxSize()
                 .graphicsLayer { alpha = shutterAlpha }
                 .background(Color.Black)
         ) {
@@ -469,7 +508,7 @@ fun CameraFeedPreview() {
         onGoBack = { },
         analyzerFeedFlow = previewFeedFlow,
         presets = emptyList(),
-        models = emptyList(),
+        imageOnlyLoadedModels = emptyList(),
     )
 }
 
