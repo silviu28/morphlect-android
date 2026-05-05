@@ -9,8 +9,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -43,6 +45,7 @@ import com.sil.mxtengine.data.Shape
 import kotlin.collections.forEach
 import androidx.core.graphics.scale
 import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.ml.impl.Tensor3D
 import com.sil.morphlect.ml.impl.Tensor4D
@@ -122,6 +125,11 @@ fun MXTComposedView(
             ui.filter { it.parameterBindingRef != null }
               .forEach { bindings[it.parameterBindingRef!!] = null }
 
+            // todo - this should be changed, if the editor image is taken as 'image' then no interaction should be defined in manifest as it is inferred
+            editorViewModel.previewBitmap?.let {
+                bindings["image"] = it.scale(inputs[0].shape[0], inputs[0].shape[1], false)
+            }
+
             loader = ExtensionModelLoader.Builder()
                 .named(name)
                 .withInputs(inputs)
@@ -165,12 +173,13 @@ fun MXTComposedView(
                         Text("run inference")
                     }
 
-                    ComposerElementType.ImageUpload -> Button(onClick = {
-                        receivingBindingKey = component.parameterBindingRef
-                        imagePickLauncher.launch("image/*")
-                    }) {
-                        Text(component.label)
-                    }
+                    ComposerElementType.ImageUpload -> Spacer(Modifier) // todo obviously show an image upload, commented just to have the image bound with the editor image
+//                        Button(onClick = {
+//                            receivingBindingKey = component.parameterBindingRef
+//                            imagePickLauncher.launch("image/*")
+//                        }) {
+//                            Text(component.label)
+//                        }
 
                     ComposerElementType.TextInput -> OutlinedTextField(
                         value = (bindings[component.parameterBindingRef] as? String) ?: "",
@@ -213,20 +222,7 @@ fun MXTComposedView(
                     )
                     is Tensor4D -> {
                         // currently this is tailored for MiDaS, as i can't think of any other model that would output a 4d tensor
-                        val depthMat = Mat(256, 256, CvType.CV_32F)
-                        val data = (inferenceResult as Tensor4D).data[0]
-
-                        for (i in 0 until 256) {
-                            val row = FloatArray(256) { j -> data[i][j][0] }
-                            depthMat.put(i, 0, row)
-                        }
-
-                        val normalized = Mat()
-                        Core.normalize(depthMat, normalized, 0.0, 255.0, Core.NORM_MINMAX)
-                        normalized.convertTo(normalized, CvType.CV_8U)
-
-                        val result = Mat()
-                        Imgproc.cvtColor(normalized, result, Imgproc.COLOR_GRAY2RGBA)
+                        val result = depthToMat((inferenceResult as Tensor4D))
 
                         Image(
                             bitmap = FormatConverters.matToBitmap(result).asImageBitmap(),
