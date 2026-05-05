@@ -89,8 +89,10 @@ import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.logic.objectDetector
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
+import com.sil.morphlect.ml.impl.Tensor4D
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
 import kotlinx.coroutines.delay
@@ -141,6 +143,7 @@ fun CameraFeed(
     )
     var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
     var currentFrame by remember { mutableStateOf<EditorLayer?>(null) }
+    var currentProcessedFrame by remember { mutableStateOf<EditorLayer?>(null) }
     var reanalyzeTriggerKey by remember { mutableStateOf(false) }
     var inferenceRefreshInterval by remember { mutableStateOf(2.seconds) }
 
@@ -156,23 +159,33 @@ fun CameraFeed(
     }
 
     // this calls inference on all models and aggregates their output
-    LaunchedEffect(reanalyzeTriggerKey) {
+    LaunchedEffect(currentFrame) {
             try {
                 // analyze the current frame through all models and join their output
-                analyzerFeedFlow.emit(
-                    currentFrame?.let { frame ->
-                        imageOnlyLoadedModels.map { model ->
-                            (model.infer(
+                currentFrame?.let { frame ->
+                    imageOnlyLoadedModels
+                        .map { model ->
+                            model.infer(
                                 mapOf(
                                     model.inputs[0].name to frame.visual
                                         .asAndroidBitmap()
-                                        .scale(224, 224)
+                                        .scale(model.inputs[0].shape[0], model.inputs[0].shape[1])
                                 )
-                            ) as? Map<Output, Float>?)
-                            ?.map { (k, v) -> "$k: ${v*100}" }
-                        }.joinToString("\n")
-                    } ?: return@LaunchedEffect
-                )
+                            )
+                        }
+                        .forEach { output ->
+                            when (output) {
+                                is Map<*, *> ->
+                                    analyzerFeedFlow.emit(
+                                        (output as? Map<Output, Float>)?.map { (k, v) -> "$k: ${v*100}"}
+                                            ?.joinToString("\n") ?: return@LaunchedEffect
+                                    )
+
+                                is Tensor4D -> currentProcessedFrame = EditorLayer(depthToMat(output))
+                                else -> TODO() // unlikely
+                            }
+                        }
+                }
             } catch (_: Exception) {
                 analyzerFeedFlow.emit(":(")
             }
@@ -305,7 +318,7 @@ fun CameraFeed(
                 modifier = Modifier.fillMaxSize(),
             )
             if (applyFiltering)
-                currentFrame?.let {
+                currentProcessedFrame?.let {
                     Image(
                         bitmap = it.visual,
                         contentDescription = "frame",
