@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,8 +42,18 @@ import com.sil.mxtengine.data.MXTManifest
 import com.sil.mxtengine.data.Shape
 import kotlin.collections.forEach
 import androidx.core.graphics.scale
+import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
+import com.sil.morphlect.ml.impl.Tensor3D
+import com.sil.morphlect.ml.impl.Tensor4D
 import com.sil.morphlect.viewmodel.EditorViewModel
+import org.opencv.core.Core
+import org.opencv.core.CvType
+import org.opencv.core.Mat
+import org.opencv.core.Scalar
+import org.opencv.imgproc.Imgproc
+import kotlin.arrayOf
+import kotlin.math.roundToInt
 
 fun Uri.getImage(context: Context, conversionShape: Shape? = null): Bitmap? {
     val res = BitmapFactory.decodeStream(context.contentResolver.openInputStream(this))
@@ -200,7 +211,32 @@ fun MXTComposedView(
                         (it as Map<*, *>).map { (k, v) -> "$k: $v" }
                             .joinToString(",\n")
                     )
-                    else -> it.toString()
+                    is Tensor4D -> {
+                        // currently this is tailored for MiDaS, as i can't think of any other model that would output a 4d tensor
+                        val depthMat = Mat(256, 256, CvType.CV_32F)
+                        val data = (inferenceResult as Tensor4D).data[0]
+
+                        for (i in 0 until 256) {
+                            val row = FloatArray(256) { j -> data[i][j][0] }
+                            depthMat.put(i, 0, row)
+                        }
+
+                        val normalized = Mat()
+                        Core.normalize(depthMat, normalized, 0.0, 255.0, Core.NORM_MINMAX)
+                        normalized.convertTo(normalized, CvType.CV_8U)
+
+                        val result = Mat()
+                        Imgproc.cvtColor(normalized, result, Imgproc.COLOR_GRAY2RGBA)
+
+                        Image(
+                            bitmap = FormatConverters.matToBitmap(result).asImageBitmap(),
+                            contentDescription = "ong",
+                            modifier = Modifier.size(300.dp)
+                        )
+                        // [1, 256, 256, 1]
+                        // a[1][256][256][1] want to get 256x256 image of 1 channel -> a[0][i][j][0] = k
+                    }
+                    else -> Text("an output too sophisticated...")
                 }
             }
         }

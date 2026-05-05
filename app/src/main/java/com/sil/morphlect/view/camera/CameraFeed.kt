@@ -86,6 +86,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.sil.morphlect.R
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.data.Preset
+import com.sil.morphlect.enums.Output
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.objectDetector
@@ -161,14 +162,14 @@ fun CameraFeed(
                 analyzerFeedFlow.emit(
                     currentFrame?.let { frame ->
                         imageOnlyLoadedModels.map { model ->
-                            model.infer(
+                            (model.infer(
                                 mapOf(
                                     model.inputs[0].name to frame.visual
                                         .asAndroidBitmap()
                                         .scale(224, 224)
                                 )
-                            )
-                            .map { (k, v) -> "$k: ${v*100}" }
+                            ) as? Map<Output, Float>?)
+                            ?.map { (k, v) -> "$k: ${v*100}" }
                         }.joinToString("\n")
                     } ?: return@LaunchedEffect
                 )
