@@ -37,7 +37,23 @@ import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 
-class EditorViewModel : ViewModel(), EditorCommandManager {
+class EditorViewModel : ViewModel, EditorCommandManager {
+    constructor() : super() {
+        viewModelScope.launch {
+            _evaluationResult.collect { result ->
+                _pendingEvaluation = result
+            }
+        }
+    }
+
+    private var _pendingEvaluation: EvaluationResult? = null
+    val pendingEvaluation get() = _pendingEvaluation
+    fun consumePendingEvaluation(): EvaluationResult? {
+        val res = _pendingEvaluation
+        _pendingEvaluation = null
+        return res
+    }
+
     private val _evaluationResult = MutableSharedFlow<EvaluationResult>()
     val evaluationResult = _evaluationResult.asSharedFlow()
 

@@ -8,7 +8,7 @@ import okio.IOException
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
 
-class RatingMaximizerLoader : ModelLoader<Map<Output, Double>, Double> {
+class RatingMaximizerLoader : ModelLoader<Map<Output, Float>, Float> {
     companion object {
         private const val IMAGE_SIZE = 224
         private const val CHANNELS = 3
@@ -32,13 +32,14 @@ class RatingMaximizerLoader : ModelLoader<Map<Output, Double>, Double> {
         }
     }
 
-    override fun infer(input: Map<Output, Double>): Double {
+    override fun infer(input: Map<Output, Float>): Float {
         if (interpreter == null) {
             throw ModelLoaderException("Unable to load the model with given properties.")
         }
 
-        val output = arrayOf(doubleArrayOf(0.0))
-        interpreter!!.run(input, output)
+        val output = arrayOf(floatArrayOf(0f))
+        val fmtInput = input.map { (_, value) -> value }.toFloatArray()
+        interpreter!!.run(fmtInput, output)
 
         return output[0][0]
     }

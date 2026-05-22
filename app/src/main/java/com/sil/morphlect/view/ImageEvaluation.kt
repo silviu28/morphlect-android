@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,20 +23,50 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.sil.morphlect.data.EvaluationResult
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Output
+import com.sil.morphlect.logic.optimizeComposition
 import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
+import com.sil.morphlect.ml.impl.RatingMaximizerLoader
+import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.view.dialog.impl.KeepParamsDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ImageEvaluation(vm: EditorViewModel, navController: NavController) {
     val ctx = LocalContext.current.applicationContext
     val loader = remember { AlteredMobileNetLoader().apply { initialize(ctx) } }
+    val optimizer = remember { RatingMaximizerLoader().apply { initialize(ctx) } }
     var values by remember { mutableStateOf<Map<Output, Float>>(mapOf()) }
     var infoText by remember { mutableStateOf("processing...") }
     var keepParamsDialogActive by remember { mutableStateOf(false) }
+
+    var stepsParamVeryInteresting by remember { mutableStateOf(0) }
+    var optimizingTrustMeBro by remember { mutableStateOf(false) }
+    var optimizedParams by remember { mutableStateOf<Map<Output, Float>?>(null) }
+
+    LaunchedEffect(optimizingTrustMeBro) {
+        if (optimizingTrustMeBro) {
+            optimizedParams = optimizer.optimizeComposition(values, 10000)
+            optimizingTrustMeBro = !optimizingTrustMeBro
+            keepParamsDialogActive = !keepParamsDialogActive
+//            vm.emitEvaluationResult(
+//                EvaluationResult(
+//                    mapOf(
+//                        Filter.Sharpness to 1.0
+//                    )
+//                )
+//            )
+            values = optimizedParams!!
+//            navController.navigate("editor")
+//            delay(300.milliseconds)
+        }
+    }
 
     LaunchedEffect(vm.previewBitmap) {
         values = withContext(Dispatchers.Default) {
@@ -44,10 +75,19 @@ fun ImageEvaluation(vm: EditorViewModel, navController: NavController) {
         infoText = "done!"
     }
 
+    if (optimizingTrustMeBro) {
+        DialogScaffold(
+            title = "",
+            onDismissRequest = {},
+        ) {
+            Text("applying optimizer step $stepsParamVeryInteresting out of 200...")
+        }
+    }
+
     if (keepParamsDialogActive) {
         KeepParamsDialog(
             onDismissRequest = { keepParamsDialogActive = false },
-            onApply = { /* this should start an optimizer... */ })
+            onApply = { optimizingTrustMeBro = true })
     }
     Column(
         modifier = Modifier.fillMaxWidth().fillMaxHeight(),

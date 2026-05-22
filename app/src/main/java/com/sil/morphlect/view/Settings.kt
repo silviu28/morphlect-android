@@ -29,6 +29,7 @@ import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material3.Scaffold
 
 /**
@@ -107,6 +108,12 @@ fun Settings(
                         scope.launch { configRepository.setDeveloperMode(it) }
                     }
                 )
+
+                SettingsEntry(title = "manage fingerprint") {
+                    IconButton(onClick = { navController.navigate("fingerprint-manager") }) {
+                        Icon(Icons.Default.Fingerprint, contentDescription = "manage fingerprint")
+                    }
+                }
 
                 SettingsEntry(title = "manage models") {
                     IconButton(onClick = { navController.navigate("model-download") }) {

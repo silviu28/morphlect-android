@@ -75,10 +75,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.sp
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
+import com.sil.morphlect.ui.theme.Typography
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.dialog.impl.LayeringDialog
 import kotlinx.coroutines.delay
@@ -128,7 +130,7 @@ fun Editor(
         }
     }
 
-    val advancedMode     by configRepository.advancedMode.collectAsState(initial = false)
+        val advancedMode     by configRepository.advancedMode.collectAsState(initial = false)
 
     // listen for back gesture - in case if it's accidental
     BackHandler {
@@ -263,19 +265,19 @@ fun Editor(
                         onClick = { vm.changeSection(Section.Filtering) },
                         isSelected = vm.section == Section.Filtering,
                     ) {
-                        Text("filtering")
+                        Text("filtering", style = Typography.bodyLarge, fontSize = 14.sp)
                     }
                     AnimatedSectionButton(
                         onClick = { vm.changeSection(Section.SmartFeatures) },
                         isSelected = vm.section == Section.SmartFeatures
                     ) {
-                        Text("smart features")
+                        Text("smart features", style = Typography.bodyLarge, fontSize = 14.sp)
                     }
                     AnimatedSectionButton(
                         onClick = { vm.changeSection(Section.ImageManipulation) },
                         isSelected = vm.section == Section.ImageManipulation
                     ) {
-                        Text("manipulation")
+                        Text("manipulation", style = Typography.bodyLarge, fontSize = 14.sp)
                     }
                 }
 

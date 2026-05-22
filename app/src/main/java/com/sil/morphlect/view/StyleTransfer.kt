@@ -1,8 +1,10 @@
 package com.sil.morphlect.view
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,22 +23,39 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.logic.WebHelper
+import kotlinx.coroutines.launch
 
 @Composable
 fun StyleTransfer() {
-    var referenceImageUri by remember { mutableStateOf<Uri?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var referenceImage by remember { mutableStateOf<Bitmap?>(null) }
     var webOverlayActive by remember { mutableStateOf(false) }
     val imagePickLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
-        referenceImageUri = uri
+        uri?.let{referenceImage = FormatConverters.uriToBitmap(context, uri)}
     }
 
     if (webOverlayActive) {
-        WebOverlay(onDismissRequest = { webOverlayActive = false }, onImageSelected = { _ -> })
+        WebOverlay(
+            onDismissRequest = { webOverlayActive = false },
+            onImageSelected = { str ->
+                coroutineScope.launch {
+                    referenceImage = WebHelper.downloadUnsplashImage(str, context)
+                }
+                webOverlayActive = false
+            }
+        )
     }
 
     Column(
@@ -48,6 +67,13 @@ fun StyleTransfer() {
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            referenceImage?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "reference image",
+                    modifier = Modifier.size(300.dp)
+                )
+            }
             Row {
                 TextButton(onClick = { imagePickLauncher.launch("image/*") }) {
                     Text("search gallery")

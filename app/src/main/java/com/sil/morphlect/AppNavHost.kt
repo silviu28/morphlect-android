@@ -9,8 +9,10 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
+import com.sil.morphlect.repository.FingerprintRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.Editor
+import com.sil.morphlect.view.FingerprintManager
 import com.sil.morphlect.view.Frontpage
 import com.sil.morphlect.view.ImageComparison
 import com.sil.morphlect.view.ImageEvaluation
@@ -36,6 +38,7 @@ fun AppNavHost() {
     val configRepository                         = remember { AppConfigRepository(ctx) }
     val presetsRepository                        = remember { PresetsRepository(ctx) }
     val extensionsRepository                     = remember { ExtensionsRepository(ctx) }
+    val fingerprintRepository                    = remember { FingerprintRepository(ctx) }
     val analyzerFeedFlow                         = remember { MutableSharedFlow<String>() }
 
     NavHost(
@@ -95,6 +98,9 @@ fun AppNavHost() {
         }
         composable("model-download") {
             ModelManager(navController)
+        }
+        composable("fingerprint-manager") {
+            FingerprintManager(fingerprintRepository)
         }
         composable(
             route = "extension-view/{extensionName}",

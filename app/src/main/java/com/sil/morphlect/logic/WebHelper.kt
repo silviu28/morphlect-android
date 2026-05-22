@@ -1,6 +1,8 @@
 package com.sil.morphlect.logic
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import com.sil.morphlect.BuildConfig
 import com.sil.morphlect.constant.WebConstants
@@ -164,6 +166,26 @@ object WebHelper {
                     .getJSONObject("urls")
                     .getString("small")
             }
+        }
+    }
+
+    suspend fun downloadUnsplashImage(query: String, context: Context): Bitmap? = withContext(Dispatchers.IO) {
+        // first get a random image URL for the query
+        val searchUrl = "$query"
+
+        val request = Request.Builder()
+            .url(searchUrl)
+            .build()
+
+        return@withContext try {
+            val response = http.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext null
+
+            val bytes = response.body?.bytes() ?: return@withContext null
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        } catch (e: Exception) {
+            Log.e("Unsplash", e.toString())
+            null
         }
     }
 }

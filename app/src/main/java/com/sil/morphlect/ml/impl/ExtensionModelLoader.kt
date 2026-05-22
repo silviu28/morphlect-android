@@ -23,7 +23,7 @@ typealias BindingMap = Map<String, Any?>
 class Tensor4D(val data: Array<Array<Array<FloatArray>>>)
 class Tensor3D(val data: Array<Array<FloatArray>>)
 
-class ExtensionModelLoader (
+class ExtensionModelLoader(
     override val name: String,
     val inputs: List<ModelInteractor>,
     val outputs: List<ModelInteractor>,

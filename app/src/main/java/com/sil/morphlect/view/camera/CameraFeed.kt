@@ -17,7 +17,10 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -25,6 +28,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,12 +39,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddBox
@@ -67,6 +73,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -74,10 +81,12 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.scale
 import androidx.lifecycle.LifecycleOwner
@@ -122,25 +131,36 @@ fun CameraFeed(
     val mainExecutor = ContextCompat.getMainExecutor(context)
     val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
 
-    var lastFeedMessage    by remember { mutableStateOf("") }
+    var lastFeedMessage     by remember { mutableStateOf("") }
 
-    var isCapturing        by remember { mutableStateOf(false) }
-    var showGrid           by remember { mutableStateOf(false) }
-    var showFeed           by remember { mutableStateOf(true) }
-    var showSliders        by remember { mutableStateOf(true) }
-    var showClassification by remember { mutableStateOf(true) }
-    var showModelsDialog   by remember { mutableStateOf(false) }
-    var applyFiltering     by remember { mutableStateOf(false) }
+    var isCapturing         by remember { mutableStateOf(false) }
+    var showGrid            by remember { mutableStateOf(false) }
+    var showFeed            by remember { mutableStateOf(true) }
+    var showSliders         by remember { mutableStateOf(true) }
+    var showClassification  by remember { mutableStateOf(true) }
+    var showModelsDialog    by remember { mutableStateOf(false) }
+    var applyFiltering      by remember { mutableStateOf(false) }
 
-    var imageWidth         by remember { mutableStateOf(1) }
-    var imageHeight        by remember { mutableStateOf(1) }
+    var imageWidth          by remember { mutableStateOf(1) }
+    var imageHeight         by remember { mutableStateOf(1) }
     var focusIndicatorPoint by remember { mutableStateOf<Offset?>(null) }
+    var isExpanded          by remember { mutableStateOf(false) }
 
     val shutterAlpha       by animateFloatAsState(
         targetValue = if (isCapturing) 0f else 1f,
         animationSpec = tween(50),
         finishedListener = { if (it == 1f) isCapturing = false }
     )
+
+    val size by animateDpAsState(
+        targetValue = if (isExpanded) 0.dp else 120.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "frame size"
+    )
+
     var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
     var currentFrame by remember { mutableStateOf<EditorLayer?>(null) }
     var currentProcessedFrame by remember { mutableStateOf<EditorLayer?>(null) }
@@ -159,7 +179,7 @@ fun CameraFeed(
     }
 
     // this calls inference on all models and aggregates their output
-    LaunchedEffect(currentFrame) {
+    LaunchedEffect(reanalyzeTriggerKey) {
             try {
                 // analyze the current frame through all models and join their output
                 currentFrame?.let { frame ->
@@ -248,7 +268,7 @@ fun CameraFeed(
 
     if (showModelsDialog) {
         DialogScaffold(
-            title = "downloaded models",
+            title = "downloaded extensions",
             onDismissRequest = { showModelsDialog = false },
             icon = Icons.Default.Camera,
         ) {
@@ -257,7 +277,7 @@ fun CameraFeed(
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(it.name)
                         Spacer(Modifier.weight(1f))
-                        Switch(false, { })
+                        Switch(true, { })
                     }
                 }
                 Spacer(Modifier.weight(1f))
@@ -292,7 +312,7 @@ fun CameraFeed(
                 factory = { ctx ->
                     PreviewView(ctx).apply {
                         controller = cameraController
-                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                        scaleType = PreviewView.ScaleType.FIT_CENTER
                         setOnTouchListener { _, event ->
                             performClick()
                             if (event.action != MotionEvent.ACTION_UP) {
@@ -315,15 +335,27 @@ fun CameraFeed(
                         }
                     }
                 },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().offset(y = (-14).dp),
             )
             if (applyFiltering)
                 currentProcessedFrame?.let {
-                    Image(
-                        bitmap = it.visual,
-                        contentDescription = "frame",
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(y = if (isExpanded) 0.dp else (-200).dp),
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        Image(
+                            bitmap = it.visual,
+                            contentDescription = "frame",
+                            modifier =
+                                Modifier
+                                    .then(if (isExpanded) Modifier.fillMaxSize() else Modifier)
+                                    .zIndex(10f)
+                                    .size(size)
+                                    .clickable { isExpanded = !isExpanded }
+                        )
+                    }
                 }
 
             // rule of thirds grid
@@ -365,7 +397,7 @@ fun CameraFeed(
                 .padding(top = 30.dp)
         ) {
             AnimatedVisibility(visible = showSliders) {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                     SettingsRow(Icons.Default.GridOn) {
                         Switch(checked = showGrid, onCheckedChange = { showGrid = it })
                     }
@@ -378,12 +410,15 @@ fun CameraFeed(
                     SettingsRow(Icons.Default.Filter) {
                         Switch(checked = applyFiltering, onCheckedChange = { applyFiltering = it })
                     }
-
-                    IconButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { showModelsDialog = true }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.End
                     ) {
-                        Icon(Icons.Default.AddBox, contentDescription = "use a model")
+                        IconButton(onClick = { showModelsDialog = true }) {
+                            Icon(Icons.Default.AddBox, contentDescription = "use a model")
+                        }
                     }
                 }
             }
@@ -411,7 +446,7 @@ fun CameraFeed(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .background(Color.Black.copy(alpha = .7f))
+//                .background(Color.Black.copy(alpha = .7f))
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(top = 12.dp, bottom = 12.dp)
         ) {
@@ -564,7 +599,7 @@ private fun SettingsRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.End
     ) {

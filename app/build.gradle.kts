@@ -124,6 +124,9 @@ dependencies {
 
     // Source: https://mvnrepository.com/artifact/net.mamoe.yamlkt/yamlkt
     implementation("net.mamoe.yamlkt:yamlkt:0.13.0")
+
+    // Source: https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-task-text
+//    implementation("org.tensorflow:tensorflow-lite-task-text:0.4.4")
 }
 
 

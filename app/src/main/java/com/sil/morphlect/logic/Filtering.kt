@@ -7,12 +7,25 @@ import org.opencv.core.Mat
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import org.opencv.imgproc.Imgproc.calcHist
+import kotlin.math.pow
 
 object Filtering {
-    fun contrast(src: Mat, contrast: Double): Mat {
+    fun contrast(src: Mat, gamma: Double): Mat {
+        val correctedGamma = 1.0 + gamma // so 0 = no change, positive = more contrast
+
+        // build lookup table — faster than per-pixel math
+        val lut = Mat(1, 256, CvType.CV_8U)
+        val lutData = ByteArray(256) { i ->
+            (255.0 * (i / 255.0).pow(correctedGamma))
+                .coerceIn(0.0, 255.0)
+                .toInt()
+                .toByte()
+        }
+        lut.put(0, 0, lutData)
+
         val dst = Mat()
-        val alpha = 1.0 + contrast
-        src.convertTo(dst, -1, alpha, 0.0)
+        Core.LUT(src, lut, dst)
+        lut.release()
         return dst
     }
 
@@ -61,25 +74,26 @@ object Filtering {
         if (lb == 0.0) {
             return src
         }
+        val dst = Mat()
         val channels = mutableListOf<Mat>()
         Core.split(src, channels)
-        val redShift = -lb * 50
-        val blueShift = lb * 50
+        val redShift = -lb * 25
+        val blueShift = lb * 25
         channels[2].convertTo(channels[2], -1, 1.0, redShift)
         channels[0].convertTo(channels[0], -1, 1.0, blueShift)
 
-        Core.merge(channels, src)
+        Core.merge(channels, dst)
         channels.forEach {
             it.release()
         }
-        return src
+        return dst
     }
 
     fun hueShift(src: Mat, shift: Double): Mat {
         if (shift == 0.0) {
             return src
         }
-
+        val dst = Mat()
         val hsv = Mat()
         Imgproc.cvtColor(src, hsv, Imgproc.COLOR_BGR2HSV)
 
@@ -92,10 +106,10 @@ object Filtering {
         Core.normalize(channels[0], channels[0], 0.0, 180.0, Core.NORM_MINMAX)
 
         Core.merge(channels, hsv)
-        Imgproc.cvtColor(hsv, src, Imgproc.COLOR_HSV2BGR)
+        Imgproc.cvtColor(hsv, dst, Imgproc.COLOR_HSV2BGR)
 
         channels.forEach { it.release() }
-        return src
+        return dst
     }
 
     // uniformly downscales CV mats. the bigger the resolution -> the bigger the downscale
