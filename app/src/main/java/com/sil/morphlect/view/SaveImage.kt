@@ -1,6 +1,7 @@
 package com.sil.morphlect.view
 
 import android.content.ContentValues
+import android.content.Context
 import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.widget.Toast
@@ -49,67 +50,62 @@ import androidx.navigation.NavHostController
 import com.sil.morphlect.view.dialog.impl.GlazeDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
 
+fun saveImage(ctx: Context, image: Bitmap, format: String, name: String) {
+    try {
+        val resolver = ctx.contentResolver
+        val mimeType = when (format) {
+            "png" -> "image/png"
+            "webp" -> "image/webp"
+            else -> "image/jpeg"
+        }
+
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "$name.$format")
+            put(MediaStore.Images.Media.MIME_TYPE, mimeType)
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Morphlect")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            ?: return
+
+        resolver.openOutputStream(uri)?.use { out ->
+            val compressFmt = when (format) {
+                "png" -> Bitmap.CompressFormat.PNG
+                "webp" -> Bitmap.CompressFormat.WEBP
+                else -> Bitmap.CompressFormat.JPEG
+            }
+            image.compress(compressFmt, 100, out)
+        }
+
+        contentValues.clear()
+        contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+        resolver.update(uri, contentValues, null, null)
+
+        Toast.makeText(ctx, "image saved.", Toast.LENGTH_SHORT).show()
+    } catch (e: Exception) {
+        Toast.makeText(ctx, "Unable to save image ${e.stackTraceToString()}", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private val formats = arrayOf("JPG", "PNG", "WEBP0")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaveImage(
-    editorViewModel: EditorViewModel,
+    vm: EditorViewModel,
     navController: NavHostController,
 ) {
-    val vm = editorViewModel
     val ctx = LocalContext.current
 
     var imageName by remember { mutableStateOf("image name") }
     var format by remember { mutableStateOf("JPG") }
     var dropdownExpanded by remember { mutableStateOf(false) }
 
-    var showGlazeInfo by remember { mutableStateOf(false) }
-    var showGlazeDialog by remember { mutableStateOf(false) }
-
-    val formats = listOf("JPG", "PNG", "WEBP")
-
     val image = vm.layers
         .reduce { allMerge, layer -> allMerge.mergeWith(layer) }
         .visual
         .asAndroidBitmap()
-
-    fun saveImage() {
-        try {
-            val resolver = ctx.contentResolver
-            val mimeType = when (format) {
-                "png" -> "image/png"
-                "webp" -> "image/webp"
-                else -> "image/jpeg"
-            }
-
-
-            val contentValues = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, "$imageName.$format")
-                put(MediaStore.Images.Media.MIME_TYPE, mimeType)
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Morphlect")
-                put(MediaStore.Images.Media.IS_PENDING, 1)
-            }
-
-            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-                ?: return
-
-            resolver.openOutputStream(uri)?.use { out ->
-                val compressFmt = when (format) {
-                    "png" -> Bitmap.CompressFormat.PNG
-                    "webp" -> Bitmap.CompressFormat.WEBP
-                    else -> Bitmap.CompressFormat.JPEG
-                }
-                image.compress(compressFmt, 100, out)
-            }
-
-            contentValues.clear()
-            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
-            resolver.update(uri, contentValues, null, null)
-
-            Toast.makeText(ctx, "image saved.", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(ctx, "unable to save image", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     Scaffold(
         floatingActionButton = {
@@ -122,13 +118,6 @@ fun SaveImage(
         },
         modifier = Modifier.padding(18.dp)
     ) { _ ->
-        if (showGlazeInfo) {
-            GlazeHelp(onDismissRequest = { showGlazeInfo = false })
-        }
-
-        if (showGlazeDialog) {
-            GlazeDialog(onDismissRequest = { showGlazeDialog = false })
-        }
 
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -189,19 +178,7 @@ fun SaveImage(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                Row {
-                    TextButton(onClick = { showGlazeDialog = true }) {
-                        Icon(Icons.Default.WaterDrop, contentDescription = "glaze")
-                        Text("glaze...")
-                    }
-                    IconButton(onClick = { showGlazeInfo = true }) {
-                        Icon(Icons.Default.QuestionMark, contentDescription = "what is glaze?")
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                ElevatedButton(onClick = { saveImage() }) {
+                ElevatedButton(onClick = { saveImage(ctx, image, format, imageName) }) {
                     Text("save")
                 }
             }
