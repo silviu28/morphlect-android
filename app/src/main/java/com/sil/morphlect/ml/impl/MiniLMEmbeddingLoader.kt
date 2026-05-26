@@ -121,4 +121,71 @@ class MiniLMEmbeddingLoader: ModelLoader<Any, Any> {
 
     suspend fun batchComputeSimilarAnchors(limit: Int = 5, words: List<String>): List<List<Pair<String, Float>>>
         = withContext(Dispatchers.Default) { words.map { computeMostSimilarAnchors(limit, it) } }
+
+    fun combineMultipleTags(
+        tagsSimilarities: List<List<Pair<String, Float>>>
+    ): Preset {
+        if (tagsSimilarities.isEmpty()) return Preset("combined", emptyMap())
+
+        // sum similarities for each anchor across all tags
+        val aggregatedScores = mutableMapOf<String, Float>()
+
+        tagsSimilarities.forEach { tagScores ->
+            tagScores.forEach { (anchorName, score) ->
+                aggregatedScores[anchorName] = (aggregatedScores[anchorName] ?: 0f) + score
+            }
+        }
+
+        // normalize and create interpolated preset
+        return interpolatePreset("combined", aggregatedScores.toList())
+    }
+
+    private fun interpolatePreset(
+        name: String,
+        similarityScores: List<Pair<String, Float>>
+    ): Preset {
+        val validScores = similarityScores.filter { it.second > 0 }
+        if (validScores.isEmpty()) return Preset(name, emptyMap())
+
+        val totalWeight = validScores.fold(0f) { acc, it -> acc + it.second }
+        val normalized = validScores.associate { (anchor, score) ->
+            anchor to (score / totalWeight).toDouble()
+        }
+
+        val combinedParams = mutableMapOf<Filter, Double>()
+
+        anchorPresets
+            .filter { normalized.containsKey(it.name) }
+            .forEach { preset ->
+                val weight = normalized[preset.name]!!
+                preset.params.forEach { (filter, value) ->
+                    combinedParams[filter] = (combinedParams[filter] ?: 0.0) + (value * weight)
+                }
+            }
+
+        return Preset(name, combinedParams)
+    }
+
+    fun computeNewPreset(name: String, similarityScores: List<Pair<String, Float>>): Preset {
+        val validScores = similarityScores.filter { it.second > 0 }
+        if (validScores.isEmpty()) return Preset(name, emptyMap())
+
+        val totalWeight = validScores.fold(0f) { acc, it -> acc + it.second }
+
+        val normalizedWeights = validScores.associate { (anchorName, score) ->
+            anchorName to (score / totalWeight).toDouble()
+        }
+
+        val combinedParams = anchorPresets
+            .filter { normalizedWeights.containsKey(it.name) }
+            .flatMap { preset ->
+                preset.params.map { (filter, value) ->
+                    filter to value * normalizedWeights[preset.name]!!
+                }
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, values) -> values.sum() }
+
+        return Preset(name, combinedParams)
+    }
 }

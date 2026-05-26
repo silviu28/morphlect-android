@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.ml.impl.MiniLMEmbeddingLoader
+import com.sil.morphlect.view.custom.LedDotSlider
 import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
@@ -50,6 +52,11 @@ fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
     var anchorPresets by remember { mutableStateOf<List<Preset>>(listOf()) }
     var isProcessing by remember { mutableStateOf(false) }
     var similarities by remember { mutableStateOf<List<List<Pair<String, Float>>>>(listOf()) }
+    var cherryPicking by remember { mutableStateOf(false) }
+    var selectedVibeIdx by remember { mutableIntStateOf(0) }
+    var appliedIntensities by remember {
+        mutableStateOf<Map<String, Float>>(emptyMap())
+    }
 
     when {
         isProcessing -> DialogScaffold(
@@ -66,7 +73,6 @@ fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(anchorPresets.joinToString())
         vm.previewBitmap?.asImageBitmap()?.let {
             Image(
                 bitmap = it,
@@ -76,47 +82,69 @@ fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
             )
         }
 
-        OutlinedTextField(
-            value = currentToken,
-            onValueChange = { currentToken = it },
-            label = { Text("add token") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        )
-        Button(onClick = {
-            if (currentToken.isNotBlank()) {
-                tokens += currentToken.trim()
-                currentToken = ""
-            }
-        }) {
-            Text("+")
-        }
-
-        FlowRow {
-            tokens.forEach { token ->
-                Button(onClick = { tokens -= token }) {
-                    Text(token)
+        if (cherryPicking) {
+            Text("select the intensity of each vibe")
+            Text(tokens.toList()[0])
+            LedDotSlider(
+                value = .5f,
+                onValueChange = { },
+                modifier = Modifier,
+            )
+            Row {
+                TextButton(onClick = { cherryPicking = false }) {
+                    Text("continue")
+                }
+                TextButton(onClick = { }) {
+                    Text("auto")
                 }
             }
+            Text(miniLMEmbeddingLoader.combineMultipleTags(similarities).toString())
         }
-
-        Row {
-            TextButton(onClick = {
-                coroutineScope.launch {
-                    isProcessing = true
-                    similarities = miniLMEmbeddingLoader.batchComputeSimilarAnchors(words = tokens.toList())
-                    isProcessing = false
+        else {
+            Text(anchorPresets.joinToString())
+            OutlinedTextField(
+                value = currentToken,
+                onValueChange = { currentToken = it },
+                label = { Text("add token") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+            )
+            Button(onClick = {
+                if (currentToken.isNotBlank()) {
+                    tokens += currentToken.trim()
+                    currentToken = ""
                 }
             }) {
-                Text("seems good")
+                Text("+")
             }
-        }
 
-        similarities.forEach { l -> Text(l.joinToString { it.first + ":" + it.second.toString() }) }
+            FlowRow {
+                tokens.forEach { token ->
+                    Button(onClick = { tokens -= token }) {
+                        Text(token)
+                    }
+                }
+            }
 
-        TextButton(onClick = { navController.navigate("editor") }) {
-            Text("back to editor")
+            Row {
+                TextButton(onClick = {
+                    coroutineScope.launch {
+                        isProcessing = true
+                        similarities =
+                            miniLMEmbeddingLoader.batchComputeSimilarAnchors(words = tokens.toList())
+                        isProcessing = false; cherryPicking = true
+                    }
+                }) {
+                    Text("seems good")
+                }
+            }
+
+            similarities.forEach { l -> Text(l.joinToString { it.first + ":" + it.second.toString() }) }
+
+            TextButton(onClick = { navController.navigate("editor") }) {
+                Text("back to editor")
+            }
         }
     }
 }
