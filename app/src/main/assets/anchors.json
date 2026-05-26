@@ -1,0 +1,51 @@
+[
+  {
+    "name": "fuzzy",
+    "params": {
+      "contrast": -0.1,
+      "brightness": 0.1
+    }
+  },
+  {
+    "name": "jazzy",
+    "params": {
+
+    }
+  },
+  {
+    "name": "classy",
+    "params" : {
+
+    }
+  },
+  {
+    "name": "amateurish",
+    "params": {
+
+    }
+  },
+  {
+    "name": "vintage",
+    "params": {
+
+    }
+  },
+  {
+    "name": "old-school",
+    "params": {
+
+    }
+  },
+  {
+    "name": "sunny",
+    "params": {
+
+    }
+  },
+  {
+    "name": "happy",
+    "params": {
+
+    }
+  }
+]
