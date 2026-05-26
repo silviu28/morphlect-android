@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,7 @@ fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
     var appliedIntensities by remember {
         mutableStateOf<Map<String, Float>>(emptyMap())
     }
+    val tokensList by remember { derivedStateOf { tokens.toList() } }
 
     when {
         isProcessing -> DialogScaffold(
@@ -84,12 +86,15 @@ fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
 
         if (cherryPicking) {
             Text("select the intensity of each vibe")
-            Text(tokens.toList()[0])
+            Text(tokensList[selectedVibeIdx])
             LedDotSlider(
                 value = .5f,
                 onValueChange = { },
                 modifier = Modifier,
             )
+            Row {
+                tokens
+            }
             Row {
                 TextButton(onClick = { cherryPicking = false }) {
                     Text("continue")
@@ -104,7 +109,13 @@ fun VibeMatcher(vm: EditorViewModel, navController: NavController) {
             Text(anchorPresets.joinToString())
             OutlinedTextField(
                 value = currentToken,
-                onValueChange = { currentToken = it },
+                onValueChange = {
+                    if (it.contains(" ")) {
+                        tokens += currentToken.trim()
+                        currentToken = ""
+                    }
+                    else currentToken = it
+                },
                 label = { Text("add token") },
                 modifier = Modifier
                     .fillMaxWidth()
