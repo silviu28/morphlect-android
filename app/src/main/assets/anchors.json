@@ -2,50 +2,111 @@
   {
     "name": "fuzzy",
     "params": {
-      "contrast": -0.1,
-      "brightness": 0.1
+      "Contrast": -0.3,
+      "Brightness": 0.1,
+      "Blur": 0.8,
+      "LightBalance": 0.0,
+      "Hue": 0.0,
+      "Sharpness": -0.7
     }
   },
   {
     "name": "jazzy",
     "params": {
-
+      "Contrast": 0.7,
+      "Brightness": 0.3,
+      "Blur": 0.0,
+      "LightBalance": 0.2,
+      "Hue": 0.4,
+      "Sharpness": 0.5
     }
   },
   {
     "name": "classy",
-    "params" : {
-
+    "params": {
+      "Contrast": 0.6,
+      "Brightness": 0.2,
+      "Blur": -0.2,
+      "LightBalance": 0.3,
+      "Hue": -0.1,
+      "Sharpness": 0.7
     }
   },
   {
     "name": "amateurish",
     "params": {
-
+      "Contrast": -0.4,
+      "Brightness": 0.6,
+      "Blur": 0.3,
+      "LightBalance": -0.3,
+      "Hue": 0.2,
+      "Sharpness": -0.5
     }
   },
   {
     "name": "vintage",
     "params": {
-
+      "Contrast": 0.3,
+      "Brightness": -0.2,
+      "Blur": 0.1,
+      "LightBalance": -0.4,
+      "Hue": 0.3,
+      "Sharpness": -0.3
     }
   },
   {
     "name": "old-school",
     "params": {
-
+      "Contrast": 0.4,
+      "Brightness": -0.3,
+      "Blur": 0.0,
+      "LightBalance": -0.5,
+      "Hue": 0.2,
+      "Sharpness": -0.2
     }
   },
   {
     "name": "sunny",
     "params": {
-
+      "Contrast": 0.5,
+      "Brightness": 0.8,
+      "Blur": -0.1,
+      "LightBalance": 0.5,
+      "Hue": 0.1,
+      "Sharpness": 0.4
     }
   },
   {
     "name": "happy",
     "params": {
-
+      "Contrast": 0.6,
+      "Brightness": 0.7,
+      "Blur": -0.2,
+      "LightBalance": 0.4,
+      "Hue": 0.3,
+      "Sharpness": 0.5
+    }
+  },
+  {
+    "name": "chilling",
+    "params": {
+      "Contrast": -0.2,
+      "Brightness": -0.3,
+      "Blur": 0.1,
+      "LightBalance": -0.6,
+      "Hue": -0.4,
+      "Sharpness": -0.2
+    }
+  },
+  {
+    "name": "grotesque",
+    "params": {
+      "Contrast": 0.9,
+      "Brightness": -0.2,
+      "Blur": 0.0,
+      "LightBalance": -0.8,
+      "Hue": 0.7,
+      "Sharpness": 0.6
     }
   }
 ]
