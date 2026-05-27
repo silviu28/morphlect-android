@@ -231,4 +231,18 @@ class EditorViewModel : ViewModel, EditorCommandManager {
             _evaluationResult.emit(result)
         }
     }
+
+    fun undoCommandAtIndex(index: Int) {
+        if (index >= 0 && undoStack.size > index) {
+            val comm = undoStack.removeAt(index)
+            redoStack.add(comm)
+        }
+    }
+
+    fun redoCommandAtIndex(index: Int) {
+        if (index >= 0 && redoStack.size > index) {
+            val comm = redoStack.removeAt(index)
+            undoStack.add(comm)
+        }
+    }
 }

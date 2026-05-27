@@ -158,8 +158,8 @@ fun Editor(
                 onDismissRequest = { state.showHistoryStack = false },
                 undoStack = vm.undoStack,
                 redoStack = vm.redoStack,
-                onUndo = { vm.undoLastCommand() },
-                onRedo = { vm.redoLastCommand() },
+                onUndo = { index -> vm.undoCommandAtIndex(index) },
+                onRedo = { index -> vm.redoCommandAtIndex(index) },
             )
 
             state.showLayering -> LayeringDialog(
@@ -341,11 +341,10 @@ fun Editor(
                             )
                         }
 
-                        if (advancedMode) {
+                        if (advancedMode)
                             TextButton(onClick = { state.showHistogram = true }) {
                                 Text("histogram")
                             }
-                        }
                     }
                 }
             }

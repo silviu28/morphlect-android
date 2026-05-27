@@ -2,19 +2,15 @@ package com.sil.morphlect.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.sil.morphlect.command.EditorCommand
 import com.sil.morphlect.view.dialog.DialogScaffold
 
@@ -32,8 +27,8 @@ private enum class HistoryEntryAction { Undo, Redo }
 @Composable
 fun History(
     onDismissRequest: () -> Unit,
-    onUndo: () -> Unit,
-    onRedo: () -> Unit,
+    onUndo: (idx: Int) -> Unit,
+    onRedo: (idx: Int) -> Unit,
     undoStack: List<EditorCommand>,
     redoStack: List<EditorCommand>,
 ) {
@@ -47,12 +42,16 @@ fun History(
         } else {
             if (undoStack.isNotEmpty()) {
                 Text("undo")
-                undoStack.forEach { HistoryEntry(it, onUndo, HistoryEntryAction.Undo) }
+                undoStack.forEachIndexed { idx, comm ->
+                    HistoryEntry(comm, { onUndo(idx) }, HistoryEntryAction.Undo)
+                }
             }
 
             if (redoStack.isNotEmpty()) {
                 Text("redo")
-                redoStack.forEach { HistoryEntry(it, onRedo, HistoryEntryAction.Redo) }
+                redoStack.forEachIndexed { idx, comm ->
+                    HistoryEntry(comm, { onRedo(idx) }, HistoryEntryAction.Redo)
+                }
             }
         }
     }
