@@ -42,10 +42,7 @@ fun Settings(
 ) {
     val advancedMode       by configRepository.advancedMode.collectAsState(initial = false)
     val hidePrimaryBar     by configRepository.hidePrimaryBar.collectAsState(initial = false)
-    val localSmartFeatures by configRepository.localSmartFeatures.collectAsState(initial = false)
-    val cloudCompute       by configRepository.cloudCompute.collectAsState(initial = false)
     val developerMode      by configRepository.developerMode.collectAsState(initial = false)
-
 
     val scope = rememberCoroutineScope()
 
@@ -79,24 +76,6 @@ fun Settings(
                     checked = hidePrimaryBar,
                     onCheckedChange = {
                         scope.launch { configRepository.setHidePrimaryBar(it) }
-                    }
-                )
-
-                SliderSettingsEntry(
-                    title = "local smart features",
-                    description = "use smart features locally instead of offloading to server",
-                    checked = localSmartFeatures,
-                    onCheckedChange = {
-                        scope.launch { configRepository.setLocalSmartFeatures(it) }
-                    }
-                )
-
-                SliderSettingsEntry(
-                    title = "cloud compute",
-                    description = null,
-                    checked = cloudCompute,
-                    onCheckedChange = {
-                        scope.launch { configRepository.setCloudCompute(it) }
                     }
                 )
 

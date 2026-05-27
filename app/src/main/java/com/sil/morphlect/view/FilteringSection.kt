@@ -292,21 +292,13 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             }
         ) { isBlurring2d ->
             if (isBlurring2d) {
-                // commented is an attempt to make the vertical blurring slider be, well, vertical... TODO
-//                Box(Modifier.size(1.dp)) {
-                    LedDotSlider(
-                        value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
-                        onValueChange = { value ->
-                            vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
-                        },
-                        valueRange = -1f..1f,
-//                        modifier = Modifier
-//                            .offset((-260).dp, (-260).dp)
-//                            .rotate(-90f)
-//                            .absoluteOffset(20.dp, 100.dp)
-//                            .zIndex(10f)
-                    )
-//                }
+                LedDotSlider(
+                    value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
+                    onValueChange = { value ->
+                        vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
+                    },
+                    valueRange = -1f..1f,
+                )
             }
         }
     }

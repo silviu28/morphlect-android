@@ -85,45 +85,17 @@ class EditorViewModel : ViewModel, EditorCommandManager {
         if (redoStack.isEmpty()) return
         val command = redoStack.removeAt(redoStack.lastIndex)
         undoStack.add(command)
-        updateLayers()
     }
 
     override fun undoLastCommand() {
         if (undoStack.isEmpty()) return
         val command = undoStack.removeAt(undoStack.lastIndex)
         redoStack.add(command)
-        updateLayers()
-    }
-
-    private fun updateLayers() {
-//        val src = originalMat ?: return
-        viewModelScope.launch(Dispatchers.Default) {
-            // compute processed layers
-//            var processed = layers.map { layer ->
-//                undoStack.fold(layer) { layer, comm -> comm.execute(layer) }
-//            }
-//
-//            // undo stack + current adjustment
-//            if (hasActiveAdjustment) {
-//                val previewCommand = createCommandForEffect(
-//                    selectedFilter,
-//                    filterValues[selectedFilter] ?: .0
-//                )
-//                processed = processed.map { previewCommand.execute(it) }
-//            }
-
-//            withContext(Dispatchers.Main) {
-//                processedBitmap = processedBmp
-//                previewBitmap = previewBmp
-//                layerManager.layers = processed.toMutableList()
-//            }
-        }
     }
 
     override fun runCommand(command: EditorCommand) {
         redoStack.clear()
         undoStack.add(command)
-        updateLayers()
     }
 
     // states
@@ -167,16 +139,10 @@ class EditorViewModel : ViewModel, EditorCommandManager {
         // apply current effect before switching (if it has a non-zero value)
         applyCurrentEffect()
         this.selectedFilter = selectedFilter
-//        updatePreviewBitmapOnly() // update preview to show new effect
     }
 
     fun adjustEffect(filter: Filter = selectedFilter, value: Double) {
         filterValues[filter] = value
-
-        // update only preview (live adjustment)
-        if (filter == selectedFilter) {
-//            updatePreviewBitmapOnly()
-        }
     }
 
     fun applyCurrentEffect() {
@@ -194,32 +160,6 @@ class EditorViewModel : ViewModel, EditorCommandManager {
         }
     }
 
-//    private fun updatePreviewBitmapOnly() {
-//        val src = originalMat ?: return
-//        viewModelScope.launch(Dispatchers.Default) {
-//            var processed = src.clone()
-//
-//            // apply all undo stack commands
-//            undoStack.forEach { command ->
-//                processed = command.execute(processed)
-//            }
-//
-//            // Apply current adjustment on top
-//            val currentValue = filterValues[selectedFilter] ?: .0
-//            if (currentValue != .0) {
-//                val previewCommand = createCommandForEffect(selectedFilter, currentValue)
-//                processed = previewCommand.execute(processed)
-//            }
-//
-//            val bitmap = FormatConverters.matToBitmap(processed)
-//            processed.release()
-//
-//            previewBitmap = bitmap
-//        }
-//    }
-
-    private val hasActiveAdjustment get() = (filterValues[selectedFilter] ?: .0) != .0
-
     fun loadImage(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.Default) {
             // clear all state
@@ -228,9 +168,6 @@ class EditorViewModel : ViewModel, EditorCommandManager {
 
             // reset effect values
             filterValues.forEach { (effect, _) -> filterValues[effect] = .0 }
-
-            // release old image if exists
-//            originalMat?.release()
 
             val bitmap = FormatConverters.uriToBitmap(context, uri)
             originalMat = FormatConverters.bitmapToMat(bitmap)

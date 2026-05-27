@@ -32,7 +32,7 @@ fun Frontpage(navController: NavController) {
                     painter = painterResource(R.drawable.front),
                     contentScale = ContentScale.Crop,
                 )
-                .padding(paddingValues),
+                .padding(paddingValues).padding(15.dp),
             contentAlignment = Alignment.BottomEnd
         ) {
             Column(
@@ -49,14 +49,14 @@ fun Frontpage(navController: NavController) {
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = {
-                    navController.navigate("login")
-                }) {
-                    Text("login")
-                }
-                TextButton(onClick = {
                     navController.navigate("onboarding")
                 }) {
-                    Text("use")
+                    Text(text = "onboarding")
+                }
+                TextButton(onClick = {
+                    navController.navigate("pick")
+                }) {
+                    Text(text = "use")
                 }
             }
         }

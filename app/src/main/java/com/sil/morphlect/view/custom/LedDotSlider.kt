@@ -29,8 +29,6 @@ fun LedDotSlider(
     thumbHeight: Float = 32f
 ) {
     var sliderWidth by remember { mutableStateOf(0f) }
-    val thumbWidthDp = thumbWidth.dp
-    val thumbHeightDp = thumbHeight.dp
 
     Canvas(
         modifier = modifier

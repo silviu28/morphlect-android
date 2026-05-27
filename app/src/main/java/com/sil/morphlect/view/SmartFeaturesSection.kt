@@ -22,9 +22,7 @@ import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
-import com.sil.morphlect.view.dialog.impl.AddFunctionalityDialog
 import com.sil.morphlect.viewmodel.EditorViewModel
-import com.sil.mxtengine.data.MXTManifest
 import kotlin.collections.listOf
 import kotlin.random.Random
 
@@ -40,7 +38,6 @@ fun SmartFeaturesSection(
     var showEvalDialog    by remember { mutableStateOf(false) }
     var showStyleDialog   by remember { mutableStateOf(false) }
     var extensions        by remember { mutableStateOf<List<String>>(listOf()) }
-//    var showAddFuncDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         extensions = extensionsRepository.readExtensionNames()
@@ -50,8 +47,6 @@ fun SmartFeaturesSection(
 
     Column {
         when {
-//            showAddFuncDialog -> AddFunctionalityDialog(onDismissRequest = { showAddFuncDialog = false })
-
             showStyleDialog -> AlertDialog(
                 onDismissRequest = { showStyleDialog = false },
                 title = { Text("style transfer") },
@@ -139,9 +134,6 @@ fun SmartFeaturesSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
         ) {
-//            TextButton(onClick = { showAddFuncDialog = true }) {
-//                Text("new functionality...")
-//            }
             extensions.forEach {
                 TextButton(onClick = { navController.navigate("extension-view/$it") }) {
                     Text(it)
