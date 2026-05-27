@@ -1,8 +1,6 @@
 package com.sil.morphlect.view.camera
 
-import com.sil.morphlect.view.PresetPreview
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
@@ -19,52 +17,17 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AddBox
-import androidx.compose.material.icons.filled.Camera
-import androidx.compose.material.icons.filled.Cameraswitch
-import androidx.compose.material.icons.filled.CropSquare
-import androidx.compose.material.icons.filled.Filter
-import androidx.compose.material.icons.filled.GridOn
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.TextFormat
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,15 +36,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -92,18 +51,14 @@ import androidx.core.graphics.scale
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
-import com.sil.morphlect.R
 import com.sil.morphlect.data.EditorLayer
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.extension.yuvToRgba
-import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.logic.objectDetector
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.ml.impl.Tensor4D
-import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
-import com.sil.morphlect.view.dialog.DialogScaffold
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.io.File
@@ -111,6 +66,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.seconds
 
+// camera feed should only contain the camera feed, with the grid on top, the detected objects, and maybe the filtered feed
 // TODO the camera mode should also receive the state of filter values in order to apply them to the camera feed.
 @OptIn(ExperimentalGetImage::class)
 @Composable
@@ -122,23 +78,20 @@ fun CameraFeed(
     analyzerFeedFlow: MutableSharedFlow<String>,
     presets: List<Preset>,
     imageOnlyLoadedModels: List<ExtensionModelLoader>,
+    cameraControllerState: CameraControllerState,
 ) {
-    val presetDefaultImage = remember {
-        FormatConverters.bitmapToMat(
-            BitmapFactory.decodeResource(context.resources, R.drawable.preset_default)
-        )
-    }
+
     val mainExecutor = ContextCompat.getMainExecutor(context)
     val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
 
-    var lastFeedMessage     by remember { mutableStateOf("") }
+//    var lastFeedMessage     by remember { mutableStateOf("") }
 
     var isCapturing         by remember { mutableStateOf(false) }
     var showGrid            by remember { mutableStateOf(false) }
-    var showFeed            by remember { mutableStateOf(true) }
-    var showSliders         by remember { mutableStateOf(true) }
+//    var showFeed            by remember { mutableStateOf(true) }
+//    var showSliders         by remember { mutableStateOf(true) }
     var showClassification  by remember { mutableStateOf(true) }
-    var showModelsDialog    by remember { mutableStateOf(false) }
+//    var showModelsDialog    by remember { mutableStateOf(false) }
     var applyFiltering      by remember { mutableStateOf(false) }
 
     var imageWidth          by remember { mutableStateOf(1) }
@@ -146,11 +99,11 @@ fun CameraFeed(
     var focusIndicatorPoint by remember { mutableStateOf<Offset?>(null) }
     var isExpanded          by remember { mutableStateOf(false) }
 
-    val shutterAlpha       by animateFloatAsState(
-        targetValue = if (isCapturing) 0f else 1f,
-        animationSpec = tween(50),
-        finishedListener = { if (it == 1f) isCapturing = false }
-    )
+//    val shutterAlpha       by animateFloatAsState(
+//        targetValue = if (isCapturing) 0f else 1f,
+//        animationSpec = tween(50),
+//        finishedListener = { if (it == 1f) isCapturing = false }
+//    )
 
     val size by animateDpAsState(
         targetValue = if (isExpanded) 0.dp else 120.dp,
@@ -166,8 +119,6 @@ fun CameraFeed(
     var currentProcessedFrame by remember { mutableStateOf<EditorLayer?>(null) }
     var reanalyzeTriggerKey by remember { mutableStateOf(false) }
     var inferenceRefreshInterval by remember { mutableStateOf(2.seconds) }
-
-    val inferenceRefreshTimes = remember { listOf(1.seconds, 2.seconds, 4.seconds, 5.seconds) }
 
     // this signals models to reanalyze in a given interval
     LaunchedEffect(Unit) {
@@ -250,13 +201,47 @@ fun CameraFeed(
                         imageProxy.close()
                     }
             }
+
+            // assign for the wrapper the required callback for taking a picture
+            cameraControllerState.lifecycleCameraController = this
+            cameraControllerState.takePicture = {
+                val file =
+                    File(context.cacheDir, "photo_${System.currentTimeMillis()}.jpg")
+                val outputFileOptions = ImageCapture
+                    .OutputFileOptions
+                    .Builder(file)
+                    .build()
+
+                cameraControllerState.lifecycleCameraController?.takePicture(
+                    outputFileOptions,
+                    mainExecutor,
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                            isCapturing = false
+                            onImageCaptured(Uri.fromFile(file))
+                        }
+
+                        override fun onError(exception: ImageCaptureException) {
+                            isCapturing = false
+                            Log.e("CAMERA", exception.stackTraceToString())
+                        }
+                    }
+                )
+            }
+            cameraControllerState.selectCamera = {
+                cameraControllerState.lifecycleCameraController?.cameraSelector =
+                    if (cameraControllerState.lifecycleCameraController?.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
+                        CameraSelector.DEFAULT_FRONT_CAMERA
+                    else
+                        CameraSelector.DEFAULT_BACK_CAMERA
+            }
         }
     }
 
-    // this collects the messages to be viewed on the screen
-    LaunchedEffect(analyzerFeedFlow) {
-        analyzerFeedFlow.collect { lastFeedMessage = it }
-    }
+//    // this collects the messages to be viewed on the screen
+//    LaunchedEffect(analyzerFeedFlow) {
+//        analyzerFeedFlow.collect { lastFeedMessage = it }
+//    }
 
     // this is for the indicator that appears when tapping the screen
     LaunchedEffect(focusIndicatorPoint) {
@@ -266,46 +251,10 @@ fun CameraFeed(
         }
     }
 
-    if (showModelsDialog) {
-        DialogScaffold(
-            title = "downloaded extensions",
-            onDismissRequest = { showModelsDialog = false },
-            icon = Icons.Default.Camera,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                imageOnlyLoadedModels.forEach {
-                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(it.name)
-                        Spacer(Modifier.weight(1f))
-                        Switch(true, { })
-                    }
-                }
-                Spacer(Modifier.weight(1f))
-                Column {
-                    Text("inference refresh timeout")
-                    HorizontalDivider()
-                    inferenceRefreshTimes.forEach {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("$it")
-                            RadioButton(
-                                selected = inferenceRefreshInterval == it,
-                                onClick = { inferenceRefreshInterval = it },
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     Box {
-        // the feed itself
         Box(
             modifier = Modifier
-                .graphicsLayer { alpha = shutterAlpha }
+//                .graphicsLayer { alpha = shutterAlpha }
                 .background(Color.Black)
         ) {
             AndroidView(
@@ -385,182 +334,12 @@ fun CameraFeed(
             }
         }
 
-        // bounding-box canvas
-        // TODO - disabling 'showClassification' should also disable the analyzer for performance
-        if (showClassification)
-            BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight)
-
-        // top right sliders
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 30.dp)
-        ) {
-            AnimatedVisibility(visible = showSliders) {
-                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                    SettingsRow(Icons.Default.GridOn) {
-                        Switch(checked = showGrid, onCheckedChange = { showGrid = it })
-                    }
-                    SettingsRow(Icons.Default.TextFormat) {
-                        Switch(checked = showFeed, onCheckedChange = { showFeed = it })
-                    }
-                    SettingsRow(Icons.Default.CropSquare) {
-                        Switch(showClassification, onCheckedChange = { showClassification = it })
-                    }
-                    SettingsRow(Icons.Default.Filter) {
-                        Switch(checked = applyFiltering, onCheckedChange = { applyFiltering = it })
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        IconButton(onClick = { showModelsDialog = true }) {
-                            Icon(Icons.Default.AddBox, contentDescription = "use a model")
-                        }
-                    }
-                }
-            }
-
-            // slider panel chevron
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(onClick = { showSliders = !showSliders }) {
-                    Icon(
-                        imageVector =
-                            if (showSliders) Icons.Default.KeyboardArrowUp
-                            else Icons.Default.KeyboardArrowDown,
-                        contentDescription = "toggle slider visibility",
-                        tint = Color.White,
-                    )
-                }
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-//                .background(Color.Black.copy(alpha = .7f))
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(top = 12.dp, bottom = 12.dp)
-        ) {
-            // presets bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                presets.forEach { preset ->
-                    PresetPreview(
-                        preset = preset,
-                        originalMat = presetDefaultImage,
-                        onPress = { },
-                        onLongPress = { },
-                    )
-                }
-            }
-
-            // bottom controls
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                IconButton(onClick = onGoBack) {
-                    Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "back")
-                }
-                IconButton(
-                    onClick = {
-                        if (!isCapturing) {
-                            isCapturing = true
-                            val file =
-                                File(context.cacheDir, "photo_${System.currentTimeMillis()}.jpg")
-                            val outputFileOptions = ImageCapture
-                                .OutputFileOptions
-                                .Builder(file)
-                                .build()
-
-                            cameraController.takePicture(
-                                outputFileOptions,
-                                mainExecutor,
-                                object : ImageCapture.OnImageSavedCallback {
-                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                        isCapturing = false
-                                        onImageCaptured(Uri.fromFile(file))
-                                    }
-
-                                    override fun onError(exception: ImageCaptureException) {
-                                        isCapturing = false
-                                        Log.e("CAMERA", exception.stackTraceToString())
-                                    }
-                                }
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .size(72.dp)
-                        .background(Color.White, CircleShape)
-                        .border(3.dp, Color.White, CircleShape)
-                ) {
-                    if (isCapturing)
-                        FlickeringLedDotProgressIndicator()
-                    else
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(Color.White, CircleShape)
-                        )
-                }
-                IconButton(
-                    onClick = {
-                        cameraController.cameraSelector =
-                            if (cameraController.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
-                                CameraSelector.DEFAULT_FRONT_CAMERA
-                            else
-                                CameraSelector.DEFAULT_BACK_CAMERA
-                    }
-                ) {
-                    Icon(Icons.Default.Cameraswitch, contentDescription = "switch camera")
-                }
-            }
-        }
-
-        // analyzer feed
-        AnimatedVisibility(
-            visible = showFeed,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Column(
-                modifier = Modifier
-                    .width(200.dp)
-                    .padding(20.dp)
-                    .padding(top = 30.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Text(
-                    text = lastFeedMessage,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                HorizontalDivider()
-                Text("running ${imageOnlyLoadedModels.size} analyzers.")
-            }
-        }
+    // bounding-box canvas
+    // TODO - disabling 'showClassification' should also disable the analyzer for performance
+    if (showClassification)
+        BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight)
     }
 }
-
 
 @Preview
 @Composable
@@ -588,25 +367,8 @@ fun CameraFeedPreview() {
         analyzerFeedFlow = previewFeedFlow,
         presets = emptyList(),
         imageOnlyLoadedModels = emptyList(),
+        cameraControllerState = CameraControllerState(),
     )
-}
-
-@Composable
-private fun SettingsRow(
-    icon: ImageVector,
-    content: @Composable (() -> Unit)
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End
-    ) {
-        Icon(icon, contentDescription = null, tint = Color.White)
-        Spacer(modifier = Modifier.width(8.dp))
-        content()
-    }
 }
 
 @Composable
