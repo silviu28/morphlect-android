@@ -30,7 +30,7 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
-fun AppNavHost() {
+fun MorphlectNavHost() {
     val navController                            = rememberNavController()
     val editorViewModel: EditorViewModel         = viewModel()
     val cameraModeViewModel: CameraModeViewModel = viewModel()

@@ -21,10 +21,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val configRepository = AppConfigRepository(this)
-        val developerMode = runBlocking { configRepository.developerMode.first() }
-        // makes the app SUPER SLOW
-//        if (developerMode)
-//            Debug.startMethodTracing("trace")
 
         enableEdgeToEdge()
         window.isNavigationBarContrastEnforced = false
@@ -36,9 +32,7 @@ class MainActivity : ComponentActivity() {
         moduleLoadResult.onSuccess {
             setContent {
                 MorphlectTheme {
-                    Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
-                        AppNavHost()
-                    }
+                    Scaffold(modifier = Modifier.fillMaxSize()) { _ -> MorphlectNavHost() }
                 }
             }
         }
