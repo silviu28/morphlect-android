@@ -1,29 +1,20 @@
 package com.sil.morphlect.view
 
-import android.os.Build
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -49,16 +39,13 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -73,7 +60,6 @@ import com.sil.morphlect.viewmodel.EditorViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
 import com.sil.morphlect.data.EditorLayer
@@ -86,17 +72,29 @@ import com.sil.morphlect.view.dialog.impl.LayeringDialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@Stable
+class EditorUiState() {
+    var showExitDialog   by mutableStateOf(false)
+    var showHistoryStack by  mutableStateOf(false)
+    var showHistogram    by mutableStateOf(false)
+    var showOptionsSheet by mutableStateOf(false)
+    var showLayersView   by mutableStateOf(false)
+    var showLayering     by mutableStateOf(false)
+    var croppingMode     by mutableStateOf(false)
+    var cropUpCorner     by mutableStateOf<Offset?>(null)
+    var cropDownCorner   by mutableStateOf<Offset?>(null)
+    var addingImage      by mutableStateOf(false)
+    var addingText       by mutableStateOf(false)
+}
 
 @Composable
 fun Editor(
     navController:     NavController,
-    editorViewModel:   EditorViewModel,
+    vm:                EditorViewModel,
     presetsRepository: PresetsRepository,
     configRepository:  AppConfigRepository,
     extensionsRepository: ExtensionsRepository,
 ) {
-    val vm = editorViewModel
-
     val ctx     = LocalContext.current
     val density = LocalDensity.current
 
@@ -104,38 +102,23 @@ fun Editor(
         Size(330.dp.toPx(), 330.dp.toPx())
     }
 
-    var showExitDialog   by remember { mutableStateOf(false) }
-    var showHistoryStack by remember { mutableStateOf(false) }
-    var showHistogram    by remember { mutableStateOf(false) }
-    var showOptionsSheet by remember { mutableStateOf(false) }
-    var showLayersView   by remember { mutableStateOf(false) }
-    var showLayering     by remember { mutableStateOf(false) }
-
-    var croppingMode     by remember { mutableStateOf(false) }
-    var cropUpCorner     by remember { mutableStateOf<Offset?>(null) }
-    var cropDownCorner   by remember { mutableStateOf<Offset?>(null) }
-    var addingImage      by remember { mutableStateOf(false) }
-    var addingText       by remember { mutableStateOf(false) }
-
-    val animatedValues    = remember { mutableStateMapOf<String, Animatable<Float, AnimationVector1D>>() }
+    val state = remember { EditorUiState() }
 
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.run {
-            val bitmap = FormatConverters.uriToBitmap(ctx, uri)
+            val bitmap = FormatConverters.uriToBitmap(ctx, this)
             val mat = FormatConverters.bitmapToMat(bitmap)
             vm.addLayer(EditorLayer(mat))
-            addingImage = false
+            state.addingImage = false
         }
     }
 
-        val advancedMode     by configRepository.advancedMode.collectAsState(initial = false)
+    val advancedMode by configRepository.advancedMode.collectAsState(initial = false)
 
     // listen for back gesture - in case if it's accidental
-    BackHandler {
-        showExitDialog = true
-    }
+    BackHandler { state.showExitDialog = true }
 
     // listen to emissions of evaluation results.
     // apply filtering with keyframing
@@ -171,30 +154,30 @@ fun Editor(
 
     Scaffold { _ ->
         when {
-            showHistoryStack -> History(
-                onDismissRequest = { showHistoryStack = false },
+            state.showHistoryStack -> History(
+                onDismissRequest = { state.showHistoryStack = false },
                 undoStack = vm.undoStack,
                 redoStack = vm.redoStack,
                 onUndo = { vm.undoLastCommand() },
                 onRedo = { vm.redoLastCommand() },
             )
 
-            showLayering -> LayeringDialog(
+            state.showLayering -> LayeringDialog(
                 layers = vm.layers,
                 onRemoveLayer = { _ -> vm.removeLayer(vm.layers.size - 1) },
                 onMergeLayerWithBelow = { i -> vm.mergeLayerWithAbove(i) },
-                onDismissRequest = { showLayering = false },
+                onDismissRequest = { state.showLayering = false },
                 onInterchangeLayers = { l1, l2 -> vm.interchangeLayers(l1, l2) },
                 onVisibilityToggle = { vm.toggleVisibilityOfLayer(it) }
             )
 
-            showOptionsSheet -> OptionsBottomSheet(
+            state.showOptionsSheet -> OptionsBottomSheet(
                 navController,
-                onDismiss = { showOptionsSheet = false }
+                onDismiss = { state.showOptionsSheet = false }
             )
 
-            showExitDialog -> AlertDialog(
-                onDismissRequest = { showExitDialog = false },
+            state.showExitDialog -> AlertDialog(
+                onDismissRequest = { state.showExitDialog = false },
                 title = { Text("quit app?") },
                 text = { Text("all unsaved changes will be lost.") },
                 confirmButton = {
@@ -203,20 +186,20 @@ fun Editor(
                     }) { Text("quit") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showExitDialog = false }) {
+                    TextButton(onClick = { state.showExitDialog = false }) {
                         Text("no")
                     }
                 }
             )
 
-            showHistogram -> HistogramBottomSheet(
-                onDismissRequest = { showHistogram = false },
+            state.showHistogram -> HistogramBottomSheet(
+                onDismissRequest = { state.showHistogram = false },
                 colorReference = vm.previewBitmap!!
             )
 
-            addingText -> AddingTextOverlay(
-                onDismissRequest = { addingText = false },
-                onConfirm = { text -> vm.addTextLayer(text); addingText = false }
+            state.addingText -> AddingTextOverlay(
+                onDismissRequest = { state.addingText = false },
+                onConfirm = { text -> vm.addTextLayer(text); state.addingText = false }
             )
         }
 
@@ -232,23 +215,25 @@ fun Editor(
                     .padding(16.dp)
             ) {
                 AnimatedVisibility(
-                    visible = showLayersView,
+                    visible = state.showLayersView,
                     enter = slideInHorizontally { it },
                     exit = slideOutHorizontally { it }
                 ) {
                     FloatingActionButton(
                         containerColor = MaterialTheme.colorScheme.primary,
-                        onClick = { showLayering = true },
+                        onClick = { state.showLayering = true },
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Sort, "layering")
                     }
                 }
+
                 Spacer(Modifier.size(2.dp))
+
                 FloatingActionButton(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    onClick = { showLayersView = !showLayersView }
+                    onClick = { state.showLayersView = !state.showLayersView }
                 ) {
-                    if (showLayersView)
+                    if (state.showLayersView)
                         Icon(Icons.Default.LayersClear, "layers")
                     else
                         Icon(Icons.Default.Layers, "layers")
@@ -298,11 +283,11 @@ fun Editor(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    ElevatedButton(onClick = { showHistoryStack = true }) {
+                    ElevatedButton(onClick = { state.showHistoryStack = true }) {
                         Icon(Icons.Default.History, contentDescription = "history")
                     }
 
-                    ElevatedButton(onClick = { showOptionsSheet = true }) {
+                    ElevatedButton(onClick = { state.showOptionsSheet = true }) {
                         Icon(Icons.Default.Menu, contentDescription = "options")
                     }
                 }
@@ -312,12 +297,12 @@ fun Editor(
                 // thumbnail
                 InteractiveThumbnail(
                     layers = vm.previewLayers,
-                    expandLayers = showLayersView,
-                    croppingMode = croppingMode,
-                    cropUpCorner = cropUpCorner,
-                    cropDownCorner = cropDownCorner,
-                    onDragStart = { cropUpCorner = it },
-                    onDrag = { cropDownCorner = it },
+                    expandLayers = state.showLayersView,
+                    croppingMode = state.croppingMode,
+                    cropUpCorner = state.cropUpCorner,
+                    cropDownCorner = state.cropDownCorner,
+                    onDragStart = { state.cropUpCorner = it },
+                    onDrag = { state.cropDownCorner = it },
                 )
 
                 // animate section switching using AnimatedContent
@@ -343,21 +328,21 @@ fun Editor(
                             )
                             Section.ImageManipulation -> ImageManipulationSection(
                                 vm = vm,
-                                croppingMode,
-                                onCropToggle = { croppingMode = !croppingMode },
+                                croppingMode = state.croppingMode,
+                                onCropToggle = { state.croppingMode = !state.croppingMode },
                                 onCropApply = {
-                                    if (cropUpCorner != null && cropDownCorner != null)
-                                        vm.cropLayers(cropUpCorner!!, cropDownCorner!!, thumbnailSizePx)
+                                    if (state.cropUpCorner != null && state.cropDownCorner != null)
+                                        vm.cropLayers(state.cropUpCorner!!, state.cropDownCorner!!, thumbnailSizePx)
                                 },
-                                addingImage,
+                                addingImage = state.addingImage,
                                 onImageAddToggle = { imagePickLauncher.launch("image/*") },
-                                addingText,
-                                onAddText = { addingText = true },
+                                addingText = state.addingText,
+                                onAddText = { state.addingText = true },
                             )
                         }
 
                         if (advancedMode) {
-                            TextButton(onClick = { showHistogram = true }) {
+                            TextButton(onClick = { state.showHistogram = true }) {
                                 Text("histogram")
                             }
                         }
