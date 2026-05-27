@@ -7,6 +7,7 @@ import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.FingerprintRepository
@@ -91,7 +92,12 @@ fun MorphlectNavHost() {
             SaveImage(editorViewModel, navController)
         }
         composable("compare") {
-            ImageComparison(editorViewModel, navController)
+            ImageComparison(
+                originalImageBitmap =
+                    editorViewModel.originalMat?.let { FormatConverters.matToBitmap(it) },
+                layers = editorViewModel.layers,
+                navController = navController,
+            )
         }
         composable("settings") {
             Settings(configRepository, navController)

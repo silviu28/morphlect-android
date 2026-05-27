@@ -133,6 +133,8 @@ class EditorLayer(val mat: Mat) : Closeable {
     fun downscaledUniformly(maxDimension: Int = 800) : EditorLayer {
         return EditorLayer(Filtering.uniformDownscale(mat))
     }
+
+    fun toCvMat(): Mat = mat
 }
 
 
