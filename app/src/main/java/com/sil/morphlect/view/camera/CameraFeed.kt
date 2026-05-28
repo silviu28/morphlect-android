@@ -63,6 +63,7 @@ import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.logic.objectDetector
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
+import com.sil.morphlect.ml.impl.Parameters
 import com.sil.morphlect.ml.impl.Tensor4D
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -80,7 +81,7 @@ fun CameraFeed(
     lifecycleOwner: LifecycleOwner,
     onImageCaptured: (Uri) -> Unit,
     analyzerFeedFlow: MutableSharedFlow<String>,
-    imageOnlyLoadedModels: List<ExtensionModelLoader>,
+    imageOnlyLoadedModels: Map<ExtensionModelLoader, Boolean>,
     cameraControllerState: CameraControllerState,
     uiState: CameraModeUiState,
 ) {
@@ -127,8 +128,9 @@ fun CameraFeed(
             // analyze the current frame through all models and join their output
             currentFrame?.let { frame ->
                 imageOnlyLoadedModels
-                    .map { model ->
-                        model.infer(
+                    .map { (model, enabled) ->
+                        if (!enabled) Unit
+                        else model.infer(
                             mapOf(
                                 model.inputs[0].name to frame.visual
                                     .asAndroidBitmap()
@@ -138,10 +140,12 @@ fun CameraFeed(
                     }
                     .forEach { output ->
                         when (output) {
-                            is Map<*, *> ->
+                            is Unit -> Unit // do nothing
+                            is Parameters ->
                                 analyzerFeedFlow.emit(
-                                    (output as? Map<Output, Float>)?.map { (k, v) -> "$k: ${v * 100}" }
-                                        ?.joinToString("\n") ?: return@LaunchedEffect
+                                    output.data
+                                        .map { (k, v) -> "$k: ${v * 100}" }
+                                        .joinToString("\n")
                                 )
 
                             is Tensor4D -> currentProcessedFrame = EditorLayer(depthToMat(output))
@@ -149,7 +153,8 @@ fun CameraFeed(
                         }
                     }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("CameraFeed", e.stackTraceToString())
             analyzerFeedFlow.emit(":(")
         }
     }
@@ -231,8 +236,9 @@ fun CameraFeed(
     }
 
     // this collects the messages to be viewed on the screen
-    LaunchedEffect(analyzerFeedFlow) {
-        analyzerFeedFlow.collect { uiState.lastFeedMessage = it }
+    LaunchedEffect(uiState.showFeed) {
+        if (uiState.showFeed)
+            analyzerFeedFlow.collect { uiState.lastFeedMessage = it }
     }
 
     // this is for the indicator that appears when tapping the screen
@@ -352,7 +358,7 @@ fun CameraFeedPreview() {
         lifecycleOwner,
         onImageCaptured = { _ -> },
         analyzerFeedFlow = previewFeedFlow,
-        imageOnlyLoadedModels = emptyList(),
+        imageOnlyLoadedModels = emptyMap(),
         cameraControllerState = CameraControllerState(),
         uiState = CameraModeUiState(ctx)
     )

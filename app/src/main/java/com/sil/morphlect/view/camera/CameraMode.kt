@@ -163,10 +163,6 @@ fun CameraMode(
     val state = remember { CameraModeUiState(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
-    var cameraPermissionGranted  by remember { mutableStateOf(
-        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED
-    ) }
 
     LaunchedEffect(Unit) {
         vm.loadRepositories(presetsRepository, extensionsRepository)
@@ -175,7 +171,7 @@ fun CameraMode(
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { permGranted -> cameraPermissionGranted = permGranted }
+    ) { permGranted -> state.cameraPermissionGranted = permGranted }
 
     vm.capturedImageUri?.let {
         val img = FormatConverters.uriToBitmap(context, it)
@@ -213,11 +209,11 @@ fun CameraMode(
             icon = Icons.Default.Camera,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                vm.imageOnlyLoadedModels.forEach {
+                vm.imageOnlyLoadedModels.forEach { (model, enabled) ->
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(it.name)
+                        Text(model.name)
                         Spacer(Modifier.weight(1f))
-                        Switch(true, { })
+                        Switch(enabled, { vm.imageOnlyLoadedModels += (model to !enabled) })
                     }
                 }
                 Spacer(Modifier.weight(1f))
@@ -241,7 +237,7 @@ fun CameraMode(
         }
     }
 
-    if (!cameraPermissionGranted) {
+    if (!state.cameraPermissionGranted) {
         DecoratedContainer(icon = Icons.Default.Error) {
             Column(
                 modifier = Modifier
@@ -332,8 +328,6 @@ fun CameraMode(
                     }
                 }
             }
-
-
 
             Column(
                 modifier = Modifier

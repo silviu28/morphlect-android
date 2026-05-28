@@ -22,6 +22,7 @@ typealias BindingMap = Map<String, Any?>
 
 class Tensor4D(val data: Array<Array<Array<FloatArray>>>)
 class Tensor3D(val data: Array<Array<FloatArray>>)
+class Parameters(val data: Map<Output, Float>)
 
 class ExtensionModelLoader(
     override val name: String,
@@ -168,7 +169,7 @@ class ExtensionModelLoader(
         return when (outputs[0].type){
             InteractorType.FilterParams -> {
                 val resultBuffer = (fmtOutputs[0] as Array<FloatArray>)[0]
-                Output.entries.associate { it to resultBuffer[it.ordinal] }
+                Parameters(Output.entries.associate { it to resultBuffer[it.ordinal] })
             }
 
             InteractorType.Image -> TODO()
