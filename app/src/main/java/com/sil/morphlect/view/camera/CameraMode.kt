@@ -58,6 +58,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,7 +92,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
-private val inferenceRefreshTimes = arrayOf(1.seconds, 2.seconds, 4.seconds, 5.seconds)
 class CameraControllerState(
     var lifecycleCameraController: LifecycleCameraController? = null,
     var takePicture: (() -> Unit)? = null,
@@ -120,10 +120,26 @@ private suspend fun saveImage(context: Context, uri: Uri) {
             contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
             resolver.update(it, contentValues, null, null)
         }
-
     }
 
     Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_LONG).show()
+}
+
+@Stable
+class CameraModeUiState(context: Context) {
+    var cameraPermissionGranted by mutableStateOf(
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED
+    )
+    var cameraPermissionPrompted by mutableStateOf(!cameraPermissionGranted)
+    var showSliders by mutableStateOf(true)
+    var showModelsDialog by mutableStateOf(false)
+    var showGrid by mutableStateOf(false)
+    var showFeed by mutableStateOf(false)
+    var showClassification by mutableStateOf(false)
+    var applyFiltering by mutableStateOf(false)
+    var lastFeedMessage     by mutableStateOf("")
+    var isCapturing by mutableStateOf(false)
 }
 
 @Composable
@@ -136,62 +152,34 @@ fun CameraMode(
     extensionsRepository: ExtensionsRepository,
 ) {
     val cameraControllerState = remember { CameraControllerState() }
-    val ctx = LocalContext.current
+    val context = LocalContext.current
     val presetDefaultImage = remember {
         FormatConverters.bitmapToMat(
-            BitmapFactory.decodeResource(ctx.resources, R.drawable.preset_default)
+            BitmapFactory.decodeResource(context.resources, R.drawable.preset_default)
         )
     }
-
+    val state = remember { CameraModeUiState(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
     var cameraPermissionGranted  by remember { mutableStateOf(
-        ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA)
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED
     ) }
-    var cameraPermissionPrompted by remember { mutableStateOf(!cameraPermissionGranted) }
-    var capturedImageUri         by remember { mutableStateOf<Uri?>(null) }
-    var presets                  by remember { mutableStateOf<List<Preset>>(emptyList()) }
-    var models                   by remember { mutableStateOf<List<String>>(emptyList()) }
-    var imageOnlyLoadedModels    by remember { mutableStateOf<List<ExtensionModelLoader>>(listOf()) }
-    var showSliders by remember { mutableStateOf(true) }
-    var showModelsDialog by remember { mutableStateOf(false) }
-    var inferenceRefreshInterval by remember { mutableStateOf(2.seconds) }
-    var showGrid by remember { mutableStateOf(false) }
-    var showFeed by remember { mutableStateOf(false) }
-    var showClassification by remember { mutableStateOf(false) }
-    var applyFiltering by remember { mutableStateOf(false) }
-    var lastFeedMessage     by remember { mutableStateOf("") }
-    var isCapturing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        presets = presetsRepository.load()
-        models = extensionsRepository.readExtensionNames()
-
-        imageOnlyLoadedModels = models
-            .map { loadExtension(ctx, it).manifest }
-            .filter { manifest -> // here we want only the extensions that take in an image
-                manifest.inputs.firstOrNull { it.type != InteractorType.Image } == null
-            }
-            .map { // then construct them
-                ExtensionModelLoader.Builder()
-                    .named(it.name)
-                    .withInputs(it.inputs)
-                    .withOutputs(it.outputs)
-                    .build()
-                    .apply { initialize(ctx) }
-            }
+        vm.loadRepositories(presetsRepository, extensionsRepository)
+        vm.loadEligibleModels(context)
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { permGranted -> cameraPermissionGranted = permGranted }
 
-    capturedImageUri?.let {
-        val img = FormatConverters.uriToBitmap(ctx, it)
+    vm.capturedImageUri?.let {
+        val img = FormatConverters.uriToBitmap(context, it)
         DialogScaffold(
             title = "capture",
-            onDismissRequest = { capturedImageUri = null },
+            onDismissRequest = { vm.capturedImageUri = null },
         ) {
             Image(
                 bitmap = img.asImageBitmap(),
@@ -199,12 +187,12 @@ fun CameraMode(
                 modifier = Modifier.size(300.dp),
             )
             Row {
-                TextButton(onClick = { capturedImageUri = null }) {
+                TextButton(onClick = { vm.capturedImageUri = null }) {
                     Text("discard")
                 }
                 TextButton(onClick = {
                     coroutineScope.launch {
-                        saveImage(ctx, it)
+                        saveImage(context, it)
                     }
                 }) {
                     Text("save")
@@ -216,14 +204,14 @@ fun CameraMode(
         }
     }
 
-        if (showModelsDialog) {
+    if (state.showModelsDialog) {
         DialogScaffold(
             title = "downloaded extensions",
-            onDismissRequest = { showModelsDialog = false },
+            onDismissRequest = { state.showModelsDialog = false },
             icon = Icons.Default.Camera,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                imageOnlyLoadedModels.forEach {
+                vm.imageOnlyLoadedModels.forEach {
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(it.name)
                         Spacer(Modifier.weight(1f))
@@ -234,15 +222,15 @@ fun CameraMode(
                 Column {
                     Text("inference refresh timeout")
                     HorizontalDivider()
-                    inferenceRefreshTimes.forEach {
+                    vm.inferenceRefreshTimes.forEach {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("$it")
                             RadioButton(
-                                selected = inferenceRefreshInterval == it,
-                                onClick = { inferenceRefreshInterval = it },
+                                selected = vm.inferenceRefreshInterval == it,
+                                onClick = { vm.inferenceRefreshInterval = it },
                             )
                         }
                     }
@@ -263,10 +251,10 @@ fun CameraMode(
                 Button(onClick = { navController.popBackStack() }) { Text("back") }
             }
         }
-        if (cameraPermissionPrompted) {
+        if (state.cameraPermissionPrompted) {
             DialogScaffold(
                 title = "camera mode",
-                onDismissRequest = { cameraPermissionPrompted = false },
+                onDismissRequest = { state.cameraPermissionPrompted = false },
                 icon = Icons.Default.QuestionMark
             ) {
                 Text("welcome to camera mode! please provide morphlect the permission to access your camera")
@@ -278,13 +266,11 @@ fun CameraMode(
     } else {
         Box {
             CameraFeed(
-                context = ctx,
+                context = context,
                 lifecycleOwner = lifecycleOwner,
-                onImageCaptured = { imageUri -> capturedImageUri = imageUri },
-                onGoBack = { navController.popBackStack() },
+                onImageCaptured = { imageUri -> vm.capturedImageUri = imageUri },
                 analyzerFeedFlow,
-                presets,
-                imageOnlyLoadedModels,
+                vm.imageOnlyLoadedModels,
                 cameraControllerState = cameraControllerState
             )
 
@@ -294,23 +280,23 @@ fun CameraMode(
                     .fillMaxWidth()
                     .padding(top = 30.dp)
             ) {
-                AnimatedVisibility(visible = showSliders) {
+                AnimatedVisibility(visible = state.showSliders) {
                     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         SettingsRow(Icons.Default.GridOn) {
-                            Switch(checked = showGrid, onCheckedChange = { showGrid = it })
+                            Switch(checked = state.showGrid, onCheckedChange = { state.showGrid = it })
                         }
                         SettingsRow(Icons.Default.TextFormat) {
-                            Switch(checked = showFeed, onCheckedChange = { showFeed = it })
+                            Switch(checked = state.showFeed, onCheckedChange = { state.showFeed = it })
                         }
                         SettingsRow(Icons.Default.CropSquare) {
                             Switch(
-                                showClassification,
-                                onCheckedChange = { showClassification = it })
+                                state.showClassification,
+                                onCheckedChange = { state.showClassification = it })
                         }
                         SettingsRow(Icons.Default.Filter) {
                             Switch(
-                                checked = applyFiltering,
-                                onCheckedChange = { applyFiltering = it })
+                                checked = state.applyFiltering,
+                                onCheckedChange = { state.applyFiltering = it })
                         }
                         Row(
                             modifier = Modifier
@@ -318,7 +304,7 @@ fun CameraMode(
                                 .padding(horizontal = 20.dp),
                             horizontalArrangement = Arrangement.End
                         ) {
-                            IconButton(onClick = { showModelsDialog = true }) {
+                            IconButton(onClick = { state.showModelsDialog = true }) {
                                 Icon(Icons.Default.AddBox, contentDescription = "use a model")
                             }
                         }
@@ -333,10 +319,10 @@ fun CameraMode(
                     .padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                IconButton(onClick = { showSliders = !showSliders }) {
+                IconButton(onClick = { state.showSliders = !state.showSliders }) {
                     Icon(
                         imageVector =
-                            if (showSliders) Icons.Default.KeyboardArrowUp
+                            if (state.showSliders) Icons.Default.KeyboardArrowUp
                             else Icons.Default.KeyboardArrowDown,
                         contentDescription = "toggle slider visibility",
                         tint = Color.White,
@@ -361,7 +347,7 @@ fun CameraMode(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    presets.forEach { preset ->
+                    vm.presets.forEach { preset ->
                         PresetPreview(
                             preset = preset,
                             originalMat = presetDefaultImage,
@@ -384,10 +370,10 @@ fun CameraMode(
                     }
                     IconButton(
                         onClick = {
-                            if (!isCapturing) {
-                                isCapturing = true
+                            if (!state.isCapturing) {
+                                state.isCapturing = true
                                 cameraControllerState.takePicture?.invoke()
-                                isCapturing = false
+                                state.isCapturing = false
                             }
                         },
                         modifier = Modifier
@@ -416,7 +402,7 @@ fun CameraMode(
             }
             // analyzer feed
             AnimatedVisibility(
-                visible = showFeed,
+                visible = state.showFeed,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
@@ -428,12 +414,12 @@ fun CameraMode(
                     horizontalAlignment = Alignment.Start
                 ) {
                     Text(
-                        text = lastFeedMessage,
+                        text = state.lastFeedMessage,
                         color = Color.White,
                         style = MaterialTheme.typography.bodyMedium
                     )
                     HorizontalDivider()
-                    Text("running ${imageOnlyLoadedModels.size} analyzers.")
+                    Text("running ${vm.imageOnlyLoadedModels.size} analyzers.")
                 }
             }
         }
