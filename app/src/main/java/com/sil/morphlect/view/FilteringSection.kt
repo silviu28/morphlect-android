@@ -124,7 +124,7 @@ fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) 
     }
 
     LaunchedEffect(Unit) {
-        presets = presetsRepository.load()
+        presets = presetsRepository.loadAll()
     }
 
     when {
@@ -152,7 +152,7 @@ fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) 
                 TextButton(onClick = {
                     coroutineScope.launch {
                         presetsRepository.removePreset(selectedPresetName!!)
-                        presets = presetsRepository.load()
+                        presets = presetsRepository.loadAll()
                     }
                     showRemoveDialog = false
                 }) {

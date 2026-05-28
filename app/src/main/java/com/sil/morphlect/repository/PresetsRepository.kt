@@ -14,17 +14,17 @@ class PresetsRepository(private val context: Context) {
     private val gson = Gson()
     private val PRESETS_KEY = stringPreferencesKey("presets")
 
-    private val defaults = listOf(
-        Preset("Vintage", mapOf(
-            Filter.Brightness to .2,
-            Filter.Contrast to -.1,
-            Filter.Hue to .3
-        )),
-        Preset("Vibrant", mapOf(
-            Filter.Brightness to .3,
-            Filter.Contrast to .2,
-            Filter.Hue to .5
-        )),
+    private val defaults = listOf<Preset>(
+//        Preset("Vintage", mapOf(
+//            Filter.Brightness to .2,
+//            Filter.Contrast to -.1,
+//            Filter.Hue to .3
+//        )),
+//        Preset("Vibrant", mapOf(
+//            Filter.Brightness to .3,
+//            Filter.Contrast to .2,
+//            Filter.Hue to .5
+//        )),
     )
 
     suspend fun load(): List<Preset> {
@@ -37,7 +37,7 @@ class PresetsRepository(private val context: Context) {
                 val presets = jsonMap.map { (name, preset) ->
                     Preset(name, preset.mapKeys { (effectName, _) -> Filter.valueOf(effectName) })
                 }
-                defaults + presets
+                presets
             } else {
                 defaults
             }
@@ -71,4 +71,6 @@ class PresetsRepository(private val context: Context) {
     suspend fun removePreset(name: String) {
         save(load().filter { it.name != name })
     }
+
+    suspend fun loadAll(): List<Preset> = defaults + load()
 }
