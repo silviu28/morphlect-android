@@ -271,7 +271,8 @@ fun CameraMode(
                 onImageCaptured = { imageUri -> vm.capturedImageUri = imageUri },
                 analyzerFeedFlow,
                 vm.imageOnlyLoadedModels,
-                cameraControllerState = cameraControllerState
+                cameraControllerState = cameraControllerState,
+                showGrid = state.showGrid,
             )
 
             // top right sliders

@@ -26,8 +26,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -70,7 +72,6 @@ import kotlin.time.Duration.Companion.seconds
 @Stable
 class CameraFeedUiState() {
     var isCapturing         by mutableStateOf(false)
-    var showGrid            by mutableStateOf(false)
     var showClassification  by mutableStateOf(true)
     var stateApplyFiltering      by mutableStateOf(false)
     var isExpanded          by mutableStateOf(false)
@@ -88,14 +89,15 @@ fun CameraFeed(
     analyzerFeedFlow: MutableSharedFlow<String>,
     imageOnlyLoadedModels: List<ExtensionModelLoader>,
     cameraControllerState: CameraControllerState,
+    showGrid: Boolean,
 ) {
     val state = remember { CameraFeedUiState() }
     val mainExecutor = ContextCompat.getMainExecutor(context)
     val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
-    
-    var imageWidth          by remember { mutableStateOf(1) }
-    var imageHeight         by remember { mutableStateOf(1) }
-    
+
+    var imageWidth by remember { mutableStateOf(1) }
+    var imageHeight by remember { mutableStateOf(1) }
+
 //    val shutterAlpha       by animateFloatAsState(
 //        targetValue = if (state.isCapturing) 0f else 1f,
 //        animationSpec = tween(50),
@@ -111,7 +113,7 @@ fun CameraFeed(
         label = "frame size"
     )
 
-    var boundingBoxes   by remember { mutableStateOf<List<Rect>>(emptyList()) }
+    var boundingBoxes by remember { mutableStateOf<List<Rect>>(emptyList()) }
     var currentFrame by remember { mutableStateOf<EditorLayer?>(null) }
     var currentProcessedFrame by remember { mutableStateOf<EditorLayer?>(null) }
     var reanalyzeTriggerKey by remember { mutableStateOf(false) }
@@ -128,35 +130,35 @@ fun CameraFeed(
 
     // this calls inference on all models and aggregates their output
     LaunchedEffect(reanalyzeTriggerKey) {
-            try {
-                // analyze the current frame through all models and join their output
-                currentFrame?.let { frame ->
-                    imageOnlyLoadedModels
-                        .map { model ->
-                            model.infer(
-                                mapOf(
-                                    model.inputs[0].name to frame.visual
-                                        .asAndroidBitmap()
-                                        .scale(model.inputs[0].shape[0], model.inputs[0].shape[1])
-                                )
+        try {
+            // analyze the current frame through all models and join their output
+            currentFrame?.let { frame ->
+                imageOnlyLoadedModels
+                    .map { model ->
+                        model.infer(
+                            mapOf(
+                                model.inputs[0].name to frame.visual
+                                    .asAndroidBitmap()
+                                    .scale(model.inputs[0].shape[0], model.inputs[0].shape[1])
                             )
-                        }
-                        .forEach { output ->
-                            when (output) {
-                                is Map<*, *> ->
-                                    analyzerFeedFlow.emit(
-                                        (output as? Map<Output, Float>)?.map { (k, v) -> "$k: ${v*100}"}
-                                            ?.joinToString("\n") ?: return@LaunchedEffect
-                                    )
+                        )
+                    }
+                    .forEach { output ->
+                        when (output) {
+                            is Map<*, *> ->
+                                analyzerFeedFlow.emit(
+                                    (output as? Map<Output, Float>)?.map { (k, v) -> "$k: ${v * 100}" }
+                                        ?.joinToString("\n") ?: return@LaunchedEffect
+                                )
 
-                                is Tensor4D -> currentProcessedFrame = EditorLayer(depthToMat(output))
-                                else -> TODO() // unlikely
-                            }
+                            is Tensor4D -> currentProcessedFrame = EditorLayer(depthToMat(output))
+                            else -> TODO() // unlikely
                         }
-                }
-            } catch (_: Exception) {
-                analyzerFeedFlow.emit(":(")
+                    }
             }
+        } catch (_: Exception) {
+            analyzerFeedFlow.emit(":(")
+        }
     }
 
     // this controls the camera and attaches the necessary analyzers (not the extensions!!)
@@ -170,7 +172,8 @@ fun CameraFeed(
                     imageProxy.close()
                     return@setImageAnalysisAnalyzer
                 }
-                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                val image =
+                    InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
                 // section 1 - performs conversion to Cv::Mat
                 if (mediaImage.planes.size == 3) {
@@ -248,92 +251,92 @@ fun CameraFeed(
         }
     }
 
-    Box {
-        Box(
-            modifier = Modifier
-//                .graphicsLayer { alpha = shutterAlpha }
-                .background(Color.Black)
-        ) {
-            AndroidView(
-                factory = { ctx ->
-                    PreviewView(ctx).apply {
-                        controller = cameraController
-                        scaleType = PreviewView.ScaleType.FIT_CENTER
-                        setOnTouchListener { _, event ->
-                            performClick()
-                            if (event.action != MotionEvent.ACTION_UP) {
-                                return@setOnTouchListener true
-                            }
-
-                            val meteringPoint = meteringPointFactory.createPoint(event.x, event.y)
-                            val focusMeteringAction = FocusMeteringAction.Builder(
-                                meteringPoint,
-                                FocusMeteringAction.FLAG_AF or
-                                        FocusMeteringAction.FLAG_AE or
-                                        FocusMeteringAction.FLAG_AWB
-                            )
-                                .setAutoCancelDuration(3, TimeUnit.SECONDS)
-                                .build()
-
-                            cameraController.cameraControl?.startFocusAndMetering(focusMeteringAction)
-                            state.focusIndicatorPoint = Offset(event.x, event.y)
-                            true
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        AndroidView(
+            factory = { ctx ->
+                PreviewView(ctx).apply {
+                    controller = cameraController
+                    scaleType = PreviewView.ScaleType.FIT_CENTER
+                    setOnTouchListener { _, event ->
+                        performClick()
+                        if (event.action != MotionEvent.ACTION_UP) {
+                            return@setOnTouchListener true
                         }
-                    }
-                },
-                modifier = Modifier.fillMaxSize().offset(y = (-14).dp),
-            )
-            if (state.stateApplyFiltering)
-                currentProcessedFrame?.let {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .offset(y = if (state.isExpanded) 0.dp else (-200).dp),
-                        contentAlignment = Alignment.BottomEnd
-                    ) {
-                        Image(
-                            bitmap = it.visual,
-                            contentDescription = "frame",
-                            modifier =
-                                Modifier
-                                    .then(if (state.isExpanded) Modifier.fillMaxSize() else Modifier)
-                                    .zIndex(10f)
-                                    .size(size)
-                                    .clickable { state.isExpanded = !state.isExpanded }
+
+                        val meteringPoint =
+                            meteringPointFactory.createPoint(event.x, event.y)
+                        val focusMeteringAction = FocusMeteringAction.Builder(
+                            meteringPoint,
+                            FocusMeteringAction.FLAG_AF or
+                                    FocusMeteringAction.FLAG_AE or
+                                    FocusMeteringAction.FLAG_AWB
                         )
+                            .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                            .build()
+
+                        cameraController.cameraControl?.startFocusAndMetering(
+                            focusMeteringAction
+                        )
+                        state.focusIndicatorPoint = Offset(event.x, event.y)
+                        true
                     }
                 }
+            },
+            modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp),
+        )
 
-            // rule of thirds grid
-            AnimatedVisibility(
-                visible = state.showGrid,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) { RuleOfThirdsGrid(modifier = Modifier.fillMaxSize()) }
+        // rule of thirds grid
+        AnimatedVisibility(
+            visible = showGrid,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) { RuleOfThirdsGrid(modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp)) }
 
-            AnimatedVisibility(
-                visible = state.focusIndicatorPoint != null,
-                enter = fadeIn(),
-                exit = fadeOut()
+        // bounding-box canvas
+        // TODO - disabling 'state.showClassification' should also disable the analyzer for performance
+        if (state.showClassification)
+            BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight)
+    }
+    if (state.stateApplyFiltering)
+        currentProcessedFrame?.let {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = if (state.isExpanded) 0.dp else (-200).dp),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    state.focusIndicatorPoint?.let { tapPoint ->
-                        drawCircle(
-                            color = Color.White,
-                            radius = 32.dp.toPx(),
-                            center = tapPoint,
-                            style = Stroke(width = 2.dp.toPx())
-                        )
-                    }
+                Image(
+                    bitmap = it.visual,
+                    contentDescription = "frame",
+                    modifier =
+                        Modifier
+                            .then(if (state.isExpanded) Modifier.fillMaxSize() else Modifier)
+                            .zIndex(10f)
+                            .size(size)
+                            .clickable { state.isExpanded = !state.isExpanded }
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = state.focusIndicatorPoint != null,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                state.focusIndicatorPoint?.let { tapPoint ->
+                    drawCircle(
+                        color = Color.White,
+                        radius = 32.dp.toPx(),
+                        center = tapPoint,
+                        style = Stroke(width = 2.dp.toPx())
+                    )
                 }
             }
         }
 
-    // bounding-box canvas
-    // TODO - disabling 'state.showClassification' should also disable the analyzer for performance
-    if (state.showClassification)
-        BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight)
-    }
+
+
 }
 
 @Preview
@@ -361,6 +364,7 @@ fun CameraFeedPreview() {
         analyzerFeedFlow = previewFeedFlow,
         imageOnlyLoadedModels = emptyList(),
         cameraControllerState = CameraControllerState(),
+        showGrid = true,
     )
 }
 
@@ -370,7 +374,7 @@ private fun BoundingBoxCanvas(
     imageWidth: Int,
     imageHeight: Int,
 ) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    Canvas(modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp)) {
         val scaleX = size.width / imageWidth
         val scaleY = size.height / imageHeight
 
