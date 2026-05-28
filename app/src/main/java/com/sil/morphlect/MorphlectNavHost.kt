@@ -12,7 +12,6 @@ import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.FingerprintRepository
 import com.sil.morphlect.repository.PresetsRepository
-import com.sil.morphlect.view.Editor
 import com.sil.morphlect.view.FingerprintManager
 import com.sil.morphlect.view.Frontpage
 import com.sil.morphlect.view.ImageComparison
@@ -24,16 +23,17 @@ import com.sil.morphlect.view.Settings
 import com.sil.morphlect.view.StyleTransfer
 import com.sil.morphlect.view.VibeMatcher
 import com.sil.morphlect.view.OnboardingCarousel
+import com.sil.morphlect.view.Studio
 import com.sil.morphlect.view.camera.CameraMode
 import com.sil.morphlect.view.mxt.MXTComposedView
 import com.sil.morphlect.viewmodel.CameraModeViewModel
-import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
 fun MorphlectNavHost() {
     val navController                            = rememberNavController()
-    val editorViewModel: EditorViewModel         = viewModel()
+    val studioViewModel: StudioViewModel         = viewModel()
     val cameraModeViewModel: CameraModeViewModel = viewModel()
     val ctx                                      = LocalContext.current
     val configRepository                         = remember { AppConfigRepository(ctx) }
@@ -55,7 +55,7 @@ fun MorphlectNavHost() {
             OnboardingCarousel(navController)
         }
         composable("pick") {
-            PickImage(navController, editorViewModel)
+            PickImage(navController, studioViewModel)
         }
         composable("camera") {
             CameraMode(
@@ -63,39 +63,39 @@ fun MorphlectNavHost() {
                 cameraModeViewModel,
                 analyzerFeedFlow,
                 onCaptureConfirm = { uri ->
-                    editorViewModel.loadImage(ctx, uri)
-                    navController.navigate("editor")
+                    studioViewModel.loadImage(ctx, uri)
+                    navController.navigate("studio")
                 },
                 presetsRepository,
                 extensionsRepository
             )
         }
-        composable("editor") {
-            Editor(
+        composable("studio") {
+            Studio(
                 navController,
-                editorViewModel,
+                studioViewModel,
                 presetsRepository,
                 configRepository,
                 extensionsRepository,
             )
         }
         composable("vibe-match") {
-            VibeMatcher(editorViewModel, navController)
+            VibeMatcher(studioViewModel, navController)
         }
         composable("image-eval") {
-            ImageEvaluation(editorViewModel, navController)
+            ImageEvaluation(studioViewModel, navController)
         }
         composable("style-transfer") {
             StyleTransfer()
         }
         composable("save") {
-            SaveImage(editorViewModel, navController)
+            SaveImage(studioViewModel, navController)
         }
         composable("compare") {
             ImageComparison(
                 originalImageBitmap =
-                    editorViewModel.originalMat?.let { FormatConverters.matToBitmap(it) },
-                layers = editorViewModel.layers,
+                    studioViewModel.originalMat?.let { FormatConverters.matToBitmap(it) },
+                layers = studioViewModel.layers,
                 navController = navController,
             )
         }
@@ -116,7 +116,7 @@ fun MorphlectNavHost() {
         ) { backStackEntry ->
             val extensionName = backStackEntry.arguments?.getString("extensionName") ?: throw Exception()
             MXTComposedView(
-                editorViewModel,
+                studioViewModel,
                 extensionName,
                 onRun = { },
             )

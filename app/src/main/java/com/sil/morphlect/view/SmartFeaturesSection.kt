@@ -22,7 +22,7 @@ import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
-import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlin.collections.listOf
 import kotlin.random.Random
 
@@ -30,7 +30,7 @@ import kotlin.random.Random
 @Composable
 fun SmartFeaturesSection(
     navController: NavController,
-    vm: EditorViewModel,
+    vm: StudioViewModel,
     configRepository: AppConfigRepository,
     extensionsRepository: ExtensionsRepository,
 ) {

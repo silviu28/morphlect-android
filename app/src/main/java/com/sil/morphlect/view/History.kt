@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.sil.morphlect.command.EditorCommand
+import com.sil.morphlect.command.StudioCommand
 import com.sil.morphlect.view.dialog.DialogScaffold
 
 private enum class HistoryEntryAction { Undo, Redo }
@@ -29,8 +29,8 @@ fun History(
     onDismissRequest: () -> Unit,
     onUndo: (idx: Int) -> Unit,
     onRedo: (idx: Int) -> Unit,
-    undoStack: List<EditorCommand>,
-    redoStack: List<EditorCommand>,
+    undoStack: List<StudioCommand>,
+    redoStack: List<StudioCommand>,
 ) {
     DialogScaffold(
         "history",
@@ -59,7 +59,7 @@ fun History(
 
 @Composable
 private fun HistoryEntry(
-    command: EditorCommand,
+    command: StudioCommand,
     onClick: () -> Unit,
     action: HistoryEntryAction
 ) {

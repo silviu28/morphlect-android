@@ -1,9 +1,5 @@
 package com.sil.morphlect.view
 
-import android.graphics.Point
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -18,21 +14,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.sil.morphlect.data.EditorLayer
-import com.sil.morphlect.view.dialog.DialogScaffold
-import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.StudioViewModel
 
 // TODO this structure can definitely be optimized...
 @Composable
 fun ImageManipulationSection(
-    vm: EditorViewModel,
+    vm: StudioViewModel,
     croppingMode: Boolean,
     onCropToggle: () -> Unit,
     onCropApply: () -> Unit,

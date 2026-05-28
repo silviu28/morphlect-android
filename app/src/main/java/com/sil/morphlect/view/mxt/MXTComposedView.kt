@@ -9,7 +9,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -30,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,16 +44,8 @@ import androidx.core.graphics.scale
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
-import com.sil.morphlect.ml.impl.Tensor3D
 import com.sil.morphlect.ml.impl.Tensor4D
-import com.sil.morphlect.viewmodel.EditorViewModel
-import org.opencv.core.Core
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.core.Scalar
-import org.opencv.imgproc.Imgproc
-import kotlin.arrayOf
-import kotlin.math.roundToInt
+import com.sil.morphlect.viewmodel.StudioViewModel
 
 fun Uri.getImage(context: Context, conversionShape: Shape? = null): Bitmap? {
     val res = BitmapFactory.decodeStream(context.contentResolver.openInputStream(this))
@@ -79,7 +68,7 @@ fun Uri.getAudio(context: Context, conversionShape: Shape? = null): ByteArray? {
 
 @Composable
 fun MXTComposedView(
-    editorViewModel: EditorViewModel,
+    studioViewModel: StudioViewModel,
     extensionName: String,
     onRun: () -> Unit
 ) {
@@ -126,7 +115,7 @@ fun MXTComposedView(
               .forEach { bindings[it.parameterBindingRef!!] = null }
 
             // todo - this should be changed, if the editor image is taken as 'image' then no interaction should be defined in manifest as it is inferred
-            editorViewModel.previewBitmap?.let {
+            studioViewModel.previewBitmap?.let {
                 bindings["image"] = it.scale(inputs[0].shape[0], inputs[0].shape[1], false)
             }
 
@@ -151,7 +140,7 @@ fun MXTComposedView(
             Text(mnfst.name)
             Text(mnfst.description)
 
-            editorViewModel.previewBitmap?.asImageBitmap()?.let {
+            studioViewModel.previewBitmap?.asImageBitmap()?.let {
                 Image(
                     bitmap = it,
                     contentDescription = "preview",

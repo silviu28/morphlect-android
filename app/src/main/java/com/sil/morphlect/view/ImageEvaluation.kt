@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,22 +22,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.sil.morphlect.data.EvaluationResult
-import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.logic.optimizeComposition
 import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
 import com.sil.morphlect.ml.impl.RatingMaximizerLoader
 import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.view.dialog.impl.KeepParamsDialog
-import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun ImageEvaluation(vm: EditorViewModel, navController: NavController) {
+fun ImageEvaluation(vm: StudioViewModel, navController: NavController) {
     val ctx = LocalContext.current.applicationContext
     val loader = remember { AlteredMobileNetLoader().apply { initialize(ctx) } }
     val optimizer = remember { RatingMaximizerLoader().apply { initialize(ctx) } }
@@ -106,8 +101,8 @@ fun ImageEvaluation(vm: EditorViewModel, navController: NavController) {
             Text("${effect.name}: ${"%.2f".format(value)}")
         }
         Row {
-            Button(onClick = { navController.navigate("editor") }) {
-                Text("back to editor")
+            Button(onClick = { navController.navigate("studio") }) {
+                Text("back to studio")
             }
             Button(onClick = { keepParamsDialogActive = true }) {
                 Text("improve")

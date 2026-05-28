@@ -75,23 +75,18 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.sil.morphlect.R
-import com.sil.morphlect.data.Preset
 import com.sil.morphlect.logic.FormatConverters
-import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.PresetPreview
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
-import com.sil.morphlect.view.mxt.loadExtension
 import com.sil.morphlect.viewmodel.CameraModeViewModel
-import com.sil.mxtengine.data.InteractorType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.seconds
 
 private suspend fun saveImage(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
@@ -196,7 +191,7 @@ fun CameraMode(
                     Text("save")
                 }
                 TextButton(onClick = { onCaptureConfirm(it) } ) {
-                    Text("go to editor")
+                    Text("go to studio")
                 }
             }
         }

@@ -56,13 +56,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.repository.PresetsRepository
-import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.StudioViewModel
 import com.sil.morphlect.enums.Section
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
-import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.data.StudioLayer
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
@@ -73,7 +73,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Stable
-class EditorUiState() {
+class StudioUiState() {
     var showExitDialog   by mutableStateOf(false)
     var showHistoryStack by  mutableStateOf(false)
     var showHistogram    by mutableStateOf(false)
@@ -88,9 +88,9 @@ class EditorUiState() {
 }
 
 @Composable
-fun Editor(
+fun Studio(
     navController:     NavController,
-    vm:                EditorViewModel,
+    vm:                StudioViewModel,
     presetsRepository: PresetsRepository,
     configRepository:  AppConfigRepository,
     extensionsRepository: ExtensionsRepository,
@@ -102,7 +102,7 @@ fun Editor(
         Size(330.dp.toPx(), 330.dp.toPx())
     }
 
-    val state = remember { EditorUiState() }
+    val state = remember { StudioUiState() }
 
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -110,7 +110,7 @@ fun Editor(
         uri?.run {
             val bitmap = FormatConverters.uriToBitmap(ctx, this)
             val mat = FormatConverters.bitmapToMat(bitmap)
-            vm.addLayer(EditorLayer(mat))
+            vm.addLayer(StudioLayer(mat))
             state.addingImage = false
         }
     }

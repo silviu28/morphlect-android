@@ -24,7 +24,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,7 +33,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,9 +54,7 @@ import androidx.core.graphics.scale
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
-import com.sil.morphlect.data.EditorLayer
-import com.sil.morphlect.data.Preset
-import com.sil.morphlect.enums.Output
+import com.sil.morphlect.data.StudioLayer
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.logic.objectDetector
@@ -108,8 +104,8 @@ fun CameraFeed(
     )
 
     var boundingBoxes by remember { mutableStateOf<List<Rect>>(emptyList()) }
-    var currentFrame by remember { mutableStateOf<EditorLayer?>(null) }
-    var currentProcessedFrame by remember { mutableStateOf<EditorLayer?>(null) }
+    var currentFrame by remember { mutableStateOf<StudioLayer?>(null) }
+    var currentProcessedFrame by remember { mutableStateOf<StudioLayer?>(null) }
     var reanalyzeTriggerKey by remember { mutableStateOf(false) }
     var inferenceRefreshInterval by remember { mutableStateOf(2.seconds) }
 
@@ -148,7 +144,7 @@ fun CameraFeed(
                                         .joinToString("\n")
                                 )
 
-                            is Tensor4D -> currentProcessedFrame = EditorLayer(depthToMat(output))
+                            is Tensor4D -> currentProcessedFrame = StudioLayer(depthToMat(output))
                             else -> TODO() // unlikely
                         }
                     }
@@ -177,7 +173,7 @@ fun CameraFeed(
                 if (mediaImage.planes.size == 3) {
                     val mat = mediaImage.yuvToRgba()
 //                    currentFrame?.close()
-                    currentFrame = EditorLayer(mat)
+                    currentFrame = StudioLayer(mat)
                 }
 
                 // section 2 - performs object detection through ObjectDetector instance

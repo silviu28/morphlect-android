@@ -25,13 +25,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.data.StudioLayer
 import com.sil.morphlect.logic.FormatConverters
 
 @Composable
 fun ImageComparison(
     originalImageBitmap: Bitmap?,
-    layers: List<EditorLayer>,
+    layers: List<StudioLayer>,
     navController: NavController
 ) {
     var dividerRatio by remember { mutableDoubleStateOf(.5) }
@@ -90,8 +90,8 @@ fun ImageComparison(
                     )
                 }
 
-                TextButton(onClick = { navController.navigate("editor") }) {
-                    Text("back to editor")
+                TextButton(onClick = { navController.navigate("studio") }) {
+                    Text("back to studio")
                 }
             }
         }

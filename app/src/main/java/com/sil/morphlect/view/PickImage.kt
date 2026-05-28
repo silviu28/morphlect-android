@@ -1,9 +1,7 @@
 package com.sil.morphlect.view
 
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,18 +21,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.sil.morphlect.viewmodel.EditorViewModel
+import com.sil.morphlect.viewmodel.StudioViewModel
 
 @Composable
-fun PickImage(navController: NavController, editorViewModel: EditorViewModel) {
+fun PickImage(navController: NavController, studioViewModel: StudioViewModel) {
     val ctx = LocalContext.current
 
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.run {
-            editorViewModel.loadImage(ctx, uri)
-            navController.navigate("editor")
+            studioViewModel.loadImage(ctx, uri)
+            navController.navigate("studio")
         }
     }
 

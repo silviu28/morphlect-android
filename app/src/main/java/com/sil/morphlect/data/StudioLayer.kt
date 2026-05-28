@@ -23,17 +23,17 @@ import com.sil.morphlect.logic.Filtering
 import org.opencv.core.Point
 import org.opencv.imgproc.Imgproc
 
-class EditorLayer(val mat: Mat) : Closeable {
+class StudioLayer(val mat: Mat) : Closeable {
     companion object {
         /**
-         * creates a new empty EditorLayer.
+         * creates a new empty StudioLayer.
          */
-        fun empty(): EditorLayer {
-            return EditorLayer(Mat.zeros(300, 300, CvType.CV_8UC4))
+        fun empty(): StudioLayer {
+            return StudioLayer(Mat.zeros(300, 300, CvType.CV_8UC4))
         }
 
         /**
-         * creates a transparent EditorLayer containing given `text`.
+         * creates a transparent StudioLayer containing given `text`.
          */
         fun withText(
             text: String,
@@ -42,7 +42,7 @@ class EditorLayer(val mat: Mat) : Closeable {
             thickness: Int = 2,
             position: IntOffset = IntOffset.Zero,
             antialiased: Boolean = true,
-        ): EditorLayer {
+        ): StudioLayer {
             // TODO this is okay, but can't use custom fonts, and Bitmap is just simple raster..
             val mat = Mat.zeros(300, 300, CvType.CV_8UC4)
             Imgproc.putText(
@@ -55,7 +55,7 @@ class EditorLayer(val mat: Mat) : Closeable {
                 thickness,
                 if (antialiased) Imgproc.LINE_AA else Imgproc.LINE_8,
             )
-            return EditorLayer(mat)
+            return StudioLayer(mat)
         }
     }
 
@@ -69,7 +69,7 @@ class EditorLayer(val mat: Mat) : Closeable {
     /**
      * returns the resulting layer created from the merging of another given layer.
      */
-    fun mergeWith(other: EditorLayer): EditorLayer {
+    fun mergeWith(other: StudioLayer): StudioLayer {
         // merged layer should fit in size both layers
         val resultSize = Size(
             maxOf(mat.cols(), other.mat.cols()).toDouble(),
@@ -91,7 +91,7 @@ class EditorLayer(val mat: Mat) : Closeable {
         extendedOther.release()
         channels.forEach { it.release() }
 
-        return EditorLayer(extended)
+        return StudioLayer(extended)
     }
 
     /**
@@ -101,12 +101,12 @@ class EditorLayer(val mat: Mat) : Closeable {
         mat.release()
     }
 
-    fun clone(): EditorLayer {
+    fun clone(): StudioLayer {
         val matClone = mat.clone()
-        return EditorLayer(matClone)
+        return StudioLayer(matClone)
     }
 
-    fun crop(upCorner: Offset, downCorner: Offset, size: androidx.compose.ui.geometry.Size): EditorLayer {
+    fun crop(upCorner: Offset, downCorner: Offset, size: androidx.compose.ui.geometry.Size): StudioLayer {
         // scale factors between display space and mat space
         val scaleX = mat.width().toFloat() / size.width
         val scaleY = mat.height().toFloat() / size.height
@@ -127,11 +127,11 @@ class EditorLayer(val mat: Mat) : Closeable {
         val safeHeight = height.coerceIn(1, mat.height() - safeY)
 
         val roi = Rect(safeX, safeY, safeWidth, safeHeight)
-        return EditorLayer(mat.clone().submat(roi))
+        return StudioLayer(mat.clone().submat(roi))
     }
 
-    fun downscaledUniformly(maxDimension: Int = 800) : EditorLayer {
-        return EditorLayer(Filtering.uniformDownscale(mat))
+    fun downscaledUniformly(maxDimension: Int = 800) : StudioLayer {
+        return StudioLayer(Filtering.uniformDownscale(mat))
     }
 
     fun toCvMat(): Mat = mat

@@ -16,28 +16,25 @@ import androidx.lifecycle.viewModelScope
 import com.sil.morphlect.command.impl.BlurCommand
 import com.sil.morphlect.command.impl.BrightnessCommand
 import com.sil.morphlect.command.impl.ContrastCommand
-import com.sil.morphlect.command.EditorCommand
-import com.sil.morphlect.command.EditorCommandManager
+import com.sil.morphlect.command.StudioCommand
+import com.sil.morphlect.command.StudioCommandManager
 import com.sil.morphlect.command.impl.HueCommand
 import com.sil.morphlect.command.impl.LightBalanceCommand
 import com.sil.morphlect.command.impl.SharpnessCommand
-import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.data.StudioLayer
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Section
-import com.sil.morphlect.logic.Filtering
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.logic.LayerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 
-class EditorViewModel : ViewModel, EditorCommandManager {
+class StudioViewModel : ViewModel, StudioCommandManager {
     constructor() : super() {
         viewModelScope.launch {
             _evaluationResult.collect { result ->
@@ -57,29 +54,29 @@ class EditorViewModel : ViewModel, EditorCommandManager {
     private val _evaluationResult = MutableSharedFlow<EvaluationResult>()
     val evaluationResult = _evaluationResult.asSharedFlow()
 
-    override var undoStack = mutableStateListOf<EditorCommand>()
-    override var redoStack = mutableStateListOf<EditorCommand>()
+    override var undoStack = mutableStateListOf<StudioCommand>()
+    override var redoStack = mutableStateListOf<StudioCommand>()
 
     var originalMat by mutableStateOf<Mat?>(null)
 
     private val layerManager = LayerManager(mutableStateListOf())
     val layers by derivedStateOf {
         layerManager.layers.map { layer ->
-            if (!layer.visible) return@map EditorLayer.empty()
+            if (!layer.visible) return@map StudioLayer.empty()
             // TODO works but a bit verbose
             (undoStack +
-                EditorCommand.of(selectedFilter, filterValues[selectedFilter]!!)
+                StudioCommand.of(selectedFilter, filterValues[selectedFilter]!!)
             ).fold(layer) { layer, comm -> comm.execute(layer) }
     } }
     val previewLayers by derivedStateOf {
         layerManager.downscaledLayers.value.map { layer ->
-            if (!layer.visible) return@map EditorLayer.empty()
+            if (!layer.visible) return@map StudioLayer.empty()
             (undoStack +
-                    EditorCommand.of(selectedFilter, filterValues[selectedFilter]!!)
+                    StudioCommand.of(selectedFilter, filterValues[selectedFilter]!!)
                     ).fold(layer) { layer, comm -> comm.execute(layer) }
         }
     }
-    var originalLayers = mutableStateListOf<EditorLayer>()
+    var originalLayers = mutableStateListOf<StudioLayer>()
 
     override fun redoLastCommand() {
         if (redoStack.isEmpty()) return
@@ -93,7 +90,7 @@ class EditorViewModel : ViewModel, EditorCommandManager {
         redoStack.add(command)
     }
 
-    override fun runCommand(command: EditorCommand) {
+    override fun runCommand(command: StudioCommand) {
         redoStack.clear()
         undoStack.add(command)
     }
@@ -120,7 +117,7 @@ class EditorViewModel : ViewModel, EditorCommandManager {
         this.section = section
     }
 
-    private fun createCommandForEffect(filter: Filter, factor: Double): EditorCommand {
+    private fun createCommandForEffect(filter: Filter, factor: Double): StudioCommand {
         return when (filter) {
             Filter.Contrast -> ContrastCommand(factor)
             Filter.Brightness -> BrightnessCommand(factor)
@@ -172,7 +169,7 @@ class EditorViewModel : ViewModel, EditorCommandManager {
             val bitmap = FormatConverters.uriToBitmap(context, uri)
             originalMat = FormatConverters.bitmapToMat(bitmap)
 
-            layerManager.addLayer(EditorLayer(originalMat!!))
+            layerManager.addLayer(StudioLayer(originalMat!!))
 
             val initialBitmap = FormatConverters.matToBitmap(originalMat!!)
             withContext(Dispatchers.Main) {
@@ -195,7 +192,7 @@ class EditorViewModel : ViewModel, EditorCommandManager {
         layerManager.removeLayer(index)
     }
 
-    fun addLayer(layer: EditorLayer = EditorLayer.empty()) {
+    fun addLayer(layer: StudioLayer = StudioLayer.empty()) {
         layerManager.addLayer(layer)
         originalLayers.add(layer)
     }
@@ -222,7 +219,7 @@ class EditorViewModel : ViewModel, EditorCommandManager {
     }
 
     fun addTextLayer(text: String) {
-        val textLayer = EditorLayer.withText(text)
+        val textLayer = StudioLayer.withText(text)
         layerManager.addLayer(textLayer)
     }
 

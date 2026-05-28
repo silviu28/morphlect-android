@@ -6,21 +6,21 @@ import com.sil.morphlect.command.impl.ContrastCommand
 import com.sil.morphlect.command.impl.HueCommand
 import com.sil.morphlect.command.impl.LightBalanceCommand
 import com.sil.morphlect.command.impl.SharpnessCommand
-import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.data.StudioLayer
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.exception.CommandException
 
-/** represents an undoable action that is done from the editor. */
-interface EditorCommand {
+/** represents an undoable action that is done from the studio. */
+interface StudioCommand {
     val actionName: String
-    fun execute(src: EditorLayer): EditorLayer
+    fun execute(src: StudioLayer): StudioLayer
 
     companion object {
         /**
          * creates an EditorCommand that serves the given functionality.
          * @throws CommandException
          */
-        fun of(filter: Filter, vararg factors: Double): EditorCommand {
+        fun of(filter: Filter, vararg factors: Double): StudioCommand {
             if (factors.isEmpty())
                 throw CommandException("No factors provided for command.")
 
