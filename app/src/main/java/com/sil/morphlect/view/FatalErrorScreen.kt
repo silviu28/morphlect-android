@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Button
@@ -22,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.sil.morphlect.view.custom.DecoratedContainer
 
 @Composable
-fun FatalErrorScreen(cause: Throwable) {
+fun FatalErrorScreen(cause: Throwable? = null, stackTrace: String? = null) {
     val context = LocalContext.current
 
     Scaffold { _ ->
@@ -32,7 +33,8 @@ fun FatalErrorScreen(cause: Throwable) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -40,7 +42,7 @@ fun FatalErrorScreen(cause: Throwable) {
 
                 Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                     Text(
-                        text = cause.stackTraceToString(),
+                        text = cause?.stackTraceToString() ?: stackTrace ?: "no info given.",
                         fontSize = 10.sp,
                     )
                 }
