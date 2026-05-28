@@ -17,7 +17,9 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
@@ -69,15 +71,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.seconds
 
-@Stable
-class CameraFeedUiState() {
-    var isCapturing         by mutableStateOf(false)
-    var showClassification  by mutableStateOf(true)
-    var stateApplyFiltering      by mutableStateOf(false)
-    var isExpanded          by mutableStateOf(false)
-    var focusIndicatorPoint by mutableStateOf<Offset?>(null)
-}
-
 // camera feed should only contain the camera feed, with the grid on top, the detected objects, and maybe the filtered feed
 // TODO the camera mode should also receive the state of filter values in order to apply them to the camera feed.
 @OptIn(ExperimentalGetImage::class)
@@ -89,23 +82,23 @@ fun CameraFeed(
     analyzerFeedFlow: MutableSharedFlow<String>,
     imageOnlyLoadedModels: List<ExtensionModelLoader>,
     cameraControllerState: CameraControllerState,
-    showGrid: Boolean,
+    uiState: CameraModeUiState,
 ) {
-    val state = remember { CameraFeedUiState() }
     val mainExecutor = ContextCompat.getMainExecutor(context)
     val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
+    var focusIndicatorPoint by remember { mutableStateOf<Offset?>(null) }
 
     var imageWidth by remember { mutableStateOf(1) }
     var imageHeight by remember { mutableStateOf(1) }
 
-//    val shutterAlpha       by animateFloatAsState(
-//        targetValue = if (state.isCapturing) 0f else 1f,
-//        animationSpec = tween(50),
-//        finishedListener = { if (it == 1f) state.isCapturing = false }
-//    )
+    val shutterAlpha       by animateFloatAsState(
+        targetValue = if (uiState.isCapturing) 0f else 1f,
+        animationSpec = tween(50),
+        finishedListener = { if (it == 1f) uiState.isCapturing = false }
+    )
 
     val size by animateDpAsState(
-        targetValue = if (state.isExpanded) 0.dp else 120.dp,
+        targetValue = if (uiState.isExpanded) 0.dp else 120.dp,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioLowBouncy,
             stiffness = Spring.StiffnessLow
@@ -188,7 +181,6 @@ fun CameraFeed(
                     .addOnSuccessListener { detectedObjects ->
                         imageWidth = imageProxy.width
                         imageHeight = imageProxy.height
-//                        Log.i("CAMERA", "Detected ${detectedObjects.size} objects.")
                         // take only the objects with high confidence
                         boundingBoxes = detectedObjects
                             .filter { it.labels.any { label -> label.confidence >= 0.5f } }
@@ -217,12 +209,12 @@ fun CameraFeed(
                     mainExecutor,
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                            state.isCapturing = false
+                            uiState.isCapturing = false
                             onImageCaptured(Uri.fromFile(file))
                         }
 
                         override fun onError(exception: ImageCaptureException) {
-                            state.isCapturing = false
+                            uiState.isCapturing = false
                             Log.e("CAMERA", exception.stackTraceToString())
                         }
                     }
@@ -238,16 +230,16 @@ fun CameraFeed(
         }
     }
 
-//    // this collects the messages to be viewed on the screen
-//    LaunchedEffect(analyzerFeedFlow) {
-//        analyzerFeedFlow.collect { lastFeedMessage = it }
-//    }
+    // this collects the messages to be viewed on the screen
+    LaunchedEffect(analyzerFeedFlow) {
+        analyzerFeedFlow.collect { uiState.lastFeedMessage = it }
+    }
 
     // this is for the indicator that appears when tapping the screen
-    LaunchedEffect(state.focusIndicatorPoint) {
-        if (state.focusIndicatorPoint != null) {
+    LaunchedEffect(focusIndicatorPoint) {
+        if (focusIndicatorPoint != null) {
             delay(900)
-            state.focusIndicatorPoint = null
+            focusIndicatorPoint = null
         }
     }
 
@@ -277,7 +269,7 @@ fun CameraFeed(
                         cameraController.cameraControl?.startFocusAndMetering(
                             focusMeteringAction
                         )
-                        state.focusIndicatorPoint = Offset(event.x, event.y)
+                        focusIndicatorPoint = Offset(event.x, event.y)
                         true
                     }
                 }
@@ -287,22 +279,23 @@ fun CameraFeed(
 
         // rule of thirds grid
         AnimatedVisibility(
-            visible = showGrid,
+            visible = uiState.showGrid,
             enter = fadeIn(),
             exit = fadeOut(),
         ) { RuleOfThirdsGrid(modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp)) }
 
         // bounding-box canvas
         // TODO - disabling 'state.showClassification' should also disable the analyzer for performance
-        if (state.showClassification)
+        if (uiState.showClassification)
             BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight)
     }
-    if (state.stateApplyFiltering)
+
+    if (uiState.applyFiltering)
         currentProcessedFrame?.let {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .offset(y = if (state.isExpanded) 0.dp else (-200).dp),
+                    .offset(y = if (uiState.isExpanded) 0.dp else (-200).dp),
                 contentAlignment = Alignment.BottomEnd
             ) {
                 Image(
@@ -310,33 +303,30 @@ fun CameraFeed(
                     contentDescription = "frame",
                     modifier =
                         Modifier
-                            .then(if (state.isExpanded) Modifier.fillMaxSize() else Modifier)
+                            .then(if (uiState.isExpanded) Modifier.fillMaxSize() else Modifier)
                             .zIndex(10f)
                             .size(size)
-                            .clickable { state.isExpanded = !state.isExpanded }
+                            .clickable { uiState.isExpanded = !uiState.isExpanded }
                 )
             }
         }
 
-        AnimatedVisibility(
-            visible = state.focusIndicatorPoint != null,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                state.focusIndicatorPoint?.let { tapPoint ->
-                    drawCircle(
-                        color = Color.White,
-                        radius = 32.dp.toPx(),
-                        center = tapPoint,
-                        style = Stroke(width = 2.dp.toPx())
-                    )
-                }
+    AnimatedVisibility(
+        visible = focusIndicatorPoint != null,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            focusIndicatorPoint?.let { tapPoint ->
+                drawCircle(
+                    color = Color.White,
+                    radius = 32.dp.toPx(),
+                    center = tapPoint,
+                    style = Stroke(width = 2.dp.toPx())
+                )
             }
         }
-
-
-
+    }
 }
 
 @Preview
@@ -364,7 +354,7 @@ fun CameraFeedPreview() {
         analyzerFeedFlow = previewFeedFlow,
         imageOnlyLoadedModels = emptyList(),
         cameraControllerState = CameraControllerState(),
-        showGrid = true,
+        uiState = CameraModeUiState(ctx)
     )
 }
 

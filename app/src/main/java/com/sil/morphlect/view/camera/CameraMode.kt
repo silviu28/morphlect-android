@@ -82,6 +82,7 @@ import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.PresetPreview
 import com.sil.morphlect.view.custom.DecoratedContainer
+import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.view.mxt.loadExtension
 import com.sil.morphlect.viewmodel.CameraModeViewModel
@@ -91,12 +92,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
-
-class CameraControllerState(
-    var lifecycleCameraController: LifecycleCameraController? = null,
-    var takePicture: (() -> Unit)? = null,
-    var selectCamera: (() -> Unit)? = null,
-)
 
 private suspend fun saveImage(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
@@ -125,6 +120,12 @@ private suspend fun saveImage(context: Context, uri: Uri) {
     Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_LONG).show()
 }
 
+class CameraControllerState(
+    var lifecycleCameraController: LifecycleCameraController? = null,
+    var takePicture: (() -> Unit)? = null,
+    var selectCamera: (() -> Unit)? = null,
+)
+
 @Stable
 class CameraModeUiState(context: Context) {
     var cameraPermissionGranted by mutableStateOf(
@@ -138,8 +139,9 @@ class CameraModeUiState(context: Context) {
     var showFeed by mutableStateOf(false)
     var showClassification by mutableStateOf(false)
     var applyFiltering by mutableStateOf(false)
-    var lastFeedMessage     by mutableStateOf("")
+    var lastFeedMessage by mutableStateOf("")
     var isCapturing by mutableStateOf(false)
+    var isExpanded by mutableStateOf(false)
 }
 
 @Composable
@@ -272,7 +274,7 @@ fun CameraMode(
                 analyzerFeedFlow,
                 vm.imageOnlyLoadedModels,
                 cameraControllerState = cameraControllerState,
-                showGrid = state.showGrid,
+                uiState = state,
             )
 
             // top right sliders
@@ -311,31 +313,32 @@ fun CameraMode(
                         }
                     }
                 }
-            }
 
-            // slider panel chevron
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(onClick = { state.showSliders = !state.showSliders }) {
-                    Icon(
-                        imageVector =
-                            if (state.showSliders) Icons.Default.KeyboardArrowUp
-                            else Icons.Default.KeyboardArrowDown,
-                        contentDescription = "toggle slider visibility",
-                        tint = Color.White,
-                    )
+                // slider panel chevron
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(onClick = { state.showSliders = !state.showSliders }) {
+                        Icon(
+                            imageVector =
+                                if (state.showSliders) Icons.Default.KeyboardArrowUp
+                                else Icons.Default.KeyboardArrowDown,
+                            contentDescription = "toggle slider visibility",
+                            tint = Color.White,
+                        )
+                    }
                 }
             }
+
+
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-//                .background(Color.Black.copy(alpha = .7f))
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(top = 12.dp, bottom = 12.dp)
             ) {
@@ -382,9 +385,9 @@ fun CameraMode(
                             .background(Color.White, CircleShape)
                             .border(3.dp, Color.White, CircleShape)
                     ) {
-//                        if (isCapturing)
-//                            FlickeringLedDotProgressIndicator()
-//                        else
+                        if (state.isCapturing)
+                            FlickeringLedDotProgressIndicator()
+                        else
                             Box(
                                 modifier = Modifier
                                     .size(48.dp)
