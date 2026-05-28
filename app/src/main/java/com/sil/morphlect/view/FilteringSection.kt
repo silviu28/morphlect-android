@@ -18,17 +18,14 @@ import androidx.compose.foundation.border
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,9 +38,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,11 +70,12 @@ import com.sil.morphlect.view.dialog.impl.AddPresetDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.opencv.core.Mat
 import kotlin.math.roundToInt
 
-suspend fun savePreset(ctx: Context, preset: Preset) {
+suspend fun savePreset(context: Context, preset: Preset) {
     val uri = withContext(Dispatchers.IO) {
-        val resolver = ctx.contentResolver
+        val resolver = context.contentResolver
 
         val contentValues = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, "${preset.name}.preset")
@@ -103,7 +100,7 @@ suspend fun savePreset(ctx: Context, preset: Preset) {
         resolver.update(uri, contentValues, null, null)
 
         // redirect the user to the directory in which the preset is saved
-        ctx.run {
+        context.run {
             val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
             startActivity(intent)
         }
@@ -111,7 +108,7 @@ suspend fun savePreset(ctx: Context, preset: Preset) {
     }
     uri?.let {
         Toast.makeText(
-            ctx,
+            context,
             "preset saved at ${it.path}",
             Toast.LENGTH_LONG
         ).show()
@@ -127,8 +124,8 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
     var isBlurring2d       by remember { mutableStateOf(false) }
     var selectedPreset     by remember { mutableStateOf<Preset?>(null) }
 
-    val scope = rememberCoroutineScope()
-    val ctx = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val applyPreset = { preset: Preset ->
         preset.params.forEach { (effect, value) ->
@@ -144,13 +141,13 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
         showAddDialog -> AddPresetDialog(
             onDismissRequest = { showAddDialog = false },
             onAddPreset = { preset ->
-                scope.launch {
+                coroutineScope.launch {
                     presetsRepository.addPreset(preset)
                     presets = presetsRepository.load()
                 }
             },
             onAddPresetFromEditor = { name ->
-                scope.launch {
+                coroutineScope.launch {
                     presetsRepository.addPreset(name, vm.filterValues)
                     presets = presetsRepository.load()
                 }
@@ -163,7 +160,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             text = { Text("do you want to remove $selectedPresetName?") },
             confirmButton = {
                 TextButton(onClick = {
-                    scope.launch {
+                    coroutineScope.launch {
                         presetsRepository.removePreset(selectedPresetName!!)
                         presets = presetsRepository.load()
                     }
@@ -194,7 +191,7 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
                 expanded = true,
             )
             TextButton(onClick = {
-                scope.launch { savePreset(ctx, it) }
+                coroutineScope.launch { savePreset(context, it) }
             }) {
                 Icon(Icons.Default.Save, contentDescription = "save")
                 Text("save preset")
@@ -339,43 +336,15 @@ fun FilteringSection(vm: EditorViewModel, presetsRepository: PresetsRepository) 
             Icon(Icons.Filled.InvertColors, contentDescription = "hue")
         }
     }
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.Gray.copy(alpha = .2f)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            presets.forEach { preset ->
-                PresetPreview(
-                    preset = preset,
-                    originalMat = vm.originalMat,
-                    onPress = { applyPreset(preset) },
-                    onLongPress = {
-                        selectedPresetName = preset.name
-                        selectedPreset = preset
-                    })
-            }
-            ElevatedButton(
-                modifier = Modifier
-                    .size(60.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp),
-                onClick = { showAddDialog = true }
-            ) {
-                Text("+")
-            }
-        }
-    }
+
+    PresetBar(
+        presets = presets,
+        originalMat = vm.originalMat,
+        onApply = { applyPreset(it) },
+        onLongPress = { preset ->
+            selectedPresetName = preset.name
+            selectedPreset = preset
+        },
+        onAddNew = { showAddDialog = true }
+    )
 }
-
-
