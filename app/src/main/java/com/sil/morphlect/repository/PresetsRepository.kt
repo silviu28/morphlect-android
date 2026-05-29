@@ -9,23 +9,26 @@ import com.sil.morphlect.enums.Filter
 import kotlinx.coroutines.flow.first
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.collections.ifEmpty
 
 class PresetsRepository(private val context: Context) {
     companion object {
         val PRESETS_KEY = stringPreferencesKey("presets")
     }
 
-    private val defaults = listOf<Preset>(
-//        Preset("Vintage", mapOf(
-//            Filter.Brightness to .2,
-//            Filter.Contrast to -.1,
-//            Filter.Hue to .3
-//        )),
-//        Preset("Vibrant", mapOf(
-//            Filter.Brightness to .3,
-//            Filter.Contrast to .2,
-//            Filter.Hue to .5
-//        )),
+    var loadedPresets = emptyList<Preset>()
+
+    private val defaults = listOf(
+        Preset("Vintage", mapOf(
+            Filter.Brightness to .2,
+            Filter.Contrast to -.1,
+            Filter.Hue to .3
+        )),
+        Preset("Vibrant", mapOf(
+            Filter.Brightness to .3,
+            Filter.Contrast to .2,
+            Filter.Hue to .5
+        )),
     )
 
     suspend fun load(): List<Preset> {
@@ -40,8 +43,9 @@ class PresetsRepository(private val context: Context) {
                 list += Preset.fromJSON(currentObj)
                 currentObj = array.opt(++idx) as JSONObject?
             }
-            list
+            list.also { loadedPresets = it }
         } catch (e: Exception) {
+            Log.e("Presets error", "Unable to load presets: ${e.stackTraceToString()}")
             defaults
         }
     }
@@ -53,21 +57,21 @@ class PresetsRepository(private val context: Context) {
                 .joinToString(prefix = "[", postfix = "]")
             context.dataStore.edit { prefs -> prefs[PRESETS_KEY] = dump }
         } catch (e: Exception) {
-            Log.e("Presets error", "Unable to save presets: $e")
+            Log.e("Presets error", "Unable to save presets: ${e.stackTraceToString()}")
         }
     }
 
     suspend fun addPreset(name: String, params: Map<Filter, Double>) {
-        save(load() + Preset(name, params))
+        save(loadedPresets.ifEmpty { load() } + Preset(name, params))
     }
 
     suspend fun addPreset(preset: Preset) {
-        save(load() + preset)
+        save(loadedPresets.ifEmpty { load() } + preset)
     }
 
     suspend fun removePreset(name: String) {
-        save(load().filter { it.name != name })
+        save(loadedPresets.ifEmpty { load() }.filter { it.name != name })
     }
 
-    suspend fun loadAll(): List<Preset> = defaults + load()
+    suspend fun loadAll(): List<Preset> = defaults + loadedPresets.ifEmpty { load() }
 }
