@@ -27,7 +27,7 @@ interface StudioCommand {
             return when (filter) {
                 Filter.Contrast -> ContrastCommand(factors[0])
                 Filter.Brightness -> BrightnessCommand(factors[0])
-                Filter.Blur, Filter.BlurSecondAxis ->
+                Filter.Blur ->
                     BlurCommand(
                         xFactor = factors[0],
                         yFactor = if (factors.size == 2) factors[1] else factors[0]
@@ -35,7 +35,6 @@ interface StudioCommand {
                 Filter.Sharpness -> SharpnessCommand(factors[0])
                 Filter.Hue -> HueCommand(factors[0])
                 Filter.LightBalance -> LightBalanceCommand(factors[0])
-                else -> throw CommandException("Non-existent command type.")
             }
         }
     }

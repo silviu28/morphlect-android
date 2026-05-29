@@ -111,7 +111,6 @@ fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) 
     var showAddDialog      by remember { mutableStateOf(false) }
     var showRemoveDialog   by remember { mutableStateOf(false) }
     var selectedPresetName by remember { mutableStateOf<String?>(null) }
-    var isBlurring2d       by remember { mutableStateOf(false) }
     var selectedPreset     by remember { mutableStateOf<Preset?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
@@ -209,39 +208,22 @@ fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) 
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row {
-                AnimatedContent(
-                    targetState = vm.filterValues[vm.selectedFilter] != 0.0,
-                    transitionSpec = {
-                        fadeIn() togetherWith fadeOut() using SizeTransform(clip = false)
-                    }
-                ) { filterUsed ->
-                    if (filterUsed) {
-                        ElevatedButton(
-                            modifier = Modifier.height(30.dp),
-                            onClick = {
-                                vm.adjustEffect(value = 0.0)
-                            }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "undo effect"
-                            )
-
-                        }
-                    }
+            AnimatedContent(
+                targetState = vm.filterValues[vm.selectedFilter] != 0.0,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut() using SizeTransform(clip = false)
                 }
-                AnimatedContent(
-                    targetState = vm.selectedFilter == Filter.Blur,
-                    transitionSpec = {
-                        fadeIn() togetherWith fadeOut()
-                    },
-                ) { isBlurring ->
-                    if (isBlurring) {
-                        ElevatedButton(
-                            modifier = Modifier.height(30.dp),
-                            onClick = { isBlurring2d = !isBlurring2d }) {
-                            if (isBlurring2d) Text("..") else Text(".")
-                        }
+            ) { filterUsed ->
+                if (filterUsed) {
+                    ElevatedButton(
+                        modifier = Modifier.height(30.dp),
+                        onClick = {
+                            vm.adjustEffect(value = 0.0)
+                        }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "undo effect"
+                        )
                     }
                 }
             }
@@ -263,31 +245,9 @@ fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) 
             value = vm.filterValues[vm.selectedFilter]!!.toFloat(),
             onValueChange = { value ->
                 vm.adjustEffect(value = value.toDouble())
-                // merge both blurring axes
-                if (!isBlurring2d) {
-                    vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
-                }
             },
             valueRange = -1f..1f,
         )
-
-        // the slider that appears when enabling 2d blur
-        AnimatedContent(
-            targetState = isBlurring2d,
-            transitionSpec = {
-                fadeIn() togetherWith fadeOut()
-            }
-        ) { isBlurring2d ->
-            if (isBlurring2d) {
-                LedDotSlider(
-                    value = vm.filterValues[Filter.BlurSecondAxis]!!.toFloat(),
-                    onValueChange = { value ->
-                        vm.adjustEffect(filter = Filter.BlurSecondAxis, value = value.toDouble())
-                    },
-                    valueRange = -1f..1f,
-                )
-            }
-        }
     }
     Row(
         modifier = Modifier

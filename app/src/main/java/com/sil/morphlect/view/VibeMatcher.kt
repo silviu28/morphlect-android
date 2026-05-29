@@ -53,7 +53,6 @@ fun applyPresetsWithIntensity(mat: Mat, presets: List<Preset>, intensities: Map<
                 Filter.Contrast -> Filtering.contrast(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
                 Filter.Brightness -> Filtering.brightness(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
                 Filter.Blur -> Filtering.blur(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0), v * (intensities[preset.name]?.toDouble() ?: 1.0))
-                Filter.BlurSecondAxis -> newMat
                 Filter.LightBalance -> Filtering.lightBalance(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
                 Filter.Hue -> Filtering.hueShift(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
                 Filter.Sharpness -> Filtering.sharpen(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))

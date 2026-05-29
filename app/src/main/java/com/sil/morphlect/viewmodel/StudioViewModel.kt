@@ -123,12 +123,11 @@ class StudioViewModel : ViewModel, StudioCommandManager {
             Filter.Brightness -> BrightnessCommand(factor)
             Filter.Blur -> BlurCommand(
                 xFactor = factor,
-                yFactor = filterValues[Filter.BlurSecondAxis] ?: .0
+                yFactor = factor
             )
             Filter.Sharpness -> SharpnessCommand(factor)
             Filter.Hue -> HueCommand(factor)
             Filter.LightBalance -> LightBalanceCommand(factor)
-            else -> ContrastCommand(.0)
         }
     }
 
