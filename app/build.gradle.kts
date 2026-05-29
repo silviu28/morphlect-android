@@ -102,9 +102,6 @@ dependencies {
     // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-support
     implementation(libs.tensorflow.lite.support)
 
-    // https://mvnrepository.com/artifact/com.google.code.gson/gson
-    implementation(libs.gson)
-
     // https://mvnrepository.com/artifact/androidx.compose.material/material-icons-extended
     implementation(libs.androidx.compose.material.icons.extended)
 
