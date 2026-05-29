@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -232,7 +233,8 @@ fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) 
                 AnimatedContent(
                     targetState = vm.selectedFilter.name,
                     transitionSpec = {
-                        slideInVertically { it } togetherWith slideOutVertically { it }
+                        (fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 2 }) togetherWith
+                                (fadeOut(tween(300)) + slideOutVertically(tween(300)) { -it / 2 })
                     }
                 ) { filterName ->
                     Text(text = filterName.lowercase(), fontSize = 30.sp)
