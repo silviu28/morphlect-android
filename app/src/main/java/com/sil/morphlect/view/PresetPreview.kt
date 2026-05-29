@@ -1,18 +1,15 @@
 package com.sil.morphlect.view
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
@@ -25,6 +22,8 @@ import com.sil.morphlect.logic.Filtering
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import org.opencv.core.Mat
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
 
 @Composable
 fun PresetPreview(
@@ -34,38 +33,37 @@ fun PresetPreview(
     onLongPress: () -> Unit,
     expanded: Boolean = false,
 ) {
-    var processedBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var scope = rememberCoroutineScope()
+    val processedBitmap by remember {
+        derivedStateOf {
+            originalMat?.let {
+                val smallMat = Mat()
+                val ratio = maxOf(it.width(), it.height()) / 256.0
+                Imgproc.resize(
+                    it, smallMat,
+                    Size(it.width() / ratio, it.height() / ratio)
+                )
+                var previewMat = smallMat.clone()
+                Filter.entries.forEach { filter ->
+                    val factor = preset.params[filter] ?: 0.0
+                    previewMat = when (filter) {
+                        Filter.Contrast -> Filtering.contrast(previewMat, factor)
+                        Filter.Brightness -> Filtering.brightness(previewMat, factor)
+                        Filter.Blur -> Filtering.blur(previewMat, factor, factor)
+                        Filter.LightBalance -> Filtering.lightBalance(previewMat, factor)
+                        Filter.Hue -> Filtering.hueShift(previewMat, factor)
+                        Filter.Sharpness -> Filtering.sharpen(previewMat, factor)
+                    }
+                }
+                FormatConverters.matToBitmap(previewMat).also { previewMat.release() }
+            }
+        }
+    }
 
     if (originalMat == null) {
         Box(modifier = Modifier.size(60.dp)) {
             FlickeringLedDotProgressIndicator()
         }
         return
-    }
-
-    LaunchedEffect(originalMat, preset) {
-        try {
-            var previewMat = originalMat.clone()
-
-            val blurValue = preset.params[Filter.Blur] ?: 0.0
-            if (blurValue != 0.0) {
-                previewMat = Filtering.blur(previewMat, blurValue / 10, blurValue / 10)
-            }
-
-            val hueValue = preset.params[Filter.Hue] ?: 0.0
-            if (hueValue != 0.0) {
-                previewMat = Filtering.hueShift(previewMat, hueValue)
-            }
-
-            val resultBitmap = FormatConverters.matToBitmap(previewMat)
-
-            previewMat.release()
-
-            processedBitmap = resultBitmap
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     Box(
@@ -75,12 +73,13 @@ fun PresetPreview(
     ) {
         if (processedBitmap == null) {
             FlickeringLedDotProgressIndicator()
-        } else {
+        } else processedBitmap?.let {
             Image(
-                bitmap = processedBitmap!!.asImageBitmap(),
+                bitmap = it.asImageBitmap(),
                 contentDescription = preset.name,
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
+                    .fillMaxSize()
                     .pointerInput(Unit) {
                         detectTapGestures(
                             onTap = { onPress() },
