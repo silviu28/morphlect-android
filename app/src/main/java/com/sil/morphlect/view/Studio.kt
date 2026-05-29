@@ -13,7 +13,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -309,7 +311,8 @@ fun Studio(
                 AnimatedContent(
                     targetState = vm.section,
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
+                        (fadeIn(tween(300)) + slideInVertically(tween(300)) { it / 2 }) togetherWith
+                                (fadeOut(tween(300)) + slideOutVertically(tween(300)) { -it / 2 })
                     }
                 ) { targetState ->
                     Column(
