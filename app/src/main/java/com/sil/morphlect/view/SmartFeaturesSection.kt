@@ -4,19 +4,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
@@ -25,6 +33,7 @@ import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlin.collections.listOf
 import kotlin.random.Random
+
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -45,76 +54,80 @@ fun SmartFeaturesSection(
 
     val developerMode by configRepository.developerMode.collectAsState(initial = false)
 
-    Column {
-        when {
-            showStyleDialog -> AlertDialog(
-                onDismissRequest = { showStyleDialog = false },
-                title = { Text("style transfer") },
-                text = { Text("this option requires you to insert an image and apply modifications to your image to match the latter's style. continue?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showStyleDialog = false
-                        navController.navigate("style-transfer")
-                    }) {
-                        Text("yes")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showStyleDialog = false
-                    }) {
-                        Text("no")
-                    }
+    when {
+        showStyleDialog -> AlertDialog(
+            onDismissRequest = { showStyleDialog = false },
+            title = { Text("style transfer") },
+            text = { Text("this option requires you to insert an image and apply modifications to your image to match the latter's style. continue?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showStyleDialog = false
+                    navController.navigate("style-transfer")
+                }) {
+                    Text("yes")
                 }
-            )
-
-            showEvalDialog -> AlertDialog(
-                onDismissRequest = { showEvalDialog = false },
-                title = { Text("image evaluation") },
-                text = { Text("this option will process your image and give you a style rating. continue?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showEvalDialog = false
-                        navController.navigate("image-eval")
-                    }) {
-                        Text("yes")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showEvalDialog = false
-                    }) {
-                        Text("no")
-                    }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showStyleDialog = false
+                }) {
+                    Text("no")
                 }
-            )
+            }
+        )
 
-            showVibeDialog -> AlertDialog(
-                onDismissRequest = { showVibeDialog = false },
-                title = { Text("vibe matcher") },
-                text = { Text("this option allows you to infer the vibe of an image, make changes to your liking, and modify your image accordingly. continue?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showVibeDialog = false
-                        navController.navigate("vibe-match")
-                    }) {
-                        Text("yes")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showVibeDialog = false
-                    }) {
-                        Text("no")
-                    }
+        showEvalDialog -> AlertDialog(
+            onDismissRequest = { showEvalDialog = false },
+            title = { Text("image evaluation") },
+            text = { Text("this option will process your image and give you a style rating. continue?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showEvalDialog = false
+                    navController.navigate("image-eval")
+                }) {
+                    Text("yes")
                 }
-            )
-        }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showEvalDialog = false
+                }) {
+                    Text("no")
+                }
+            }
+        )
 
+        showVibeDialog -> AlertDialog(
+            onDismissRequest = { showVibeDialog = false },
+            title = { Text("vibe matcher") },
+            text = { Text("this option allows you to infer the vibe of an image, make changes to your liking, and modify your image accordingly. continue?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showVibeDialog = false
+                    navController.navigate("vibe-match")
+                }) {
+                    Text("yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showVibeDialog = false
+                }) {
+                    Text("no")
+                }
+            }
+        )
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("built-in", style = MaterialTheme.typography.bodySmall)
         FlowRow(
             verticalArrangement = Arrangement.Center,
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().padding(10.dp)
         ) {
             TextButton(onClick = { showVibeDialog = true }) {
                 Text("vibe matcher")
@@ -130,8 +143,10 @@ fun SmartFeaturesSection(
                     Text("[DEBUG] verify animation")
                 }
         }
+
+        Text("mxt", style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
             horizontalArrangement = Arrangement.Center,
         ) {
             extensions.forEach {
