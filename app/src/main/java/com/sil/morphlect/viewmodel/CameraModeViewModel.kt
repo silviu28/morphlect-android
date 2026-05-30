@@ -4,14 +4,13 @@ import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
-import com.sil.morphlect.view.mxt.loadExtension
+import com.sil.morphlect.logic.loadExtension
 import com.sil.mxtengine.data.InteractorType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

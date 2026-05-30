@@ -7,12 +7,8 @@ import android.util.Log
 import com.sil.morphlect.BuildConfig
 import com.sil.morphlect.constant.WebConstants
 import com.sil.morphlect.dto.ModelInfoDTO
-import com.sil.morphlect.view.mxt.MXTManifestDTO
-import com.sil.mxtengine.data.MXTManifest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import net.mamoe.yamlkt.Yaml
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray

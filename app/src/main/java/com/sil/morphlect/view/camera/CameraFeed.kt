@@ -54,7 +54,7 @@ import androidx.core.graphics.scale
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
-import com.sil.morphlect.data.StudioLayer
+import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.logic.objectDetector

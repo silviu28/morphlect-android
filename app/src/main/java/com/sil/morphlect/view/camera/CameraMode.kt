@@ -71,7 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
-import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer

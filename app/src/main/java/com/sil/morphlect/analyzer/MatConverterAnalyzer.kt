@@ -11,7 +11,7 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import androidx.core.graphics.createBitmap
-import com.sil.morphlect.logic.FormatConverters
+import com.sil.morphlect.imgproc.FormatConverters
 
 /**
  * attaches to a camera feed and processes frames into OpenCV Mat format.

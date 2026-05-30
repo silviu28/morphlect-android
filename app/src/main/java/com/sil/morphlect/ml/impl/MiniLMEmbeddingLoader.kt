@@ -6,14 +6,12 @@ import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.ml.BertTokenizer
 import com.sil.morphlect.ml.ModelLoader
-import com.sil.morphlect.ml.cosineSimilarity
+import com.sil.morphlect.logic.cosineSimilarity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 // https://github.com/hissain/AndroidSemanticSearch
 

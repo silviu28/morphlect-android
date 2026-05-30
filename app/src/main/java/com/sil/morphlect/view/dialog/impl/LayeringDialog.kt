@@ -30,7 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.sil.morphlect.data.StudioLayer
+import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.view.dialog.DialogScaffold
 
 @Composable

@@ -6,7 +6,7 @@ import com.sil.morphlect.command.impl.ContrastCommand
 import com.sil.morphlect.command.impl.HueCommand
 import com.sil.morphlect.command.impl.LightBalanceCommand
 import com.sil.morphlect.command.impl.SharpnessCommand
-import com.sil.morphlect.data.StudioLayer
+import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.exception.CommandException
 

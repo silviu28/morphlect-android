@@ -21,12 +21,12 @@ import com.sil.morphlect.command.StudioCommandManager
 import com.sil.morphlect.command.impl.HueCommand
 import com.sil.morphlect.command.impl.LightBalanceCommand
 import com.sil.morphlect.command.impl.SharpnessCommand
-import com.sil.morphlect.data.StudioLayer
+import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Section
-import com.sil.morphlect.logic.FormatConverters
-import com.sil.morphlect.logic.LayerManager
+import com.sil.morphlect.imgproc.FormatConverters
+import com.sil.morphlect.layerwork.LayerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow

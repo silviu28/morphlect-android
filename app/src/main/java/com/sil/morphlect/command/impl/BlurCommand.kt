@@ -1,8 +1,8 @@
 package com.sil.morphlect.command.impl
 
 import com.sil.morphlect.command.StudioCommand
-import com.sil.morphlect.data.StudioLayer
-import com.sil.morphlect.logic.Filtering
+import com.sil.morphlect.layerwork.StudioLayer
+import com.sil.morphlect.imgproc.Filtering
 
 class BlurCommand(var xFactor: Double, var yFactor: Double) : StudioCommand {
     override val actionName: String

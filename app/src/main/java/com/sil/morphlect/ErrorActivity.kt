@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.sil.morphlect.ui.theme.MorphlectTheme
-import com.sil.morphlect.view.FatalErrorScreen
+import com.sil.morphlect.view.nav.FatalErrorScreen
 
 class ErrorActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
