@@ -11,9 +11,9 @@ import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.exception.CommandException
 
 /** represents an undoable action that is done from the studio. */
-interface StudioCommand {
+interface StudioCommand : Command<StudioLayer, StudioLayer> {
     val actionName: String
-    fun execute(src: StudioLayer): StudioLayer
+    override fun execute(src: StudioLayer): StudioLayer
 
     companion object {
         /**
