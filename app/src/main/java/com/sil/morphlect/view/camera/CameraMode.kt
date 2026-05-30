@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -18,7 +17,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -74,11 +71,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
-import com.sil.morphlect.R
 import com.sil.morphlect.logic.FormatConverters
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
-import com.sil.morphlect.view.PresetPreview
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
@@ -150,11 +145,6 @@ fun CameraMode(
 ) {
     val cameraControllerState = remember { CameraControllerState() }
     val context = LocalContext.current
-    val presetDefaultImage = remember {
-        FormatConverters.bitmapToMat(
-            BitmapFactory.decodeResource(context.resources, R.drawable.preset_default)
-        )
-    }
     val state = remember { CameraModeUiState(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
@@ -331,25 +321,6 @@ fun CameraMode(
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(top = 12.dp, bottom = 12.dp)
             ) {
-                // presets bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    vm.presets.forEach { preset ->
-                        PresetPreview(
-                            preset = preset,
-                            originalMat = presetDefaultImage,
-                            onPress = { },
-                            onLongPress = { },
-                        )
-                    }
-                }
-
                 // bottom controls
                 Row(
                     modifier = Modifier
