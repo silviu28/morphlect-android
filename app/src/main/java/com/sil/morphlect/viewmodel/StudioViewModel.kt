@@ -62,21 +62,21 @@ class StudioViewModel : ViewModel, StudioCommandManager {
     private val layerManager = LayerManager(mutableStateListOf())
     val layers by derivedStateOf {
         layerManager.layers.map { layer ->
-            if (!layer.visible) return@map StudioLayer.empty()
-            // TODO works but a bit verbose
             (undoStack +
                 StudioCommand.of(selectedFilter, filterValues[selectedFilter]!!)
-            ).fold(layer) { layer, comm -> comm.execute(layer) }
+            ).fold(layer) { layer, comm -> comm.execute(layer)
+                .also { it.visible = layer.visible } }
     } }
     val previewLayers by derivedStateOf {
         layerManager.downscaledLayers.value.map { layer ->
-            if (!layer.visible) return@map StudioLayer.empty()
+//            if (!layer.visible) return@map StudioLayer.empty()
             (undoStack +
-                    StudioCommand.of(selectedFilter, filterValues[selectedFilter]!!)
-                    ).fold(layer) { layer, comm -> comm.execute(layer) }
+                StudioCommand.of(selectedFilter, filterValues[selectedFilter]!!)
+            ).fold(layer) { layer, comm -> comm.execute(layer)
+                .also { it.visible = layer.visible } }
         }
     }
-    var originalLayers = mutableStateListOf<StudioLayer>()
+    val originalLayers = mutableStateListOf<StudioLayer>()
 
     override fun redoLastCommand() {
         if (redoStack.isEmpty()) return

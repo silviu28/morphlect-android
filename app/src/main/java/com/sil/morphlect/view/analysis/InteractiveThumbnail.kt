@@ -139,6 +139,7 @@ fun InteractiveThumbnail(
                 FlickeringLedDotProgressIndicator()
             else
                 layers.forEachIndexed { index, layer ->
+                    if (!layer.visible) return@forEachIndexed
                     val offset = index * 60f * spread
 
                     Image(

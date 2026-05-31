@@ -42,6 +42,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.viewmodel.StudioViewModel
 
 fun saveImage(ctx: Context, image: Bitmap, format: String, name: String) {
@@ -97,7 +98,8 @@ fun SaveImage(
     var dropdownExpanded by remember { mutableStateOf(false) }
 
     val image = vm.layers
-        .reduce { allMerge, layer -> allMerge.mergeWith(layer) }
+        .filter { it.visible }
+        .fold(StudioLayer.empty()) { allMerge, layer -> allMerge.mergeWith(layer) }
         .visual
         .asAndroidBitmap()
 

@@ -170,7 +170,7 @@ fun Studio(
             )
 
             state.showLayering -> LayeringDialog(
-                layers = vm.layers,
+                layers = vm.previewLayers,
                 onRemoveLayer = { _ -> vm.removeLayer(vm.layers.size - 1) },
                 onMergeLayerWithBelow = { i -> vm.mergeLayerWithAbove(i) },
                 onDismissRequest = { state.showLayering = false },

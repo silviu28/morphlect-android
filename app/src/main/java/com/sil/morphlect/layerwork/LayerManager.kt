@@ -17,7 +17,7 @@ class LayerManager : Closeable {
     }
 
     fun removeLayer(index: Int = 0) {
-        var layer = layers.removeAt(index)
+        val layer = layers.removeAt(index)
         layer.close()
     }
 
@@ -43,9 +43,9 @@ class LayerManager : Closeable {
     }
 
     fun cropLayers(upCorner: Offset, downCorner: Offset, size: Size) {
-        layers = layers.map {
-            it.crop(upCorner, downCorner, size)
-        }.toMutableList()
+        val cropped = layers.map { it.crop(upCorner, downCorner, size) }
+        layers.clear()
+        layers.addAll(cropped)
     }
 
     /**

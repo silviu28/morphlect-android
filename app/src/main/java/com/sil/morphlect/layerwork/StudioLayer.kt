@@ -132,6 +132,7 @@ class StudioLayer(val mat: Mat) : Closeable {
 
     fun downscaledUniformly(maxDimension: Int = 800) : StudioLayer {
         return StudioLayer(Filtering.uniformDownscale(mat))
+            .also { it.visible = this.visible }
     }
 
     fun toCvMat(): Mat = mat
