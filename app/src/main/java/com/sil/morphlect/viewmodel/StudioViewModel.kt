@@ -184,10 +184,11 @@ class StudioViewModel : ViewModel, StudioCommandManager {
         layerManager.close()
     }
 
-    fun canUndo(): Boolean = undoStack.isNotEmpty()
-    fun canRedo(): Boolean = redoStack.isNotEmpty()
+    val canUndo get() = undoStack.isNotEmpty()
+    val canRedo get() = redoStack.isNotEmpty()
 
     fun removeLayer(index: Int) {
+        if (layerManager.layers.size == 1) return // disallow complete deletion
         layerManager.removeLayer(index)
     }
 
@@ -197,7 +198,6 @@ class StudioViewModel : ViewModel, StudioCommandManager {
     }
 
     fun interchangeLayers(firstIndex: Int, secondIndex: Int) {
-        // spaghetti........
         if (firstIndex >= 0 && firstIndex < layerManager.layers.size
             && secondIndex >= 0 && secondIndex < layerManager.layers.size) {
             layerManager.interchangeLayers(firstIndex, secondIndex)

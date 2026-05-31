@@ -275,7 +275,7 @@ fun Studio(
 
                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
                     ElevatedButton(
-                        enabled = vm.canUndo(),
+                        enabled = vm.canUndo,
                         onClick = {
                         vm.undoLastCommand()
                     }) {
@@ -283,7 +283,7 @@ fun Studio(
                     }
 
                     ElevatedButton(
-                        enabled = vm.canRedo(),
+                        enabled = vm.canRedo,
                         onClick = { vm.redoLastCommand() }) {
                         Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "redo")
                     }
