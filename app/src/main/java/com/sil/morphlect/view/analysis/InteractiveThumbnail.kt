@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sil.morphlect.layerwork.StudioLayer
@@ -66,7 +68,7 @@ fun InteractiveThumbnail(
     onDragStart: (Offset) -> Unit,
     onDrag: (Offset) -> Unit,
 ) {
-    var zoomScale      by remember { mutableStateOf(1f) }
+    var zoomScale      by remember { mutableFloatStateOf(1f) }
     var positionOffset by remember { mutableStateOf(Offset.Zero) }
     var holdingClick   by remember { mutableStateOf(false) }
 
@@ -144,6 +146,7 @@ fun InteractiveThumbnail(
 
                     Image(
                         bitmap = layer.visual,
+                        contentScale = ContentScale.None,
                         contentDescription = "preview",
                         modifier = Modifier
                             .size(300.dp)

@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,6 +49,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.TextFormat
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,6 +73,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
@@ -136,6 +139,7 @@ class CameraModeUiState(context: Context) {
     var lastFeedMessage by mutableStateOf("")
     var isCapturing by mutableStateOf(false)
     var isExpanded by mutableStateOf(false)
+    var adheresToRuleOfThirds by mutableStateOf(true)
 }
 
 @Composable
@@ -284,17 +288,27 @@ fun CameraMode(
                 cameraControllerState = cameraControllerState,
                 uiState = state,
                 clusteringType = vm.clusteringType,
+                onCompositionCheck = { adheres -> state.adheresToRuleOfThirds = adheres }
             )
 
-            // tip-giving little snackbar thing
-            Box(modifier = Modifier
-                .width(200.dp)
-                .height(50.dp)
-                .background(Color.Gray.copy(alpha = .3f))
-                .align(Alignment.TopCenter)
-//                .padding(top = 200.dp)
-            ) {
-                Text("you may want to move objects in the scene or your phone more to the left/right.")
+            // tip-giving snackbar
+            if (state.adheresToRuleOfThirds) {
+                Box(
+                    modifier = Modifier
+                        .offset(y = 67.dp)
+                        .align(Alignment.TopCenter)
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(80.dp)
+                    ) {
+                        Text(
+                            text = "you may want to move objects in the scene or your phone more to the left/right.",
+                            fontSize = 12.sp
+                        )
+                    }
+                }
             }
 
             // top right sliders
@@ -396,7 +410,6 @@ fun CameraMode(
                     IconButton(
                         onClick = {
                             cameraControllerState.selectCamera?.invoke()
-
                         }
                     ) {
                         Icon(Icons.Default.Cameraswitch, contentDescription = "switch camera")

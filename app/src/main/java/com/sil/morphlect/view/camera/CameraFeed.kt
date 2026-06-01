@@ -69,6 +69,7 @@ import com.sil.morphlect.ml.impl.Parameters
 import com.sil.morphlect.ml.impl.Tensor4D
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
@@ -100,8 +101,30 @@ fun dominantClusterBoundingBox(
     )
 }
 
-// camera feed should only contain the camera feed, with the grid on top, the detected objects, and maybe the filtered feed
-// TODO the camera mode should also receive the state of filter values in order to apply them to the camera feed.
+fun adhereToRuleOfThirds(
+    bb: Rect,
+    imageWidth: Int,
+    imageHeight: Int,
+    tolerance: Float = 0.1f
+): Boolean {
+    val powerPoints = listOf(
+        imageWidth / 3f to imageHeight / 3f,
+        imageWidth * 2 / 3f to imageHeight / 3f,
+        imageWidth / 3f to imageHeight * 2 / 3f,
+        imageWidth * 2 / 3f to imageHeight * 2 / 3f
+    )
+
+    val tolerancePx = imageWidth * tolerance
+    val cx = bb.centerX()
+    val cy = bb.centerY()
+
+    return powerPoints.any { (px, py) ->
+        val dx = cx - px
+        val dy = cy - py
+        sqrt((dx * dx + dy * dy).toDouble()) <= tolerancePx
+    }
+}
+
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun CameraFeed(
@@ -113,6 +136,7 @@ fun CameraFeed(
     cameraControllerState: CameraControllerState,
     uiState: CameraModeUiState,
     clusteringType: ClusteringType,
+    onCompositionCheck: (adheres: Boolean) -> Unit,
 ) {
     val mainExecutor = ContextCompat.getMainExecutor(context)
     val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
@@ -185,6 +209,30 @@ fun CameraFeed(
         } catch (e: Exception) {
             Log.e("CameraFeed", e.stackTraceToString())
             analyzerFeedFlow.emit(":(")
+        }
+    }
+
+    // this periodically runs the rule of thirds adherence check
+    LaunchedEffect(Unit) {
+        launch {
+            while (true) {
+                dominantClusterBoundingBox(
+                    boundingBoxes,
+                    imageWidth,
+                    imageHeight,
+                    400f,
+                    clustering = clusteringType
+                )?.let {
+                    val adheres = adhereToRuleOfThirds(
+                        bb = it,
+                        imageWidth = imageWidth,
+                        imageHeight = imageHeight,
+                        tolerance = .1f
+                    )
+                    onCompositionCheck(adheres)
+                }
+                delay(1.seconds)
+            }
         }
     }
 
@@ -390,6 +438,7 @@ fun CameraFeedPreview() {
         cameraControllerState = CameraControllerState(),
         uiState = CameraModeUiState(ctx),
         clusteringType = ClusteringType.DBSCAN,
+        onCompositionCheck = { _ -> Unit },
     )
 }
 
