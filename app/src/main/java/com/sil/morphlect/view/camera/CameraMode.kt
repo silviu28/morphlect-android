@@ -25,12 +25,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddBox
@@ -72,6 +75,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.sil.morphlect.imgproc.FormatConverters
+import com.sil.morphlect.logic.ClusteringType
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
@@ -193,7 +197,11 @@ fun CameraMode(
             onDismissRequest = { state.showModelsDialog = false },
             icon = Icons.Default.Camera,
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
                 vm.imageOnlyLoadedModels.forEach { (model, enabled) ->
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(model.name)
@@ -201,7 +209,26 @@ fun CameraMode(
                         Switch(enabled, { vm.imageOnlyLoadedModels += (model to !enabled) })
                     }
                 }
+
                 Spacer(Modifier.weight(1f))
+
+                Column {
+                    Text("clustering type")
+                    HorizontalDivider()
+                    ClusteringType.entries.forEach {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("$it")
+                            RadioButton(
+                                selected = vm.clusteringType == it,
+                                onClick = { vm.clusteringType = it },
+                            )
+                        }
+                    }
+                }
+
                 Column {
                     Text("inference refresh timeout")
                     HorizontalDivider()
@@ -256,7 +283,19 @@ fun CameraMode(
                 vm.imageOnlyLoadedModels,
                 cameraControllerState = cameraControllerState,
                 uiState = state,
+                clusteringType = vm.clusteringType,
             )
+
+            // tip-giving little snackbar thing
+            Box(modifier = Modifier
+                .width(200.dp)
+                .height(50.dp)
+                .background(Color.Gray.copy(alpha = .3f))
+                .align(Alignment.TopCenter)
+//                .padding(top = 200.dp)
+            ) {
+                Text("you may want to move objects in the scene or your phone more to the left/right.")
+            }
 
             // top right sliders
             Column(

@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.sil.morphlect.data.Preset
+import com.sil.morphlect.logic.ClusteringType
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.repository.PresetsRepository
@@ -23,6 +24,7 @@ class CameraModeViewModel() : ViewModel() {
     var imageOnlyLoadedModels by mutableStateOf<Map<ExtensionModelLoader, Boolean>>(emptyMap())
     val inferenceRefreshTimes = arrayOf(1.seconds, 2.seconds, 4.seconds, 5.seconds)
     var inferenceRefreshInterval by mutableStateOf(inferenceRefreshTimes[0])
+    var clusteringType by mutableStateOf(ClusteringType.DBSCAN)
 
     suspend fun loadRepositories(presetsRepository: PresetsRepository, extensionsRepository: ExtensionsRepository)
         = withContext(Dispatchers.IO) {

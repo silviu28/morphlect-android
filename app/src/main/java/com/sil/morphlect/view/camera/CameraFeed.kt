@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -111,13 +112,14 @@ fun CameraFeed(
     imageOnlyLoadedModels: Map<ExtensionModelLoader, Boolean>,
     cameraControllerState: CameraControllerState,
     uiState: CameraModeUiState,
+    clusteringType: ClusteringType,
 ) {
     val mainExecutor = ContextCompat.getMainExecutor(context)
     val classificationExecutor = remember { Executors.newSingleThreadExecutor() }
     var focusIndicatorPoint by remember { mutableStateOf<Offset?>(null) }
 
-    var imageWidth by remember { mutableStateOf(1) }
-    var imageHeight by remember { mutableStateOf(1) }
+    var imageWidth by remember { mutableIntStateOf(1) }
+    var imageHeight by remember { mutableIntStateOf(1) }
 
     val shutterAlpha       by animateFloatAsState(
         targetValue = if (uiState.isCapturing) 0f else 1f,
@@ -318,9 +320,8 @@ fun CameraFeed(
         ) { RuleOfThirdsGrid(modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp)) }
 
         // bounding-box canvas
-        // TODO - disabling 'state.showClassification' should also disable the analyzer for performance
         if (uiState.showClassification)
-            BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight)
+            BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight, clusteringType)
     }
 
     if (uiState.applyFiltering)
@@ -387,7 +388,8 @@ fun CameraFeedPreview() {
         analyzerFeedFlow = previewFeedFlow,
         imageOnlyLoadedModels = emptyMap(),
         cameraControllerState = CameraControllerState(),
-        uiState = CameraModeUiState(ctx)
+        uiState = CameraModeUiState(ctx),
+        clusteringType = ClusteringType.DBSCAN,
     )
 }
 
@@ -405,6 +407,7 @@ private fun BoundingBoxCanvas(
     boxes: List<Rect>,
     imageWidth: Int,
     imageHeight: Int,
+    clusteringType: ClusteringType,
 ) {
     Canvas(modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp)) {
         val scaleX = size.width / imageWidth
@@ -412,7 +415,12 @@ private fun BoundingBoxCanvas(
 
         boxes.forEach { drawBoundingBox(it, scaleX, scaleY) }
 
-        dominantClusterBoundingBox(boxes, imageWidth, imageHeight, eps = 400f)
-            ?.let { drawBoundingBox(it, scaleX, scaleY, color = Color.Red) }
+        dominantClusterBoundingBox(
+            boxes,
+            imageWidth,
+            imageHeight,
+            eps = 400f,
+            clustering = clusteringType
+        )?.let { drawBoundingBox(it, scaleX, scaleY, color = Color.Red) }
     }
 }
