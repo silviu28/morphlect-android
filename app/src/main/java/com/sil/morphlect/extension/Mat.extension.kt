@@ -9,8 +9,12 @@ import org.opencv.core.Size
 fun Mat.extend(size: Size): Mat {
     if (size == size()) return this
 
-    var dst = Mat.zeros(size, type())
-    val region = dst.submat(0, rows(), 0, cols())
+    val dst = Mat.zeros(size, type())
+
+    val xOffset = ((size.width - cols()) / 2).toInt()
+    val yOffset = ((size.height - rows()) / 2).toInt()
+
+    val region = dst.submat(yOffset, yOffset + rows(), xOffset, xOffset + cols())
     copyTo(region)
     region.release()
 
