@@ -27,10 +27,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -75,6 +73,15 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
 import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.seconds
+
+private fun getAnalysisDimensions(
+    rotationDegrees: Int,
+    bufferWidth: Int,
+    bufferHeight: Int,
+): Pair<Int, Int> = when (rotationDegrees) {
+    90, 270 -> bufferHeight to bufferWidth
+    else -> bufferWidth to bufferHeight
+}
 
 /**
  * returns the bounding box given by the dominant cluster from clusters given bounding boxes `bbs` using the specified `clustering` algorithm.
@@ -145,12 +152,6 @@ fun CameraFeed(
     var imageWidth by remember { mutableIntStateOf(1) }
     var imageHeight by remember { mutableIntStateOf(1) }
 
-    val shutterAlpha       by animateFloatAsState(
-        targetValue = if (uiState.isCapturing) 0f else 1f,
-        animationSpec = tween(50),
-        finishedListener = { if (it == 1f) uiState.isCapturing = false }
-    )
-
     val size by animateDpAsState(
         targetValue = if (uiState.isExpanded) 0.dp else 120.dp,
         animationSpec = spring(
@@ -161,6 +162,7 @@ fun CameraFeed(
     )
 
     var boundingBoxes by remember { mutableStateOf<List<Rect>>(emptyList()) }
+    var spanningBoundingBox by remember { mutableStateOf<Rect?>(null) }
     var currentFrame by remember { mutableStateOf<StudioLayer?>(null) }
     var currentProcessedFrame by remember { mutableStateOf<StudioLayer?>(null) }
     var reanalyzeTriggerKey by remember { mutableStateOf(false) }
@@ -216,13 +218,7 @@ fun CameraFeed(
     LaunchedEffect(Unit) {
         launch {
             while (true) {
-                dominantClusterBoundingBox(
-                    boundingBoxes,
-                    imageWidth,
-                    imageHeight,
-                    400f,
-                    clustering = clusteringType
-                )?.let {
+                spanningBoundingBox?.let {
                     val adheres = adhereToRuleOfThirds(
                         bb = it,
                         imageWidth = imageWidth,
@@ -261,12 +257,25 @@ fun CameraFeed(
                 objectDetector
                     .process(image)
                     .addOnSuccessListener { detectedObjects ->
-                        imageWidth = imageProxy.width
-                        imageHeight = imageProxy.height
+                        val (analysisW, analysisH) = getAnalysisDimensions(
+                            imageProxy.imageInfo.rotationDegrees,
+                            imageProxy.width,
+                            imageProxy.height,
+                        )
+                        imageWidth = analysisW
+                        imageHeight = analysisH
                         // take only the objects with high confidence
                         boundingBoxes = detectedObjects
 //                            .filter { it.labels.any { label -> label.confidence >= 0.5f } }
                             .map { it.boundingBox }
+
+                        spanningBoundingBox = dominantClusterBoundingBox(
+                            boundingBoxes,
+                            imageWidth,
+                            imageHeight,
+                            eps = 400f,
+                            clustering = clusteringType
+                        )
                     }
                     .addOnFailureListener { error ->
                         Log.e("CAMERA", "Object detection failed", error)
@@ -326,7 +335,10 @@ fun CameraFeed(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    val previewModifier = Modifier.fillMaxSize()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         AndroidView(
             factory = { ctx ->
                 PreviewView(ctx).apply {
@@ -357,7 +369,7 @@ fun CameraFeed(
                     }
                 }
             },
-            modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp),
+            modifier = previewModifier,
         )
 
         // rule of thirds grid
@@ -365,47 +377,56 @@ fun CameraFeed(
             visible = uiState.showGrid,
             enter = fadeIn(),
             exit = fadeOut(),
-        ) { RuleOfThirdsGrid(modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp)) }
+        ) { RuleOfThirdsGrid(modifier = previewModifier) }
 
         // bounding-box canvas
-        if (uiState.showClassification)
-            BoundingBoxCanvas(boundingBoxes, imageWidth, imageHeight, clusteringType)
-    }
+        if (uiState.showClassification) {
+            BoundingBoxCanvas(
+                boxes = boundingBoxes,
+                spanningBoundingBox = spanningBoundingBox,
+                imageWidth = imageWidth,
+                imageHeight = imageHeight,
+                modifier = previewModifier,
+            )
+        }
 
-    if (uiState.applyFiltering)
-        currentProcessedFrame?.let {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset(y = if (uiState.isExpanded) 0.dp else (-200).dp),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                Image(
-                    bitmap = it.visual,
-                    contentDescription = "frame",
-                    modifier =
-                        Modifier
-                            .then(if (uiState.isExpanded) Modifier.fillMaxSize() else Modifier)
-                            .zIndex(10f)
-                            .size(size)
-                            .clickable { uiState.isExpanded = !uiState.isExpanded }
-                )
+        AnimatedVisibility(
+            visible = focusIndicatorPoint != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            Canvas(modifier = previewModifier) {
+                focusIndicatorPoint?.let { tapPoint ->
+                    drawCircle(
+                        color = Color.White,
+                        radius = 32.dp.toPx(),
+                        center = tapPoint,
+                        style = Stroke(width = 2.dp.toPx()),
+                    )
+                }
+            }
             }
         }
 
-    AnimatedVisibility(
-        visible = focusIndicatorPoint != null,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            focusIndicatorPoint?.let { tapPoint ->
-                drawCircle(
-                    color = Color.White,
-                    radius = 32.dp.toPx(),
-                    center = tapPoint,
-                    style = Stroke(width = 2.dp.toPx())
-                )
+        if (uiState.applyFiltering) {
+            currentProcessedFrame?.let {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(y = if (uiState.isExpanded) 0.dp else (-200).dp),
+                    contentAlignment = Alignment.BottomEnd,
+                ) {
+                    Image(
+                        bitmap = it.visual,
+                        contentDescription = "frame",
+                        modifier =
+                            Modifier
+                                .then(if (uiState.isExpanded) Modifier.fillMaxSize() else Modifier)
+                                .zIndex(10f)
+                                .size(size)
+                                .clickable { uiState.isExpanded = !uiState.isExpanded },
+                    )
+                }
             }
         }
     }
@@ -454,22 +475,17 @@ fun DrawScope.drawBoundingBox(box: Rect, scaleX: Float, scaleY: Float, color: Co
 @Composable
 private fun BoundingBoxCanvas(
     boxes: List<Rect>,
+    spanningBoundingBox: Rect?,
     imageWidth: Int,
     imageHeight: Int,
-    clusteringType: ClusteringType,
+    modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = Modifier.width(imageWidth.dp).height(imageHeight.dp)) {
+    Canvas(modifier = modifier) {
         val scaleX = size.width / imageWidth
         val scaleY = size.height / imageHeight
 
         boxes.forEach { drawBoundingBox(it, scaleX, scaleY) }
 
-        dominantClusterBoundingBox(
-            boxes,
-            imageWidth,
-            imageHeight,
-            eps = 400f,
-            clustering = clusteringType
-        )?.let { drawBoundingBox(it, scaleX, scaleY, color = Color.Red) }
+        spanningBoundingBox?.let { drawBoundingBox(it, scaleX, scaleY, color = Color.Red) }
     }
 }

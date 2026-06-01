@@ -278,7 +278,7 @@ fun CameraMode(
             }
         }
     } else {
-        Box {
+        Box(modifier = Modifier.fillMaxSize()) {
             CameraFeed(
                 context = context,
                 lifecycleOwner = lifecycleOwner,
