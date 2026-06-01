@@ -43,6 +43,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,7 +57,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
 import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.extension.yuvToRgba
+import com.sil.morphlect.logic.CenterWise
+import com.sil.morphlect.logic.ClusteringType
+import com.sil.morphlect.logic.dbscan
 import com.sil.morphlect.logic.depthToMat
+import com.sil.morphlect.logic.imageSegmentKmeans
 import com.sil.morphlect.logic.objectDetector
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
 import com.sil.morphlect.ml.impl.Parameters
@@ -66,7 +71,33 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
+import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.seconds
+
+/**
+ * returns the bounding box given by the dominant cluster from clusters given bounding boxes `bbs` using the specified `clustering` algorithm.
+ */
+fun dominantClusterBoundingBox(
+    bbs: List<Rect>,
+    imageWidth: Int,
+    imageHeight: Int,
+    eps: Float,
+    minPoints: Int = 2,
+    clustering: ClusteringType = ClusteringType.DBSCAN,
+): Rect? {
+    val clusters = when (clustering) {
+        ClusteringType.DBSCAN -> dbscan(bbs, eps, minPoints) { CenterWise(it.centerX(), it.centerY(), it) }
+        ClusteringType.Kmeans -> imageSegmentKmeans(bbs, imageWidth, imageHeight) { Pair(it.centerX(), it.centerY()) }
+    }
+    val dominant = clusters.maxByOrNull { it.value.size }?.value ?: return null
+
+    return Rect(
+        dominant.minOf { it.left },
+        dominant.minOf { it.top },
+        dominant.maxOf { it.right },
+        dominant.maxOf { it.bottom }
+    )
+}
 
 // camera feed should only contain the camera feed, with the grid on top, the detected objects, and maybe the filtered feed
 // TODO the camera mode should also receive the state of filter values in order to apply them to the camera feed.
@@ -184,7 +215,7 @@ fun CameraFeed(
                         imageHeight = imageProxy.height
                         // take only the objects with high confidence
                         boundingBoxes = detectedObjects
-                            .filter { it.labels.any { label -> label.confidence >= 0.5f } }
+//                            .filter { it.labels.any { label -> label.confidence >= 0.5f } }
                             .map { it.boundingBox }
                     }
                     .addOnFailureListener { error ->
@@ -360,6 +391,15 @@ fun CameraFeedPreview() {
     )
 }
 
+fun DrawScope.drawBoundingBox(box: Rect, scaleX: Float, scaleY: Float, color: Color = Color.White.copy(alpha = .5f)) {
+    drawRect(
+        color = color,
+        topLeft = Offset(box.left * scaleX, box.top * scaleY),
+        size = Size(box.width() * scaleX, box.height() * scaleY),
+        style = Stroke(width = .5.dp.toPx())
+    )
+}
+
 @Composable
 private fun BoundingBoxCanvas(
     boxes: List<Rect>,
@@ -370,13 +410,9 @@ private fun BoundingBoxCanvas(
         val scaleX = size.width / imageWidth
         val scaleY = size.height / imageHeight
 
-        boxes.forEach { box ->
-            drawRect(
-                color = Color.White.copy(alpha = .5f),
-                topLeft = Offset(box.left * scaleX, box.top * scaleY),
-                size = Size(box.width() * scaleX, box.height() * scaleY),
-                style = Stroke(width = .5.dp.toPx())
-            )
-        }
+        boxes.forEach { drawBoundingBox(it, scaleX, scaleY) }
+
+        dominantClusterBoundingBox(boxes, imageWidth, imageHeight, eps = 400f)
+            ?.let { drawBoundingBox(it, scaleX, scaleY, color = Color.Red) }
     }
 }
