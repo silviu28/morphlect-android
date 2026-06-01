@@ -86,7 +86,7 @@ fun MorphlectNavHost() {
             ImageEvaluation(studioViewModel, navController)
         }
         composable("style-transfer") {
-            StyleTransfer()
+            StyleTransfer(studioViewModel.previewBitmap)
         }
         composable("save") {
             SaveImage(studioViewModel, navController)

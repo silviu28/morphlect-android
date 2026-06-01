@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -23,19 +26,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.sil.morphlect.data.EvaluationResult
+import com.sil.morphlect.enums.Output
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.logic.WebHelper
+import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
 import com.sil.morphlect.view.WebOverlay
 import kotlinx.coroutines.launch
 
+fun AlteredMobileNetLoader.computeCompositionDiff(initialImage: Bitmap, selectedImage: Bitmap): EvaluationResult {
+    val initialParams = infer(initialImage)
+    val selectedParams = infer(selectedImage)
+
+    val delta = initialParams.entries.associate { (output, initialFactor) ->
+        val selectedFactor = selectedParams[output] ?: 0f
+        output to (selectedFactor - initialFactor).toDouble()
+    }
+
+    return EvaluationResult(delta)
+}
+
 @Composable
-fun StyleTransfer() {
+fun StyleTransfer(initialImage: Bitmap?) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val model = remember { AlteredMobileNetLoader().apply { initialize(context) } }
     var referenceImage by remember { mutableStateOf<Bitmap?>(null) }
     var webOverlayActive by remember { mutableStateOf(false) }
     val imagePickLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
-        uri?.let{referenceImage = FormatConverters.uriToBitmap(context, uri)}
+        uri?.let{ referenceImage = FormatConverters.uriToBitmap(context, it) }
+    }
+    var diff by remember { mutableStateOf<Map<Output, Double>>(emptyMap()) }
+
+    if (initialImage == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("no initial image")
+        }
+        return
     }
 
     if (webOverlayActive) {
@@ -51,29 +78,41 @@ fun StyleTransfer() {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            referenceImage?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "reference image",
-                    modifier = Modifier.size(300.dp)
-                )
+        referenceImage?.let {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = "reference image",
+                modifier = Modifier
+                    .size(300.dp)
+                    .weight(1f)
+            )
+        } ?: Spacer(Modifier.weight(1f))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { imagePickLauncher.launch("image/*") }) {
+                Text("search gallery")
             }
-            Row {
-                TextButton(onClick = { imagePickLauncher.launch("image/*") }) {
-                    Text("search gallery")
-                }
-                TextButton(onClick = { webOverlayActive = true }) {
-                    Text("search unsplash")
-                }
+            TextButton(onClick = { webOverlayActive = true }) {
+                Text("search unsplash")
             }
+        }
+
+        referenceImage?.let {
+            Button(onClick = {
+                diff = model.computeCompositionDiff(initialImage, it).outputs
+            }) { Text("run") }
+        }
+
+        if (diff.isNotEmpty()) {
+            Text(
+                diff.entries.joinToString("\n") { (filter, value) -> "${filter.name}: ${"%.2f".format(value)}" },
+            )
         }
     }
 }
