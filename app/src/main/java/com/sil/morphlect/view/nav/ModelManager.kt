@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,44 +47,58 @@ import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import com.sil.morphlect.view.dialog.DialogScaffold
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.seconds
+
+@Stable
+internal class ModelManagerUiState() {
+    var onDownloads by mutableStateOf(false)
+    var providerUrl by mutableStateOf(WebHelper.providerUrl)
+    var showProviderSwitch by mutableStateOf(false)
+    var modelInfo by mutableStateOf<List<ModelInfoDTO>>(listOf())
+    var query by mutableStateOf("")
+    var installed by mutableStateOf<List<ModelInfoDTO>>(listOf())
+}
 
 @Composable
 fun ModelManager(navController: NavHostController) {
-    var onDownloads by remember { mutableStateOf(false) }
-    var providerUrl by remember { mutableStateOf(WebHelper.providerUrl) }
-    var showProviderSwitch by remember { mutableStateOf(false) }
-    var modelInfo by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
-    var query by remember { mutableStateOf("") }
-    var installed by remember { mutableStateOf<List<ModelInfoDTO>>(listOf()) }
-
+    val state = remember { ModelManagerUiState() }
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     val extensionsRepository = ExtensionsRepository(ctx)
 
     LaunchedEffect(Unit) {
-        modelInfo = WebHelper.fetchModelData()
-        installed = extensionsRepository.readExtensionNames().map {
+        state.modelInfo = WebHelper.fetchModelData()
+
+        if (state.modelInfo.isEmpty()) withContext(Dispatchers.Main) {
+            Toast.makeText(ctx, "unable to retrieve server data", Toast.LENGTH_LONG).show()
+        }
+
+        state.installed = extensionsRepository.readExtensionNames().map {
             ModelInfoDTO(0, it, "", 0)
         }
     }
 
-    if (showProviderSwitch) {
+    if (state.showProviderSwitch) {
         DialogScaffold(
             title = "switch extension provider",
             icon = Icons.Default.Settings,
             onDismissRequest = {
-                showProviderSwitch = false
-                providerUrl = WebHelper.providerUrl
+                state.showProviderSwitch = false
+                state.providerUrl = WebHelper.providerUrl
             }) {
                 OutlinedTextField(
-                    value = providerUrl,
-                    onValueChange = { providerUrl = it },
+                    value = state.providerUrl,
+                    onValueChange = { state.providerUrl = it },
                     label = { Text("provider url") },
                 )
                 IconButton(onClick = {
-                    showProviderSwitch = false
-                    WebHelper.providerUrl = providerUrl
+                    state.showProviderSwitch = false
+                    WebHelper.providerUrl = state.providerUrl
                 }) {
                     Icon(Icons.Default.Check, contentDescription = "apply provider")
                 }
@@ -112,24 +127,24 @@ fun ModelManager(navController: NavHostController) {
             ) {
                 Text("model manager")
 
-                if (onDownloads) {
+                if (state.onDownloads) {
                     // downloads section
                     OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
+                        value = state.query,
+                        onValueChange = { state.query = it },
                         label = { Text("search") },
                     )
                     Button(onClick = {
-                        scope.launch { modelInfo = WebHelper.fetchModelData(query) }
+                        scope.launch { state.modelInfo = WebHelper.fetchModelData(state.query) }
                     }) {
                         Icon(Icons.Default.Search, contentDescription = "search")
                     }
 
-                    if (modelInfo.isEmpty()) {
+                    if (state.modelInfo.isEmpty()) {
                         FlickeringLedDotProgressIndicator()
                         Text("fetching data...")
                     } else {
-                        modelInfo.map { dto ->
+                        state.modelInfo.map { dto ->
                             ModelInfoView(
                                 dto,
                                 onDownload = {
@@ -153,40 +168,36 @@ fun ModelManager(navController: NavHostController) {
                     }
                 } else {
                     // installed section
-                    if (installed.isEmpty()) {
+                    if (state.installed.isEmpty()) {
                         Text("no models yet. try installing some.")
                     } else {
-                        installed.forEach { dto ->
+                        state.installed.forEach { dto ->
                             ModelInfoView(
                                 dto,
                                 onRemove = {
                                     scope.launch {
                                         extensionsRepository.delete(dto.name)
                                             .also {
-                                                installed = extensionsRepository.readExtensionNames().map {
+                                                state.installed = extensionsRepository.readExtensionNames().map {
                                                     ModelInfoDTO(0, it, "", 0)
                                                 }
                                             }
                                     }
-                                    Toast.makeText(
-                                        ctx,
-                                        "${dto.name} has been removed.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    Toast.makeText(ctx,"${dto.name} has been removed.", Toast.LENGTH_SHORT).show()
                                 }
                             )
                         }
                     }
                 }
                 Row {
-                    TextButton(onClick = { onDownloads = true }) {
+                    TextButton(onClick = { state.onDownloads = true }) {
                         Text("download")
                     }
-                    TextButton(onClick = { onDownloads = false }) {
+                    TextButton(onClick = { state.onDownloads = false }) {
                         Text("view installed")
                     }
                 }
-                TextButton(onClick = { showProviderSwitch = true }) {
+                TextButton(onClick = { state.showProviderSwitch = true }) {
                     Text("switch provider...")
                 }
             }
@@ -218,14 +229,15 @@ fun ModelInfoView(
             )
 
             Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "${dto.description}\n(${"%.2f".format(dto.size.toMegabytes())} MB)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme
-                    .colorScheme
-                    .onSurfaceVariant
-                    .copy(alpha = 0.7f),
-            )
+            if (dto.description.isNotEmpty() && dto.size > 0)
+                Text(
+                    text = "${dto.description}\n(${"%.2f".format(dto.size.toMegabytes())} MB)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme
+                        .colorScheme
+                        .onSurfaceVariant
+                        .copy(alpha = 0.7f),
+                )
         }
 
         onDownload?.let {
