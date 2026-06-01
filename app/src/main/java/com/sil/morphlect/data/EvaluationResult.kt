@@ -1,5 +1,5 @@
 package com.sil.morphlect.data
 
-import com.sil.morphlect.enums.Filter
+import com.sil.morphlect.enums.Output
 
-data class EvaluationResult(val filters: Map<Filter, Double>)
+data class EvaluationResult(val outputs: Map<Output, Double>)

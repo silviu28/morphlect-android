@@ -134,26 +134,28 @@ fun Studio(
             vm.changeSection(Section.Filtering)
             delay(100L)
 
-            result.filters.entries.forEachIndexed { index, (key, targetValue) ->
+            result.outputs.entries.forEachIndexed { index, (key, targetValue) ->
                 delay(index * 400L)
-                vm.changeSelectedEffect(key)
-                delay(150L)
+                key.toFilter()?.run {
+                    vm.changeSelectedEffect(this)
+                    delay(150L)
 
-                val animatable = Animatable(vm.filterValues[key]!!.toFloat())
+                    val animatable = Animatable(vm.filterValues[this]!!.toFloat())
 
-                launch {
-                    animatable.animateTo(
-                        targetValue = targetValue.toFloat(),
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
+                    launch {
+                        animatable.animateTo(
+                            targetValue = targetValue.toFloat(),
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
                         )
-                    )
-                }
+                    }
 
-                launch {
-                    snapshotFlow { animatable.value }
-                        .collect { vm.adjustEffect(value = it.toDouble()) }
+                    launch {
+                        snapshotFlow { animatable.value }
+                            .collect { vm.adjustEffect(value = it.toDouble()) }
+                    }
                 }
             }
         }
