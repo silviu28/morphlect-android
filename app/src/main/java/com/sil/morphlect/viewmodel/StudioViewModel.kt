@@ -69,7 +69,6 @@ class StudioViewModel : ViewModel, StudioCommandManager {
     } }
     val previewLayers by derivedStateOf {
         layerManager.downscaledLayers.value.map { layer ->
-//            if (!layer.visible) return@map StudioLayer.empty()
             (undoStack +
                 StudioCommand.of(selectedFilter, filterValues[selectedFilter]!!)
             ).fold(layer) { layer, comm -> comm.execute(layer)

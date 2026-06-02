@@ -6,7 +6,7 @@ import com.sil.morphlect.imgproc.Filtering
 
 class SharpnessCommand(val factor: Double) : StudioCommand {
     override val actionName: String
-        get() = "Sharpness ${".2f".format(factor)}"
+        get() = "Sharpness ${"%.2f".format(factor)}"
 
     override fun execute(src: StudioLayer): StudioLayer {
         return StudioLayer(Filtering.sharpen(src.mat, factor))

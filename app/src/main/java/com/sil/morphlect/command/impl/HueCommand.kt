@@ -6,7 +6,7 @@ import com.sil.morphlect.imgproc.Filtering
 
 class HueCommand(val factor: Double) : StudioCommand {
     override val actionName: String
-        get() = "Hue ${".2f".format(factor)}"
+        get() = "Hue ${"%.2f".format(factor)}"
 
     override fun execute(src: StudioLayer): StudioLayer {
         return StudioLayer(Filtering.hueShift(src.mat, factor))

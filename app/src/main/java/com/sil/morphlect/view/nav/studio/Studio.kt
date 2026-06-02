@@ -64,6 +64,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
+import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
@@ -76,8 +77,10 @@ import com.sil.morphlect.view.analysis.InteractiveThumbnail
 import com.sil.morphlect.view.OptionsBottomSheet
 import com.sil.morphlect.view.animated.AnimatedSectionButton
 import com.sil.morphlect.view.dialog.impl.LayeringDialog
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Stable
 class StudioUiState() {
@@ -127,37 +130,47 @@ fun Studio(
     // listen for back gesture - in case if it's accidental
     BackHandler { state.showExitDialog = true }
 
-    // listen to emissions of evaluation results.
-    // apply filtering with keyframing
-    LaunchedEffect(Unit) {
-        vm.evaluationResult.collect { result ->
-            vm.changeSection(Section.Filtering)
-            delay(100L)
+    suspend fun applyEvaluationResultWithKeyframes(result: EvaluationResult)
+        = withContext(Dispatchers.IO) {
+        vm.changeSection(Section.Filtering)
+        delay(100L)
 
-            result.outputs.entries.forEachIndexed { index, (key, targetValue) ->
-                delay(index * 400L)
-                key.toFilter()?.run {
-                    vm.changeSelectedEffect(this)
-                    delay(150L)
+        result.outputs.entries.forEachIndexed { index, (key, value) ->
+            val targetValue = value * 10
+            delay(index * 400L)
+            key.toFilter()?.run {
+                vm.changeSelectedEffect(this)
+                delay(150L)
 
-                    val animatable = Animatable(vm.filterValues[this]!!.toFloat())
+                val animatable = Animatable(vm.filterValues[this]!!.toFloat())
 
-                    launch {
-                        animatable.animateTo(
-                            targetValue = targetValue.toFloat(),
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            )
+                launch {
+                    animatable.animateTo(
+                        targetValue = targetValue.toFloat(),
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
                         )
-                    }
+                    )
+                }
 
-                    launch {
-                        snapshotFlow { animatable.value }
-                            .collect { vm.adjustEffect(value = it.toDouble()) }
-                    }
+                launch {
+                    snapshotFlow { animatable.value }
+                        .collect { vm.adjustEffect(value = it.toDouble()) }
                 }
             }
+        }
+    }
+
+    // consume pending results emitted while Studio was not collecting,
+    // then keep collecting live results while Studio is visible.
+    LaunchedEffect(Unit) {
+        vm.consumePendingEvaluation()?.let { pending ->
+            applyEvaluationResultWithKeyframes(pending)
+        }
+
+        vm.evaluationResult.collect { result ->
+            applyEvaluationResultWithKeyframes(result)
         }
     }
 
