@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,42 +33,71 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Filter
+import com.sil.morphlect.enums.Output
 import com.sil.morphlect.imgproc.Filtering
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.ml.impl.MiniLMEmbeddingLoader
 import com.sil.morphlect.view.custom.LedDotSlider
 import com.sil.morphlect.view.dialog.DialogScaffold
-import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlinx.coroutines.launch
 import org.opencv.core.Mat
 
 fun applyPresetsWithIntensity(mat: Mat, presets: List<Preset>, intensities: Map<String, Float>): Mat {
     var newMat = mat.clone()
     presets.forEachIndexed { idx, preset ->
+        val intensity = intensities[idx.toString()]?.toDouble() ?: 1.0
         preset.params.entries.forEach { (k, v) ->
             newMat = when (k) {
-                Filter.Contrast -> Filtering.contrast(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
-                Filter.Brightness -> Filtering.brightness(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
-                Filter.Blur -> Filtering.blur(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0), v * (intensities[preset.name]?.toDouble() ?: 1.0))
-                Filter.LightBalance -> Filtering.lightBalance(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
-                Filter.Hue -> Filtering.hueShift(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
-                Filter.Sharpness -> Filtering.sharpen(mat, v * (intensities[preset.name]?.toDouble() ?: 1.0))
+                Filter.Contrast -> Filtering.contrast(newMat, v * intensity)
+                Filter.Brightness -> Filtering.brightness(newMat, v * intensity)
+                Filter.Blur -> Filtering.blur(newMat, v * intensity, v * intensity)
+                Filter.LightBalance -> Filtering.lightBalance(newMat, v * intensity)
+                Filter.Hue -> Filtering.hueShift(newMat, v * intensity)
+                Filter.Sharpness -> Filtering.sharpen(newMat, v * intensity)
             }
         }
     }
     return newMat
 }
 
+private fun Filter.toOutput(): Output? = when (this) {
+    Filter.Sharpness -> Output.Sharpness
+    Filter.Brightness -> Output.Brightness
+    Filter.Contrast -> Output.Contrast
+    Filter.Hue -> Output.Hue
+    Filter.Blur -> Output.Bitrate
+    Filter.LightBalance -> null
+}
+
+private fun mergedEvaluationResult(
+    presets: List<Preset>,
+    intensities: Map<String, Float>,
+): EvaluationResult {
+    val merged = mutableMapOf<Output, Double>()
+    presets.forEachIndexed { index, preset ->
+        val intensity = intensities[index.toString()]?.toDouble() ?: 1.0
+        preset.params.forEach { (filter, value) ->
+            val outputKey = filter.toOutput() ?: return@forEach
+            merged[outputKey] = (merged[outputKey] ?: .0) + (value * intensity)
+        }
+    }
+    return EvaluationResult(merged)
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
+fun VibeMatcher(
+    originalMat: Mat?,
+    onFinished: (EvaluationResult) -> Unit,
+    onReturn: () -> Unit,
+) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var tokens by remember { mutableStateOf(emptySet<String>()) }
+    var tokens by remember { mutableStateOf<List<String>>(emptyList()) }
     var currentToken by remember { mutableStateOf("") }
     val miniLMEmbeddingLoader = remember {
         MiniLMEmbeddingLoader().apply { initialize(context) }
@@ -78,14 +107,10 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
     var similarities by remember { mutableStateOf<List<List<Pair<String, Float>>>>(listOf()) }
     var cherryPicking by remember { mutableStateOf(false) }
     var selectedVibeIdx by remember { mutableIntStateOf(0) }
-    var appliedIntensities by remember {
-        mutableStateOf(
-            tokens.associate { it to .5f }
-        )
-    }
-    val tokensList by remember { derivedStateOf { tokens.toList() } }
+    var appliedIntensities by remember { mutableStateOf<Map<String, Float>>(emptyMap()) }
+    val tokensList by remember { derivedStateOf { tokens } }
     var separatePresets by remember { mutableStateOf<List<Preset>>(emptyList()) }
-    var initialMat by remember { mutableStateOf(vm.originalMat) }
+    var initialMat by remember { mutableStateOf(originalMat) }
 
     when {
         isProcessing -> DialogScaffold(
@@ -96,8 +121,7 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
+            .fillMaxSize()
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -115,13 +139,13 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
             }
 
             if (cherryPicking) {
-                tokensList[selectedVibeIdx].let { selected ->
+                tokensList.getOrNull(selectedVibeIdx)?.let { selected ->
                     Text("select the intensity of each vibe")
                     Text(selected)
                     LedDotSlider(
-                        value = appliedIntensities[selected] ?: 0f,
+                        value = appliedIntensities[selectedVibeIdx.toString()] ?: 0.5f,
                         onValueChange = { newValue ->
-                            appliedIntensities = appliedIntensities + (selected to newValue)
+                            appliedIntensities = appliedIntensities + (selectedVibeIdx.toString() to newValue)
                         },
                         modifier = Modifier,
                     )
@@ -143,7 +167,16 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
                     }
                 }
                 Row {
-                    TextButton(onClick = { cherryPicking = false }) {
+                    TextButton(onClick = {
+                        cherryPicking = false
+                        onFinished(
+                            mergedEvaluationResult(
+                                presets = separatePresets,
+                                intensities = appliedIntensities,
+                            )
+                        )
+                        onReturn()
+                    }) {
                         Text("continue")
                     }
                     TextButton(onClick = { }) {
@@ -157,7 +190,10 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
                     value = currentToken,
                     onValueChange = {
                         if (it.contains(" ")) {
-                            tokens += currentToken.trim()
+                            val token = it.trim()
+                            if (token.isNotBlank() && token !in tokens) {
+                                tokens = tokens + token
+                            }
                             currentToken = ""
                         } else currentToken = it
                     },
@@ -168,7 +204,10 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
                 )
                 Button(onClick = {
                     if (currentToken.isNotBlank()) {
-                        tokens += currentToken.trim()
+                        val token = currentToken.trim()
+                        if (token !in tokens) {
+                            tokens = tokens + token
+                        }
                         currentToken = ""
                     }
                 }) {
@@ -177,7 +216,16 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
 
                 FlowRow {
                     tokens.forEach { token ->
-                        Button(onClick = { tokens -= token }) {
+                        Button(onClick = {
+                            val index = tokens.indexOf(token)
+                            tokens = tokens.filterNot { it == token }
+                            appliedIntensities = appliedIntensities.toMutableMap().apply {
+                                remove(index.toString())
+                            }
+                            if (selectedVibeIdx >= tokens.size) {
+                                selectedVibeIdx = (tokens.size - 1).coerceAtLeast(0)
+                            }
+                        }) {
                             Text(token)
                         }
                     }
@@ -188,10 +236,14 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
                         coroutineScope.launch {
                             isProcessing = true
                             similarities =
-                                miniLMEmbeddingLoader.batchComputeSimilarAnchors(words = tokens.toList())
+                                miniLMEmbeddingLoader.batchComputeSimilarAnchors(words = tokensList)
                             separatePresets = similarities.mapIndexed { idx, it ->
                                 miniLMEmbeddingLoader.computeNewPreset(tokensList[idx], it)
                             }
+                            appliedIntensities = tokensList
+                                .indices
+                                .associate { index -> index.toString() to 0.5f }
+                            selectedVibeIdx = 0
                             isProcessing = false; cherryPicking = true
                         }
                     }) {
@@ -201,7 +253,7 @@ fun VibeMatcher(vm: StudioViewModel, navController: NavController) {
 
                 similarities.forEach { l -> Text(l.joinToString { it.first + ":" + it.second.toString() }) }
 
-                TextButton(onClick = { navController.navigate("studio") }) {
+                TextButton(onClick = { onReturn() }) {
                     Text("back to studio")
                 }
             }

@@ -80,7 +80,11 @@ fun MorphlectNavHost() {
             )
         }
         composable("vibe-match") {
-            VibeMatcher(studioViewModel, navController)
+            VibeMatcher(
+                originalMat = studioViewModel.originalMat,
+                onFinished = { evalResult -> studioViewModel.emitEvaluationResult(evalResult) },
+                onReturn = { navController.popBackStack() }
+            )
         }
         composable("image-eval") {
             ImageEvaluation(
