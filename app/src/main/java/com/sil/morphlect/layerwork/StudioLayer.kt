@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.datastore.core.Closeable
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.extension.extend
 import com.sil.morphlect.extension.toCvScalar
 import com.sil.morphlect.imgproc.Filtering
@@ -38,9 +39,9 @@ class StudioLayer(val mat: Mat) : Closeable {
         fun withText(
             text: String,
             size: TextUnit = .5.sp,
-            color: Color = Color.Companion.White,
+            color: Color = Color.White,
             thickness: Int = 2,
-            position: IntOffset = IntOffset.Companion.Zero,
+            position: IntOffset = IntOffset.Zero,
             antialiased: Boolean = true,
         ): StudioLayer {
             // TODO this is okay, but can't use custom fonts, and Bitmap is just simple raster..
@@ -136,4 +137,19 @@ class StudioLayer(val mat: Mat) : Closeable {
     }
 
     fun toCvMat(): Mat = mat
+
+    fun applyFilterMap(filters: Map<Filter, Double>): StudioLayer {
+        var newMat = mat.clone()
+        filters.forEach { (filter, factor) ->
+            newMat = when (filter) {
+                Filter.Contrast -> Filtering.contrast(newMat, factor * 10)
+                Filter.Brightness -> Filtering.brightness(newMat, factor * 10)
+                Filter.Blur -> Filtering.blur(newMat, factor * 10, factor * 10)
+                Filter.LightBalance -> Filtering.lightBalance(newMat, factor * 10)
+                Filter.Hue -> Filtering.hueShift(newMat, factor * 10)
+                Filter.Sharpness -> Filtering.sharpen(newMat, factor * 10)
+            }
+        }
+        return StudioLayer(newMat)
+    }
 }

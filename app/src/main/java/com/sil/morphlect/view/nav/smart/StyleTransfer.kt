@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.imgproc.FormatConverters
+import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.logic.WebHelper
 import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
 import com.sil.morphlect.view.WebOverlay
@@ -47,7 +48,11 @@ fun AlteredMobileNetLoader.computeCompositionDiff(initialImage: Bitmap, selected
 }
 
 @Composable
-fun StyleTransfer(initialImage: Bitmap?) {
+fun StyleTransfer(
+    initialImage: Bitmap?,
+    onFinished: (EvaluationResult) -> Unit,
+    onReturn: () -> Unit,
+) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val model = remember { AlteredMobileNetLoader().apply { initialize(context) } }
@@ -81,7 +86,7 @@ fun StyleTransfer(initialImage: Bitmap?) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         referenceImage?.let {
@@ -92,7 +97,7 @@ fun StyleTransfer(initialImage: Bitmap?) {
                     .size(300.dp)
                     .weight(1f)
             )
-        } ?: Spacer(Modifier.weight(1f))
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { imagePickLauncher.launch("image/*") }) {
@@ -103,16 +108,32 @@ fun StyleTransfer(initialImage: Bitmap?) {
             }
         }
 
-        referenceImage?.let {
+        referenceImage?.let { ref ->
             Button(onClick = {
-                diff = model.computeCompositionDiff(initialImage, it).outputs
+                diff = model.computeCompositionDiff(initialImage, ref).outputs
             }) { Text("run") }
-        }
 
-        if (diff.isNotEmpty()) {
-            Text(
-                diff.entries.joinToString("\n") { (filter, value) -> "${filter.name}: ${"%.2f".format(value)}" },
-            )
+            if (diff.isNotEmpty()) {
+                Image(
+                    bitmap =
+                        StudioLayer(FormatConverters.bitmapToMat(initialImage))
+                            .applyFilterMap(
+                                diff.entries
+                                    .mapNotNull { (k, v) -> k.toFilter()?.let { it to v } }.toMap())
+                            .mat.let { FormatConverters.matToBitmap(it) }
+                            .asImageBitmap(),
+                contentDescription = "reference image",
+                modifier = Modifier
+                    .size(300.dp)
+                    .weight(1f)
+                )
+                Button(onClick = {
+                    onFinished(EvaluationResult(diff))
+                    onReturn()
+                }) {
+                    Text("apply")
+                }
+            }
         }
     }
 }

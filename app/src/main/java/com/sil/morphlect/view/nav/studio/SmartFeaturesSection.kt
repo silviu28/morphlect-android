@@ -32,7 +32,6 @@ import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlin.collections.listOf
 import kotlin.random.Random
 
-
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SmartFeaturesSection(
@@ -157,5 +156,5 @@ fun SmartFeaturesSection(
 }
 
 fun generateRandomResult(): EvaluationResult = EvaluationResult(
-    Output.entries.associate { filter -> filter to Random.nextDouble() }
+    Output.entries.associate { out -> out to Random.nextDouble() }
 )

@@ -83,10 +83,17 @@ fun MorphlectNavHost() {
             VibeMatcher(studioViewModel, navController)
         }
         composable("image-eval") {
-            ImageEvaluation(studioViewModel, navController)
+            ImageEvaluation(
+                studioViewModel,
+                navController
+            )
         }
         composable("style-transfer") {
-            StyleTransfer(studioViewModel.previewBitmap)
+            StyleTransfer(
+                studioViewModel.previewBitmap,
+                onFinished = { evalResult -> studioViewModel.emitEvaluationResult(evalResult) },
+                onReturn = { navController.popBackStack() }
+            )
         }
         composable("save") {
             SaveImage(studioViewModel, navController)
