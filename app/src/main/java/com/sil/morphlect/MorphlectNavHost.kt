@@ -84,8 +84,9 @@ fun MorphlectNavHost() {
         }
         composable("image-eval") {
             ImageEvaluation(
-                studioViewModel,
-                navController
+                studioViewModel.previewBitmap,
+                onFinished = { evalResult -> studioViewModel.emitEvaluationResult(evalResult) },
+                onReturn = { navController.popBackStack() },
             )
         }
         composable("style-transfer") {

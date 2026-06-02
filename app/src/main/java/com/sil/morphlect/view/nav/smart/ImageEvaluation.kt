@@ -1,5 +1,6 @@
 package com.sil.morphlect.view.nav.smart
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,19 +22,22 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.logic.optimizeComposition
 import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
 import com.sil.morphlect.ml.impl.RatingMaximizerLoader
 import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.view.dialog.impl.KeepParamsDialog
-import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ImageEvaluation(vm: StudioViewModel, navController: NavController) {
+fun ImageEvaluation(
+    previewBitmap: Bitmap?,
+    onFinished: (EvaluationResult) -> Unit,
+    onReturn: () -> Unit,
+) {
     val ctx = LocalContext.current.applicationContext
     val loader = remember { AlteredMobileNetLoader().apply { initialize(ctx) } }
     val optimizer = remember { RatingMaximizerLoader().apply { initialize(ctx) } }
@@ -50,22 +54,19 @@ fun ImageEvaluation(vm: StudioViewModel, navController: NavController) {
             optimizedParams = optimizer.optimizeComposition(values, 10000)
             optimizingTrustMeBro = !optimizingTrustMeBro
             keepParamsDialogActive = !keepParamsDialogActive
-//            vm.emitEvaluationResult(
-//                EvaluationResult(
-//                    mapOf(
-//                        Filter.Sharpness to 1.0
-//                    )
-//                )
-//            )
             values = optimizedParams!!
-//            navController.navigate("editor")
-//            delay(300.milliseconds)
+            optimizedParams?.let {
+                onFinished(
+                    EvaluationResult(it.entries.associate { a -> a.key to a.value.toDouble() })
+                )
+            }
+            onReturn()
         }
     }
 
-    LaunchedEffect(vm.previewBitmap) {
+    LaunchedEffect(previewBitmap) {
         values = withContext(Dispatchers.Default) {
-            loader.infer(vm.previewBitmap!!)
+            loader.infer(previewBitmap!!)
         }
         infoText = "done!"
     }
@@ -89,7 +90,7 @@ fun ImageEvaluation(vm: StudioViewModel, navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        vm.previewBitmap?.asImageBitmap()?.let {
+        previewBitmap?.asImageBitmap()?.let {
             Image(
                 bitmap = it,
                 contentDescription = "preview",
@@ -101,7 +102,7 @@ fun ImageEvaluation(vm: StudioViewModel, navController: NavController) {
             Text("${effect.name}: ${"%.2f".format(value)}")
         }
         Row {
-            Button(onClick = { navController.navigate("studio") }) {
+            Button(onClick = { onReturn() }) {
                 Text("back to studio")
             }
             Button(onClick = { keepParamsDialogActive = true }) {

@@ -26,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHost
+import androidx.navigation.NavHostController
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.imgproc.FormatConverters
