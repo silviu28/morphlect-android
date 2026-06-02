@@ -88,8 +88,8 @@ private val formats = arrayOf("JPG", "PNG", "WEBP0")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaveImage(
-    vm: StudioViewModel,
-    navController: NavHostController,
+    imageLayers: List<StudioLayer>,
+    onReturn: () -> Unit,
 ) {
     val ctx = LocalContext.current
 
@@ -97,17 +97,19 @@ fun SaveImage(
     var format by remember { mutableStateOf("JPG") }
     var dropdownExpanded by remember { mutableStateOf(false) }
 
-    val image = vm.layers
-        .filter { it.visible }
-        .fold(StudioLayer.empty()) { allMerge, layer -> allMerge.mergeWith(layer) }
-        .visual
-        .asAndroidBitmap()
+    val image = remember {
+        imageLayers
+            .filter { it.visible }
+            .fold(StudioLayer.empty()) { allMerge, layer -> allMerge.mergeWith(layer) }
+            .visual
+            .asAndroidBitmap()
+    }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
-                onClick = { navController.popBackStack() },
+                onClick = { onReturn() },
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
             }
@@ -124,7 +126,7 @@ fun SaveImage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text("save image")
-                if (vm.previewBitmap == null) {
+                if (imageLayers.isEmpty()) {
                     CircularProgressIndicator()
                 } else {
                     Image(

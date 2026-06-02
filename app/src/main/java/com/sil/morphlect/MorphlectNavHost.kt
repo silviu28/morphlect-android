@@ -48,15 +48,19 @@ fun MorphlectNavHost() {
         composable("*") {
             Frontpage(navController)
         }
+
         composable("frontpage") {
             Frontpage(navController)
         }
+
         composable("onboarding") {
             OnboardingCarousel(navController)
         }
+
         composable("pick") {
             PickImage(navController, studioViewModel)
         }
+
         composable("camera") {
             CameraMode(
                 navController,
@@ -70,6 +74,7 @@ fun MorphlectNavHost() {
                 extensionsRepository
             )
         }
+
         composable("studio") {
             Studio(
                 navController,
@@ -79,6 +84,7 @@ fun MorphlectNavHost() {
                 extensionsRepository,
             )
         }
+
         composable("vibe-match") {
             VibeMatcher(
                 originalMat = studioViewModel.originalMat,
@@ -86,6 +92,7 @@ fun MorphlectNavHost() {
                 onReturn = { navController.popBackStack() }
             )
         }
+
         composable("image-eval") {
             ImageEvaluation(
                 studioViewModel.previewBitmap,
@@ -93,6 +100,7 @@ fun MorphlectNavHost() {
                 onReturn = { navController.popBackStack() },
             )
         }
+
         composable("style-transfer") {
             StyleTransfer(
                 studioViewModel.previewBitmap,
@@ -100,37 +108,50 @@ fun MorphlectNavHost() {
                 onReturn = { navController.popBackStack() }
             )
         }
+
         composable("save") {
-            SaveImage(studioViewModel, navController)
+            SaveImage(
+                imageLayers = studioViewModel.layers,
+                onReturn = { navController.popBackStack() }
+            )
         }
+
         composable("compare") {
             ImageComparison(
                 originalImageBitmap =
                     studioViewModel.originalMat?.let { FormatConverters.matToBitmap(it) },
                 layers = studioViewModel.layers,
-                navController = navController,
+                onReturn = { navController.popBackStack() }
             )
         }
+
         composable("settings") {
-            Settings(configRepository, navController)
+            Settings(configRepository, { route -> navController.navigate(route) })
         }
+
         composable("model-download") {
-            ModelManager(navController)
+            ModelManager({ navController.popBackStack() })
         }
+
         composable("fingerprint-manager") {
             FingerprintManager(fingerprintRepository)
         }
+
         composable(
             route = "extension-view/{extensionName}",
             arguments = listOf(navArgument("extensionName") {
                 type = NavType.StringType
             })
         ) { backStackEntry ->
-            val extensionName = backStackEntry.arguments?.getString("extensionName") ?: throw Exception()
+            val extensionName = backStackEntry.arguments
+                ?.getString("extensionName")
+                ?: throw IllegalAccessException("This extension does not exist.")
+
             MXTComposedView(
-                studioViewModel,
+                previewBitmap = studioViewModel.previewBitmap,
                 extensionName,
                 onRun = { },
+                onReturn = { navController.popBackStack() }
             )
         }
     }

@@ -37,7 +37,7 @@ import androidx.compose.material3.Scaffold
 @Composable
 fun Settings(
     configRepository: AppConfigRepository,
-    navController: NavController,
+    onNavigate: (route: String) -> Unit,
 ) {
     val advancedMode       by configRepository.advancedMode.collectAsState(initial = false)
     val hidePrimaryBar     by configRepository.hidePrimaryBar.collectAsState(initial = false)
@@ -49,7 +49,7 @@ fun Settings(
         floatingActionButton = {
             FloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
-                onClick = { navController.popBackStack() },
+                onClick = { onNavigate("studio") },
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
             }
@@ -88,13 +88,13 @@ fun Settings(
                 )
 
                 SettingsEntry(title = "manage fingerprint") {
-                    IconButton(onClick = { navController.navigate("fingerprint-manager") }) {
+                    IconButton(onClick = { onNavigate("fingerprint-manager") }) {
                         Icon(Icons.Default.Fingerprint, contentDescription = "manage fingerprint")
                     }
                 }
 
                 SettingsEntry(title = "manage models") {
-                    IconButton(onClick = { navController.navigate("model-download") }) {
+                    IconButton(onClick = { onNavigate("model-download") }) {
                         Icon(Icons.Default.Settings, contentDescription = "manage models")
                     }
                 }

@@ -65,7 +65,7 @@ internal class ModelManagerUiState() {
 }
 
 @Composable
-fun ModelManager(navController: NavHostController) {
+fun ModelManager(onReturn: () -> Unit) {
     val state = remember { ModelManagerUiState() }
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
@@ -110,7 +110,7 @@ fun ModelManager(navController: NavHostController) {
         floatingActionButton = {
             FloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
-                onClick = { navController.popBackStack() },
+                onClick = { onReturn() },
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
             }

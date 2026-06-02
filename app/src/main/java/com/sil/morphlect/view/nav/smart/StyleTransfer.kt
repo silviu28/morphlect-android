@@ -61,7 +61,7 @@ fun StyleTransfer(
     var referenceImage by remember { mutableStateOf<Bitmap?>(null) }
     var webOverlayActive by remember { mutableStateOf(false) }
     val imagePickLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
-        uri?.let{ referenceImage = FormatConverters.uriToBitmap(context, it) }
+        uri?.let { referenceImage = FormatConverters.uriToBitmap(context, it) }
     }
     var diff by remember { mutableStateOf<Map<Output, Double>>(emptyMap()) }
 

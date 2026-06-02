@@ -70,9 +70,10 @@ fun Uri.getAudio(context: Context, conversionShape: Shape? = null): ByteArray? {
 
 @Composable
 fun MXTComposedView(
-    studioViewModel: StudioViewModel,
+    previewBitmap: Bitmap?,
     extensionName: String,
-    onRun: () -> Unit
+    onRun: () -> Unit,
+    onReturn: () -> Unit,
 ) {
     val ctx = LocalContext.current
 
@@ -117,7 +118,7 @@ fun MXTComposedView(
               .forEach { bindings[it.parameterBindingRef!!] = null }
 
             // todo - this should be changed, if the editor image is taken as 'image' then no interaction should be defined in manifest as it is inferred
-            studioViewModel.previewBitmap?.let {
+            previewBitmap?.let {
                 bindings["image"] = it.scale(inputs[0].shape[0], inputs[0].shape[1], false)
             }
 
@@ -142,7 +143,7 @@ fun MXTComposedView(
             Text(mnfst.name)
             Text(mnfst.description)
 
-            studioViewModel.previewBitmap?.asImageBitmap()?.let {
+            previewBitmap?.asImageBitmap()?.let {
                 Image(
                     bitmap = it,
                     contentDescription = "preview",

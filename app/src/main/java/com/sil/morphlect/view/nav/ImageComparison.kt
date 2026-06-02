@@ -32,7 +32,7 @@ import com.sil.morphlect.imgproc.FormatConverters
 fun ImageComparison(
     originalImageBitmap: Bitmap?,
     layers: List<StudioLayer>,
-    navController: NavController
+    onReturn: () -> Unit,
 ) {
     var dividerRatio by remember { mutableDoubleStateOf(.5) }
     val editedImageBitmap = layers
@@ -90,7 +90,7 @@ fun ImageComparison(
                     )
                 }
 
-                TextButton(onClick = { navController.navigate("studio") }) {
+                TextButton(onClick = { onReturn() }) {
                     Text("back to studio")
                 }
             }
