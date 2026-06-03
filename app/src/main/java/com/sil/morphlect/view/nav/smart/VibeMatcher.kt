@@ -81,7 +81,7 @@ private fun mergedEvaluationResult(
         val intensity = intensities[index.toString()]?.toDouble() ?: 1.0
         preset.params.forEach { (filter, value) ->
             val outputKey = filter.toOutput() ?: return@forEach
-            merged[outputKey] = (merged[outputKey] ?: .0) + (value * intensity)
+            merged[outputKey] = (merged[outputKey] ?: .0) + (value * intensity/10)
         }
     }
     return EvaluationResult(merged)

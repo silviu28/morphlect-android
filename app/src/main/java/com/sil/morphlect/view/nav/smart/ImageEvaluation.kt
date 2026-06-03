@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,59 +33,68 @@ import com.sil.morphlect.view.dialog.impl.KeepParamsDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+@Stable
+class ImageEvaluationUiState() {
+    var values by mutableStateOf<Map<Output, Float>>(mapOf())
+    var keepParamsDialogActive by mutableStateOf(false)
+
+    var optimizing by mutableStateOf(false)
+    var optimizedParams by mutableStateOf<Map<Output, Float>?>(null)
+}
+
 @Composable
 fun ImageEvaluation(
     previewBitmap: Bitmap?,
     onFinished: (EvaluationResult) -> Unit,
     onReturn: () -> Unit,
 ) {
-    val ctx = LocalContext.current.applicationContext
+    val ctx = LocalContext.current
     val loader = remember { AlteredMobileNetLoader().apply { initialize(ctx) } }
     val optimizer = remember { RatingMaximizerLoader().apply { initialize(ctx) } }
-    var values by remember { mutableStateOf<Map<Output, Float>>(mapOf()) }
-    var infoText by remember { mutableStateOf("processing...") }
-    var keepParamsDialogActive by remember { mutableStateOf(false) }
+    val state = remember { ImageEvaluationUiState() }
 
-    var stepsParamVeryInteresting by remember { mutableStateOf(0) }
-    var optimizingTrustMeBro by remember { mutableStateOf(false) }
-    var optimizedParams by remember { mutableStateOf<Map<Output, Float>?>(null) }
-
-    LaunchedEffect(optimizingTrustMeBro) {
-        if (optimizingTrustMeBro) {
-            optimizedParams = optimizer.optimizeComposition(values, 10000)
-            optimizingTrustMeBro = !optimizingTrustMeBro
-            keepParamsDialogActive = !keepParamsDialogActive
-            values = optimizedParams!!
-            optimizedParams?.let {
-                onFinished(
-                    EvaluationResult(it.entries.associate { a -> a.key to a.value.toDouble() })
-                )
+    LaunchedEffect(state.optimizing) {
+        if (state.optimizing) {
+            state.optimizedParams = optimizer.optimizeComposition(state.values, 10000)
+            state.optimizing = !state.optimizing
+            state.keepParamsDialogActive = !state.keepParamsDialogActive
+//            state.values = state.optimizedParams!!
+            state.optimizedParams?.let {
+                // oh my god bruh...
+                val asEvalRes = EvaluationResult(it.valuesToDouble())
+                val ogAsEvalRes = EvaluationResult(state.values.entries.associate { a -> a.key to a.value.toDouble() })
+                onFinished(EvaluationResult(
+                    asEvalRes.delta(ogAsEvalRes)
+                    .outputs
+                    .entries
+                    .associate { a -> a.key to a.value / 10 }
+                ))
             }
             onReturn()
         }
     }
 
     LaunchedEffect(previewBitmap) {
-        values = withContext(Dispatchers.Default) {
+        state.values = withContext(Dispatchers.Default) {
             loader.infer(previewBitmap!!)
         }
-        infoText = "done!"
     }
 
-    if (optimizingTrustMeBro) {
-        DialogScaffold(
-            title = "",
-            onDismissRequest = {},
-        ) {
-            Text("applying optimizer step $stepsParamVeryInteresting out of 200...")
-        }
+    when {
+        state.optimizing ->
+            DialogScaffold(
+                title = "",
+                onDismissRequest = {},
+            ) {
+                Text("please wait...")
+            }
+
+        state.keepParamsDialogActive ->
+            KeepParamsDialog(
+                onDismissRequest = { state.keepParamsDialogActive = false },
+                onApply = { state.optimizing = true })
     }
 
-    if (keepParamsDialogActive) {
-        KeepParamsDialog(
-            onDismissRequest = { keepParamsDialogActive = false },
-            onApply = { optimizingTrustMeBro = true })
-    }
     Column(
         modifier = Modifier.fillMaxWidth().fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -98,14 +108,14 @@ fun ImageEvaluation(
                 contentScale = ContentScale.Crop
             )
         }
-        values.forEach { (effect, value) ->
+        state.values.forEach { (effect, value) ->
             Text("${effect.name}: ${"%.2f".format(value)}")
         }
         Row {
             Button(onClick = { onReturn() }) {
                 Text("back to studio")
             }
-            Button(onClick = { keepParamsDialogActive = true }) {
+            Button(onClick = { state.keepParamsDialogActive = true }) {
                 Text("improve")
             }
         }

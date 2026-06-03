@@ -37,16 +37,19 @@ import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
 import com.sil.morphlect.view.WebOverlay
 import kotlinx.coroutines.launch
 
+// all caused by the fact that sliders accept double instead of float... ugh
+fun Map<Output, Float>.valuesToDouble(): Map<Output, Double>
+    = entries.associate { (k, v) -> k to v.toDouble() }
+
 fun AlteredMobileNetLoader.computeCompositionDiff(initialImage: Bitmap, selectedImage: Bitmap): EvaluationResult {
-    val initialParams = infer(initialImage)
-    val selectedParams = infer(selectedImage)
+    val initial = infer(initialImage)
+        .valuesToDouble()
+        .let { EvaluationResult(it) }
+    val selected = infer(selectedImage)
+        .valuesToDouble()
+        .let { EvaluationResult(it) }
 
-    val delta = initialParams.entries.associate { (output, initialFactor) ->
-        val selectedFactor = selectedParams[output] ?: 0f
-        output to (selectedFactor - initialFactor).toDouble()
-    }
-
-    return EvaluationResult(delta)
+    return initial.delta(selected)
 }
 
 @Composable
