@@ -19,7 +19,6 @@ class AlteredMobileNetLoader : ModelLoader<Bitmap, Map<Output, Float>> {
         private const val IMAGE_SIZE = 224
         private const val CHANNELS = 3
         private const val OUTPUT_SIZE = 6
-        private const val MODEL_NAME = "altered_mobilenet.tflite"
     }
 
     override val name = "altered_mobilenet.tflite"

@@ -9,15 +9,7 @@ import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
 
 class RatingMaximizerLoader : ModelLoader<Map<Output, Float>, Float> {
-    companion object {
-        private const val IMAGE_SIZE = 224
-        private const val CHANNELS = 3
-        private const val OUTPUT_SIZE = 6
-        private const val MODEL_NAME = "ratingmaximizer.tflite"
-    }
-
     override val name = "ratingmaximizer.tflite"
-
     private var interpreter: Interpreter? = null
 
     override fun initialize(context: Context): Boolean {
