@@ -17,6 +17,7 @@ class LayerManager : Closeable {
     }
 
     fun removeLayer(index: Int = 0) {
+        if (layers.isEmpty()) return
         val layer = layers.removeAt(index)
         layer.close()
     }
