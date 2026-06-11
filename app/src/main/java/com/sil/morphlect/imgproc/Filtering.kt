@@ -10,7 +10,7 @@ import kotlin.math.pow
 
 object Filtering {
     fun contrast(src: Mat, gamma: Double): Mat {
-        val correctedGamma = 1.0 + gamma // so 0 = no change, positive = more contrast
+        val correctedGamma = 1.0 + gamma // so 0 -> no change, positive -> more contrast
 
         // build lookup table — faster than per-pixel math
         val lut = Mat(1, 256, CvType.CV_8U)
@@ -38,7 +38,7 @@ object Filtering {
     // TODO
     fun blur(src: Mat, xStrength: Double, yStrength: Double): Mat {
         // values in range (0, 1) must be converted to arbitrary odd kernel sizes
-        // can be multiplied by a larger number for higher blur but it will run very poorly
+        // can be multiplied by a larger number for higher blur, but it will run very poorly
         val hKernel = (xStrength * 100).toInt().let {
             if (it <= 1) return src.clone()
             if (it % 2 == 0) it + 1 else it
@@ -56,16 +56,16 @@ object Filtering {
 
     fun sharpen(src: Mat, sharpening: Double): Mat {
         if (sharpening == 0.0) return src
+
+        // blur the source
+        val blurred = Mat()
+        Imgproc.GaussianBlur(src, blurred, Size(0.0, 0.0), 5.0)
+
+        // unsharp mask: dst = src * (1 + amount) - blurred * amount
         val dst = Mat()
+        Core.addWeighted(src, 1.0 + sharpening, blurred, -sharpening, 0.0, dst)
 
-        val kernel = Mat(3, 3, CvType.CV_32F).apply {
-            put(0, 0,
-              .0,           -1.0,   .0,
-            -1.0, 5 + sharpening, -1.0,
-              .0,           -1.0,   .0)
-        }
-
-        Imgproc.filter2D(src, dst, -1, kernel)
+        blurred.release()
         return dst
     }
 
