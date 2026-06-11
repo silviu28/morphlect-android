@@ -202,12 +202,20 @@ fun Studio(
                 onDismissRequest = { state.showExitDialog = false },
                 title = { Text("quit app?") },
                 text = { Text("all unsaved changes will be lost.") },
-                confirmButton = {
+                confirmButton = {  },
+                dismissButton = { // you can stick everything in one 'button'
                     TextButton(onClick = {
                         (ctx as? ComponentActivity)?.finish()
                     }) { Text("quit") }
-                },
-                dismissButton = {
+
+                    TextButton(onClick = {
+                        state.showExitDialog = false
+                        navController.navigate("pick")
+                        vm.clearComposition()
+                    }) {
+                        Text("choose something else")
+                    }
+
                     TextButton(onClick = { state.showExitDialog = false }) {
                         Text("no")
                     }

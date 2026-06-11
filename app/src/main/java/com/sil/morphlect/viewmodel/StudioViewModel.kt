@@ -162,7 +162,9 @@ class StudioViewModel : ViewModel, StudioCommandManager {
             redoStack.clear()
 
             // reset effect values
-            filterValues.forEach { (effect, _) -> filterValues[effect] = .0 }
+            filterValues.forEach { (effect, _)  ->
+                filterValues[effect] = .0
+            }
 
             val bitmap = FormatConverters.uriToBitmap(context, uri)
             originalMat = FormatConverters.bitmapToMat(bitmap)
@@ -239,5 +241,9 @@ class StudioViewModel : ViewModel, StudioCommandManager {
             val comm = redoStack.removeAt(index)
             undoStack.add(comm)
         }
+    }
+
+    fun clearComposition() {
+        layerManager.layers.clear()
     }
 }
