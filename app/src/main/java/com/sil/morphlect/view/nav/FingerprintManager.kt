@@ -1,10 +1,12 @@
 package com.sil.morphlect.view.nav
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Save
@@ -13,15 +15,21 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.sil.morphlect.repository.FingerprintRepository
 import com.sil.morphlect.view.custom.DecoratedContainer
+import kotlinx.coroutines.launch
 
 @Composable
 fun FingerprintManager(
     fingerprintRepository: FingerprintRepository
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
     DecoratedContainer(Icons.Default.Fingerprint) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -52,6 +60,15 @@ fun FingerprintManager(
                     Icon(Icons.Default.FileUpload, contentDescription = null)
                     Text("load another fingerprint")
                 }
+            }
+            TextButton(onClick = {
+                coroutineScope.launch {
+                    fingerprintRepository.apply { save(generateNew()) }
+                }
+                Toast.makeText(context, "fingerprint data removed.", Toast.LENGTH_SHORT).show()
+            }) {
+                Icon(Icons.Default.Delete, contentDescription = "delete")
+                Text("remove fingerprint data")
             }
         }
     }

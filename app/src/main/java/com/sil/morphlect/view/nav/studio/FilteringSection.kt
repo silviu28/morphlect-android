@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Deblur
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.filled.LensBlur
@@ -51,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sil.morphlect.data.FingerprintData
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.viewmodel.StudioViewModel
@@ -109,7 +111,11 @@ suspend fun savePreset(context: Context, preset: Preset) {
 }
 
 @Composable
-fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) {
+fun FilteringSection(
+    vm: StudioViewModel,
+    presetsRepository: PresetsRepository,
+    fingerprint: FingerprintData?,
+) {
     var presets            by remember { mutableStateOf<List<Preset>>(listOf()) }
     var showAddDialog      by remember { mutableStateOf(false) }
     var showRemoveDialog   by remember { mutableStateOf(false) }
@@ -212,22 +218,42 @@ fun FilteringSection(vm: StudioViewModel, presetsRepository: PresetsRepository) 
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AnimatedContent(
-                targetState = vm.filterValues[vm.selectedFilter] != 0.0,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut() using SizeTransform(clip = false)
-                }
-            ) { filterUsed ->
-                if (filterUsed) {
-                    ElevatedButton(
-                        modifier = Modifier.height(30.dp),
-                        onClick = {
-                            vm.adjustEffect(value = 0.0)
-                        }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "undo effect"
-                        )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                val filterUsed = vm.filterValues[vm.selectedFilter] != 0.0
+
+                AnimatedContent(
+                    targetState = filterUsed,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut() using SizeTransform(clip = false)
+                    }
+                ) { used ->
+                    if (used) {
+                        ElevatedButton(
+                            modifier = Modifier.height(30.dp),
+                            onClick = { vm.adjustEffect(value = 0.0) }
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "undo effect"
+                            )
+                        }
+                    } else {
+                        fingerprint?.let {
+                            ElevatedButton(
+                                modifier = Modifier.height(30.dp),
+                                onClick = {
+                                    it.minorAdjustments.forEach { (filter, value) ->
+                                        vm.changeSelectedEffect(filter)
+                                        vm.adjustEffect(value = value)
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Fingerprint,
+                                    contentDescription = "apply fingerprint adjustment"
+                                )
+                            }
+                        }
                     }
                 }
             }

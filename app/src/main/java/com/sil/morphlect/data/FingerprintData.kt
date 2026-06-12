@@ -10,18 +10,23 @@ data class FingerprintData(
     val minorAdjustments: Map<Filter, Double>,
     val preferHigherRatings: Boolean,
     val meanPreferenceRating: Double,
+    val savedImageCount: UInt,
 ) {
     companion object {
         fun fromJSON(json: JSONObject): FingerprintData {
             val adjustments = with(json) {
                 val obj = getJSONObject("minorAdjustments")
-                Filter.values().associate { it to obj.getDouble(it.name) }
+                Filter.entries.associate {
+                    it to obj.optDouble(it.name).let { v -> if (!v.isNaN()) v else .0 } // why is it nan????
+                }
             }
+
             return FingerprintData(
                 json.getString("id"),
                 adjustments,
                 json.getBoolean("preferHigherRatings"),
-                json.getDouble("meanPreferenceRating")
+                json.getDouble("meanPreferenceRating"),
+                json.getLong("savedImageCount").toUInt()
             )
         }
     }
@@ -29,9 +34,14 @@ data class FingerprintData(
     fun toJSON(): JSONObject {
         return JSONObject().apply {
             put("id", id)
-            put("minorAdjustments", minorAdjustments)
+            put("minorAdjustments", JSONObject().apply {
+                minorAdjustments.forEach { (filter, value) ->
+                    put(filter.name, value)
+                }
+            })
             put("preferHigherRatings", preferHigherRatings)
             put("meanPreferenceRating", meanPreferenceRating)
+            put("savedImageCount", savedImageCount.toLong())
         }
     }
 }

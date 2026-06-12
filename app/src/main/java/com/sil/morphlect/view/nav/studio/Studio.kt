@@ -65,10 +65,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
 import com.sil.morphlect.data.EvaluationResult
+import com.sil.morphlect.data.FingerprintData
 import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
+import com.sil.morphlect.repository.FingerprintRepository
 import com.sil.morphlect.ui.theme.Typography
 import com.sil.morphlect.view.AddingTextOverlay
 import com.sil.morphlect.view.analysis.HistogramBottomSheet
@@ -95,6 +97,7 @@ class StudioUiState() {
     var cropDownCorner   by mutableStateOf<Offset?>(null)
     var addingImage      by mutableStateOf(false)
     var addingText       by mutableStateOf(false)
+    var fingerprint      by mutableStateOf<FingerprintData?>(null)
 }
 
 @Composable
@@ -104,6 +107,7 @@ fun Studio(
     presetsRepository: PresetsRepository,
     configRepository:  AppConfigRepository,
     extensionsRepository: ExtensionsRepository,
+    fingerprintRepository: FingerprintRepository,
 ) {
     val ctx     = LocalContext.current
     val density = LocalDensity.current
@@ -114,15 +118,8 @@ fun Studio(
 
     val state = remember { StudioUiState() }
 
-    val imagePickLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.run {
-            val bitmap = FormatConverters.uriToBitmap(ctx, this)
-            val mat = FormatConverters.bitmapToMat(bitmap)
-            vm.addLayer(StudioLayer(mat))
-            state.addingImage = false
-        }
+    LaunchedEffect(Unit) {
+        state.fingerprint = fingerprintRepository.load()
     }
 
     val advancedMode by configRepository.advancedMode.collectAsState(initial = false)
@@ -351,7 +348,7 @@ fun Studio(
                             .height(300.dp)
                     ) {
                         when (targetState) {
-                            Section.Filtering -> FilteringSection(vm, presetsRepository)
+                            Section.Filtering -> FilteringSection(vm, presetsRepository, state.fingerprint)
                             Section.SmartFeatures -> SmartFeaturesSection(
                                 navController,
                                 vm,

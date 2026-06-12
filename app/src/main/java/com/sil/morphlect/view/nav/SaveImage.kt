@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,11 +42,18 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.layerwork.StudioLayer
-import com.sil.morphlect.viewmodel.StudioViewModel
+import com.sil.morphlect.ml.impl.AlteredMobileNetLoader
+import com.sil.morphlect.repository.FingerprintRepository
+import kotlinx.coroutines.launch
 
-fun saveImage(ctx: Context, image: Bitmap, format: String, name: String) {
+fun saveImage(
+    ctx: Context,
+    image: Bitmap,
+    format: String,
+    name: String,
+) {
     try {
         val resolver = ctx.contentResolver
         val mimeType = when (format) {
@@ -90,12 +98,15 @@ private val formats = arrayOf("JPG", "PNG", "WEBP0")
 fun SaveImage(
     imageLayers: List<StudioLayer>,
     onReturn: () -> Unit,
+    fingerprintRepository: FingerprintRepository,
+    filters: Map<Filter, Double>,
 ) {
     val ctx = LocalContext.current
-
+    val coroutineScope = rememberCoroutineScope()
     var imageName by remember { mutableStateOf("image name") }
     var format by remember { mutableStateOf("JPG") }
     var dropdownExpanded by remember { mutableStateOf(false) }
+    val evaluator = remember { AlteredMobileNetLoader().apply { initialize(ctx) } }
 
     val image = remember {
         imageLayers
@@ -176,7 +187,16 @@ fun SaveImage(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                ElevatedButton(onClick = { saveImage(ctx, image, format, imageName) }) {
+                ElevatedButton(onClick = {
+                    coroutineScope.launch {
+                        saveImage(ctx, image, format, imageName)
+                        val params = evaluator.infer(image)
+                        fingerprintRepository.load().run {
+                            val adjusted = fingerprintRepository.computeNew(this, params)
+                            fingerprintRepository.save(adjusted)
+                        }
+                    }
+                }) {
                     Text("save")
                 }
             }

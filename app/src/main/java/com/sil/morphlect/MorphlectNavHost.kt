@@ -82,6 +82,7 @@ fun MorphlectNavHost() {
                 presetsRepository,
                 configRepository,
                 extensionsRepository,
+                fingerprintRepository = fingerprintRepository,
             )
         }
 
@@ -113,7 +114,9 @@ fun MorphlectNavHost() {
         composable("save") {
             SaveImage(
                 imageLayers = studioViewModel.layers,
-                onReturn = { navController.popBackStack() }
+                onReturn = { navController.popBackStack() },
+                fingerprintRepository = fingerprintRepository,
+                filters = studioViewModel.filterValues,
             )
         }
 
