@@ -28,6 +28,7 @@ import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.enums.Section
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.layerwork.LayerManager
+import com.sil.morphlect.layerwork.LayerPosition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -219,8 +220,14 @@ class StudioViewModel : ViewModel, StudioCommandManager {
             layerManager.mergeLayerWithAbove(index)
     }
 
-    fun addTextLayer(text: String, size: Int) {
-        val textLayer = StudioLayer.withText(text, textSizeSp = size.toFloat())
+    fun addTextLayer(text: String, size: Int, position: LayerPosition) {
+        val textLayer = StudioLayer.withText(
+            layers[0].width,
+            layers[0].height,
+            text = text,
+            textSizeSp = size.toFloat(),
+            position = position
+        )
         layerManager.addLayer(textLayer)
     }
 

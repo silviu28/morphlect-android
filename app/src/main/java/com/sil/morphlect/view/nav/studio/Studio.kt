@@ -230,7 +230,7 @@ fun Studio(
 
                 addingText -> AddingTextOverlay(
                     onDismissRequest = { addingText = false },
-                    onConfirm = { text, size -> vm.addTextLayer(text, size); addingText = false }
+                    onConfirm = { text, size, pos -> vm.addTextLayer(text, size, pos); addingText = false }
                 )
             }
         }

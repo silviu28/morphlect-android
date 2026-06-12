@@ -35,11 +35,13 @@ class StudioLayer(val mat: Mat) : Closeable {
          * creates a transparent StudioLayer containing given `text`.
          */
         fun withText(
+            canvasWidth: Int,
+            canvasHeight: Int,
             text: String,
             textSizeSp: Float = 24f,
             color: Color = Color.White,
             typeface: Typeface = Typeface.DEFAULT,
-            position: IntOffset = IntOffset.Zero,
+            position: LayerPosition = LayerPosition.CENTER,
             antialiased: Boolean = true,
         ): StudioLayer {
             val paint = android.graphics.Paint().apply {
@@ -69,9 +71,17 @@ class StudioLayer(val mat: Mat) : Closeable {
             val mat = FormatConverters.bitmapToMat(bitmap)
             bitmap.recycle()
 
-            return StudioLayer(mat).apply {
-//                offset = position // maybe
-            }
+            val offset = position.toOffset(canvasWidth, canvasHeight, width, height)
+
+            val canvasMat = Mat.zeros(canvasHeight, canvasWidth, CvType.CV_8UC4)
+
+            val roi = Rect(offset.x, offset.y, mat.cols(), mat.rows())
+            val targetRegion = canvasMat.submat(roi)
+
+            mat.copyTo(targetRegion)
+            mat.release()
+
+            return StudioLayer(canvasMat)
         }
     }
 
@@ -81,6 +91,9 @@ class StudioLayer(val mat: Mat) : Closeable {
     val visual by lazy { FormatConverters.matToBitmap(mat).asImageBitmap() }
 
     var visible by mutableStateOf(true)
+
+    val width = mat.width()
+    val height = mat.height()
 
     /**
      * returns the resulting layer created from the merging of another given layer.
