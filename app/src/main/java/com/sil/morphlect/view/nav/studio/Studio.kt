@@ -297,9 +297,8 @@ fun Studio(
                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
                     ElevatedButton(
                         enabled = vm.canUndo,
-                        onClick = {
-                        vm.undoLastCommand()
-                    }) {
+                        onClick = { vm.undoLastCommand() }
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "undo")
                     }
 

@@ -61,7 +61,7 @@ class StudioViewModel : ViewModel, StudioCommandManager {
 
     var originalMat by mutableStateOf<Mat?>(null)
 
-    private val layerManager = LayerManager(mutableStateListOf())
+    private val layerManager = LayerManager()
     val layers by derivedStateOf {
         layerManager.layers.map { layer ->
             (undoStack +

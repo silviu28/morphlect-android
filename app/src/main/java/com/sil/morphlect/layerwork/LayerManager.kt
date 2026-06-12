@@ -1,20 +1,23 @@
 package com.sil.morphlect.layerwork
 
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.geometry.Offset
+import org.opencv.core.Size as CVSize
 import androidx.compose.ui.geometry.Size
+import com.sil.morphlect.extension.extend
 import java.io.Closeable
 
 /**
  * safely manages layers and operations with layers.
  */
-class LayerManager : Closeable {
-    var layers: MutableList<StudioLayer>
-    var downscaledLayers = derivedStateOf { layers.map { it.downscaledUniformly() } }
+class LayerManager() : Closeable {
+    var maxWidth: Int = 1
+    var maxHeight: Int = 1
 
-    constructor(layers: MutableList<StudioLayer>) {
-        this.layers = layers
-    }
+    // find the biggest dimensions
+    var layers: MutableList<StudioLayer> = mutableStateListOf()
+    var downscaledLayers = derivedStateOf { layers.map { it.downscaledUniformly() } }
 
     fun removeLayer(index: Int = 0) {
         if (layers.isEmpty()) return
@@ -22,8 +25,36 @@ class LayerManager : Closeable {
         layer.close()
     }
 
+    private fun StudioLayer.extend(size: CVSize)
+        = StudioLayer(mat.extend(size))
+
     fun addLayer(layer: StudioLayer) {
-        layers.add(layer)
+        // determine target dimensions
+        val targetWidth = maxOf(maxWidth, layer.width)
+        val targetHeight = maxOf(maxHeight, layer.height)
+
+        val needsResize = targetWidth != maxWidth || targetHeight != maxHeight
+
+        if (needsResize) {
+            // resize all existing layers to new dimensions
+            val resizedLayers = layers.map { existingLayer ->
+                existingLayer.extend(CVSize(targetWidth.toDouble(), targetHeight.toDouble()))
+            }
+            layers.clear()
+            layers.addAll(resizedLayers)
+
+            // Update max dimensions
+            maxWidth = targetWidth
+            maxHeight = targetHeight
+        }
+
+        // add the new layer (resized if needed)
+        val finalLayer = if (layer.width != targetWidth || layer.height != targetHeight) {
+            layer.extend(CVSize(targetWidth.toDouble(), targetHeight.toDouble()))
+        } else {
+            layer
+        }
+        layers.add(finalLayer)
     }
 
     fun mergeLayerWithAbove(index: Int) {
