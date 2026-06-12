@@ -1,6 +1,6 @@
 package com.sil.morphlect.logic
 
-import com.sil.morphlect.ml.impl.Tensor4D
+import com.sil.morphlect.data.Tensor4D
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat

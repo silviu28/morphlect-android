@@ -5,6 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.util.Log
 import androidx.core.graphics.get
+import com.sil.morphlect.data.BindingMap
+import com.sil.morphlect.data.InferenceValue
+import com.sil.morphlect.data.Tensor4D
 import com.sil.morphlect.enums.Output
 import com.sil.morphlect.exception.ModelLoaderException
 import com.sil.morphlect.ml.ModelLoader
@@ -18,18 +21,12 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.to
 
-typealias BindingMap = Map<String, Any?>
-
-class Tensor4D(val data: Array<Array<Array<FloatArray>>>)
-class Tensor3D(val data: Array<Array<FloatArray>>)
-class Parameters(val data: Map<Output, Float>)
-
 class ExtensionModelLoader(
     override val name: String,
     val inputs: List<ModelInteractor>,
     val outputs: List<ModelInteractor>,
     val threadCount: Int = 4,
-) : ModelLoader<BindingMap, Any?> {
+) : ModelLoader<BindingMap, InferenceValue> {
     class Builder {
         private var name: String = "none"
         private var inputs: List<ModelInteractor> = listOf()
@@ -97,7 +94,7 @@ class ExtensionModelLoader(
     }
 
     @Throws(ModelLoaderException::class, Exception::class)
-    override fun infer(inputVals: BindingMap): Any? {
+    override fun infer(inputVals: BindingMap): InferenceValue {
         if (interpreter == null) {
             throw ModelLoaderException("Unable to load the model with given properties.")
         }
@@ -169,7 +166,9 @@ class ExtensionModelLoader(
         return when (outputs[0].type){
             InteractorType.FilterParams -> {
                 val resultBuffer = (fmtOutputs[0] as Array<FloatArray>)[0]
-                Parameters(Output.entries.associate { it to resultBuffer[it.ordinal] })
+                InferenceValue.MapValue(
+                    Output.entries.associate { it to resultBuffer[it.ordinal] }
+                )
             }
 
             InteractorType.Image -> TODO()
@@ -178,10 +177,13 @@ class ExtensionModelLoader(
             InteractorType.Float -> TODO()
             InteractorType.FloatArray -> {
                 when (outputs[0].shape.size) {
-                    4 -> Tensor4D(fmtOutputs[0] as Array<Array<Array<FloatArray>>>)
+                    4 -> InferenceValue.Tensor4DValue(
+                        Tensor4D(fmtOutputs[0] as Array<Array<Array<FloatArray>>>)
+                    )
                     else -> TODO()
                 }
             }
+            InteractorType.DepthMap -> TODO()
         }
     }
 

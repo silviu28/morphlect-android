@@ -41,12 +41,13 @@ import com.sil.mxtengine.data.MXTManifest
 import com.sil.mxtengine.data.Shape
 import kotlin.collections.forEach
 import androidx.core.graphics.scale
+import com.sil.morphlect.data.BindingMap
+import com.sil.morphlect.data.InferenceValue
+import com.sil.morphlect.data.Tensor4D
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
-import com.sil.morphlect.ml.impl.Tensor4D
 import com.sil.morphlect.logic.loadExtension
-import com.sil.morphlect.viewmodel.StudioViewModel
 import kotlin.collections.get
 
 fun Uri.getImage(context: Context, conversionShape: Shape? = null): Bitmap? {
@@ -81,7 +82,7 @@ fun MXTComposedView(
     var receivingBindingKey by remember { mutableStateOf<String?>(null) }
     var loader by remember { mutableStateOf<ExtensionModelLoader?>(null) }
     val bindings = remember { mutableStateMapOf<String, Any?>() }
-    var inferenceResult by remember { mutableStateOf<Any?>(null) }
+    var inferenceValue by remember { mutableStateOf<InferenceValue>(InferenceValue.Empty()) }
 
     val allFieldsCompleted = { !bindings.containsValue(null) }
 
@@ -157,7 +158,7 @@ fun MXTComposedView(
                     ComposerElementType.RunButton -> TextButton(onClick = {
                         loader?.run {
                             if (allFieldsCompleted())
-                                inferenceResult = infer(bindings)
+                                inferenceValue = infer(bindings.toMap() as BindingMap)
                             else
                                 Toast.makeText(ctx, "Complete all inputs!", Toast.LENGTH_SHORT).show()
                         }
@@ -206,7 +207,7 @@ fun MXTComposedView(
                 }
             }
 
-            inferenceResult?.let {
+            inferenceValue?.let {
                 when (it) {
                     is Map<*, *> -> Text(
                         (it as Map<*, *>).map { (k, v) -> "$k: $v" }
@@ -214,7 +215,7 @@ fun MXTComposedView(
                     )
                     is Tensor4D -> {
                         // currently this is tailored for MiDaS, as i can't think of any other model that would output a 4d tensor
-                        val result = depthToMat((inferenceResult as Tensor4D))
+                        val result = depthToMat((inferenceValue as Tensor4D))
 
                         Image(
                             bitmap = FormatConverters.matToBitmap(result).asImageBitmap(),

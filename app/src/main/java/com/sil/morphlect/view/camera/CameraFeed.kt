@@ -17,9 +17,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
@@ -54,6 +52,8 @@ import androidx.core.graphics.scale
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
+import com.sil.morphlect.data.Parameters
+import com.sil.morphlect.data.Tensor4D
 import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.extension.yuvToRgba
 import com.sil.morphlect.logic.CenterWise
@@ -63,8 +63,6 @@ import com.sil.morphlect.logic.depthToMat
 import com.sil.morphlect.logic.imageSegmentKmeans
 import com.sil.morphlect.logic.objectDetector
 import com.sil.morphlect.ml.impl.ExtensionModelLoader
-import com.sil.morphlect.ml.impl.Parameters
-import com.sil.morphlect.ml.impl.Tensor4D
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -73,6 +71,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
 import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.seconds
+import com.sil.morphlect.data.InferenceValue
 
 private fun getAnalysisDimensions(
     rotationDegrees: Int,
@@ -187,9 +186,9 @@ fun CameraFeed(
                         if (!enabled) Unit
                         else model.infer(
                             mapOf(
-                                model.inputs[0].name to frame.visual
+                                model.inputs[0].name to InferenceValue.BitmapValue(frame.visual
                                     .asAndroidBitmap()
-                                    .scale(model.inputs[0].shape[0], model.inputs[0].shape[1])
+                                    .scale(model.inputs[0].shape[0], model.inputs[0].shape[1]))
                             )
                         )
                     }
