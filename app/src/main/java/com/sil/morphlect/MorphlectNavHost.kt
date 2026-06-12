@@ -89,7 +89,8 @@ fun MorphlectNavHost() {
             VibeMatcher(
                 originalMat = studioViewModel.originalMat,
                 onFinished = { evalResult -> studioViewModel.emitEvaluationResult(evalResult) },
-                onReturn = { navController.popBackStack() }
+                onReturn = { navController.popBackStack() },
+                configRepository = configRepository,
             )
         }
 

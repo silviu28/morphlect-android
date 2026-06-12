@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,6 +41,7 @@ import com.sil.morphlect.enums.Output
 import com.sil.morphlect.imgproc.Filtering
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.ml.impl.MiniLMEmbeddingLoader
+import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.custom.LedDotSlider
 import com.sil.morphlect.view.dialog.DialogScaffold
 import kotlinx.coroutines.launch
@@ -93,6 +95,7 @@ fun VibeMatcher(
     originalMat: Mat?,
     onFinished: (EvaluationResult) -> Unit,
     onReturn: () -> Unit,
+    configRepository: AppConfigRepository,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -111,6 +114,7 @@ fun VibeMatcher(
     val tokensList by remember { derivedStateOf { tokens } }
     var separatePresets by remember { mutableStateOf<List<Preset>>(emptyList()) }
     var initialMat by remember { mutableStateOf(originalMat) }
+    val developerMode by configRepository.developerMode.collectAsState(initial = false)
 
     when {
         isProcessing -> DialogScaffold(
@@ -214,7 +218,12 @@ fun VibeMatcher(
                     Text("+")
                 }
 
-                FlowRow {
+                Row(
+                    modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
                     tokens.forEach { token ->
                         Button(onClick = {
                             val index = tokens.indexOf(token)
@@ -251,11 +260,14 @@ fun VibeMatcher(
                     }
                 }
 
-                similarities.forEach { l -> Text(l.joinToString { it.first + ":" + it.second.toString() }) }
-
                 TextButton(onClick = { onReturn() }) {
                     Text("back to studio")
                 }
+
+                if (developerMode)
+                    similarities.forEach { l ->
+                        Text(l.joinToString { it.first + ":" + it.second.toString() })
+                    }
             }
         }
     }
