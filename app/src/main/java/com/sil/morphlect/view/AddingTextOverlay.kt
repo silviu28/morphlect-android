@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,9 +35,10 @@ import androidx.compose.ui.zIndex
 @Composable
 fun AddingTextOverlay(
     onDismissRequest: () -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Int) -> Unit,
 ) {
     var text by remember { mutableStateOf("") }
+    var textSize by remember { mutableIntStateOf(24) }
 
     Box(
         modifier = Modifier
@@ -78,7 +81,22 @@ fun AddingTextOverlay(
                     ),
                 )
 
-                IconButton(onClick = { onConfirm(text) }) {
+                Row {
+                    OutlinedTextField(
+                        value = textSize.toString(),
+                        onValueChange = { value -> value.toIntOrNull()?.let { textSize = it } },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                            cursorColor = Color.White,
+                            focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
+                        )
+                    )
+                }
+
+                IconButton(onClick = { onConfirm(text, textSize) }) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Confirm",

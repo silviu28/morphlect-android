@@ -175,62 +175,64 @@ fun Studio(
     }
 
     Scaffold { _ ->
-        when {
-            state.showHistoryStack -> History(
-                onDismissRequest = { state.showHistoryStack = false },
-                undoStack = vm.undoStack,
-                redoStack = vm.redoStack,
-                onUndo = { index -> vm.undoCommandAtIndex(index) },
-                onRedo = { index -> vm.redoCommandAtIndex(index) },
-            )
+        with(state) {
+            when {
+                showHistoryStack -> History(
+                    onDismissRequest = { showHistoryStack = false },
+                    undoStack = vm.undoStack,
+                    redoStack = vm.redoStack,
+                    onUndo = { index -> vm.undoCommandAtIndex(index) },
+                    onRedo = { index -> vm.redoCommandAtIndex(index) },
+                )
 
-            state.showLayering -> LayeringDialog(
-                layers = vm.previewLayers,
-                onRemoveLayer = { _ -> vm.removeLayer(vm.layers.size - 1) },
-                onMergeLayerWithBelow = { i -> vm.mergeLayerWithAbove(i) },
-                onDismissRequest = { state.showLayering = false },
-                onInterchangeLayers = { l1, l2 -> vm.interchangeLayers(l1, l2) },
-                onVisibilityToggle = { vm.toggleVisibilityOfLayer(it) }
-            )
+                showLayering -> LayeringDialog(
+                    layers = vm.previewLayers,
+                    onRemoveLayer = { _ -> vm.removeLayer(vm.layers.size - 1) },
+                    onMergeLayerWithBelow = { i -> vm.mergeLayerWithAbove(i) },
+                    onDismissRequest = { showLayering = false },
+                    onInterchangeLayers = { l1, l2 -> vm.interchangeLayers(l1, l2) },
+                    onVisibilityToggle = { vm.toggleVisibilityOfLayer(it) }
+                )
 
-            state.showOptionsSheet -> OptionsBottomSheet(
-                navController,
-                onDismiss = { state.showOptionsSheet = false }
-            )
+                showOptionsSheet -> OptionsBottomSheet(
+                    navController,
+                    onDismiss = { showOptionsSheet = false }
+                )
 
-            state.showExitDialog -> AlertDialog(
-                onDismissRequest = { state.showExitDialog = false },
-                title = { Text("quit app?") },
-                text = { Text("all unsaved changes will be lost.") },
-                confirmButton = {  },
-                dismissButton = { // you can stick everything in one 'button'
-                    TextButton(onClick = {
-                        (ctx as? ComponentActivity)?.finish()
-                    }) { Text("quit") }
+                showExitDialog -> AlertDialog(
+                    onDismissRequest = { showExitDialog = false },
+                    title = { Text("quit app?") },
+                    text = { Text("all unsaved changes will be lost.") },
+                    confirmButton = {  },
+                    dismissButton = { // you can stick everything in one 'button'
+                        TextButton(onClick = {
+                            (ctx as? ComponentActivity)?.finish()
+                        }) { Text("quit") }
 
-                    TextButton(onClick = {
-                        state.showExitDialog = false
-                        navController.navigate("pick")
-                        vm.clearComposition()
-                    }) {
-                        Text("choose something else")
+                        TextButton(onClick = {
+                            showExitDialog = false
+                            navController.navigate("pick")
+                            vm.clearComposition()
+                        }) {
+                            Text("choose something else")
+                        }
+
+                        TextButton(onClick = { showExitDialog = false }) {
+                            Text("no")
+                        }
                     }
+                )
 
-                    TextButton(onClick = { state.showExitDialog = false }) {
-                        Text("no")
-                    }
-                }
-            )
+                showHistogram -> HistogramBottomSheet(
+                    onDismissRequest = { showHistogram = false },
+                    colorReference = vm.previewBitmap!!
+                )
 
-            state.showHistogram -> HistogramBottomSheet(
-                onDismissRequest = { state.showHistogram = false },
-                colorReference = vm.previewBitmap!!
-            )
-
-            state.addingText -> AddingTextOverlay(
-                onDismissRequest = { state.addingText = false },
-                onConfirm = { text -> vm.addTextLayer(text); state.addingText = false }
-            )
+                addingText -> AddingTextOverlay(
+                    onDismissRequest = { addingText = false },
+                    onConfirm = { text, size -> vm.addTextLayer(text, size); addingText = false }
+                )
+            }
         }
 
         Box(

@@ -1,28 +1,26 @@
 package com.sil.morphlect.layerwork
 
+import android.graphics.Typeface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.sp
 import androidx.datastore.core.Closeable
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.extension.extend
-import com.sil.morphlect.extension.toCvScalar
 import com.sil.morphlect.imgproc.Filtering
 import com.sil.morphlect.imgproc.FormatConverters
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
-import org.opencv.core.Point
 import org.opencv.core.Rect
 import org.opencv.core.Size
-import org.opencv.imgproc.Imgproc
 import kotlin.math.abs
+import androidx.core.graphics.createBitmap
 
 class StudioLayer(val mat: Mat) : Closeable {
     companion object {
@@ -38,25 +36,42 @@ class StudioLayer(val mat: Mat) : Closeable {
          */
         fun withText(
             text: String,
-            size: TextUnit = .5.sp,
+            textSizeSp: Float = 24f,
             color: Color = Color.White,
-            thickness: Int = 2,
+            typeface: Typeface = Typeface.DEFAULT,
             position: IntOffset = IntOffset.Zero,
             antialiased: Boolean = true,
         ): StudioLayer {
-            // TODO this is okay, but can't use custom fonts, and Bitmap is just simple raster..
-            val mat = Mat.zeros(300, 300, CvType.CV_8UC4)
-            Imgproc.putText(
-                mat,
+            val paint = android.graphics.Paint().apply {
+                this.color = color.toArgb()
+                this.typeface = typeface
+                isAntiAlias = antialiased
+                textSize = textSizeSp
+            }
+
+            val bounds = android.graphics.Rect()
+            paint.getTextBounds(text, 0, text.length, bounds)
+
+            val padding = 16
+            val width = bounds.width() + padding * 2
+            val height = bounds.height() + padding * 2
+
+            val bitmap = createBitmap(width, height)
+            val canvas = android.graphics.Canvas(bitmap)
+
+            canvas.drawText(
                 text,
-                Point(150.0 + position.x, 150.0 + position.y),
-                Imgproc.FONT_HERSHEY_SIMPLEX,
-                size.value.toDouble(),
-                color.toCvScalar(),
-                thickness,
-                if (antialiased) Imgproc.LINE_AA else Imgproc.LINE_8,
+                padding.toFloat() - bounds.left,
+                padding.toFloat() - bounds.top,
+                paint
             )
-            return StudioLayer(mat)
+
+            val mat = FormatConverters.bitmapToMat(bitmap)
+            bitmap.recycle()
+
+            return StudioLayer(mat).apply {
+//                offset = position // maybe
+            }
         }
     }
 

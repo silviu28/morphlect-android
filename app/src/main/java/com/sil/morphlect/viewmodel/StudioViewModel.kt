@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sil.morphlect.command.impl.BlurCommand
@@ -218,8 +219,8 @@ class StudioViewModel : ViewModel, StudioCommandManager {
             layerManager.mergeLayerWithAbove(index)
     }
 
-    fun addTextLayer(text: String) {
-        val textLayer = StudioLayer.withText(text)
+    fun addTextLayer(text: String, size: Int) {
+        val textLayer = StudioLayer.withText(text, textSizeSp = size.toFloat())
         layerManager.addLayer(textLayer)
     }
 
