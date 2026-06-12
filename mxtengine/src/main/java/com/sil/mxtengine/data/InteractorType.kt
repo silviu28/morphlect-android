@@ -9,5 +9,6 @@ enum class InteractorType {
     Text,
     TextArray,
     Float,
-    FloatArray
+    FloatArray,
+    DepthMap,
 }
