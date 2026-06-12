@@ -275,7 +275,6 @@ fun Studio(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-
             ) {
                 Row {
                     AnimatedSectionButton(
@@ -360,16 +359,17 @@ fun Studio(
                                 extensionsRepository
                             )
                             Section.ImageManipulation -> ImageManipulationSection(
-                                vm = vm,
                                 croppingMode = state.croppingMode,
                                 onCropToggle = { state.croppingMode = !state.croppingMode },
-                                onCropApply = {
+                                onCropApply = { cropAll ->
                                     if (state.cropUpCorner != null && state.cropDownCorner != null)
-                                        vm.cropLayers(
-                                            state.cropUpCorner!!,
-                                            state.cropDownCorner!!,
-                                            thumbnailSizePx
-                                        )
+                                        if (cropAll)
+                                            vm.cropLayers(
+                                                state.cropUpCorner!!,
+                                                state.cropDownCorner!!,
+                                                thumbnailSizePx
+                                            )
+                                        else vm.cropLayer(vm.layers.size - 1, state.cropUpCorner!!, state.cropDownCorner!!, thumbnailSizePx)
                                 },
                                 addingImage = state.addingImage,
                                 onImageAddToggle = { state.addingImage = true },

@@ -211,6 +211,11 @@ class StudioViewModel : ViewModel, StudioCommandManager {
         layerManager.cropLayers(upCorner, downCorner, size)
     }
 
+    fun cropLayer(index: Int, upCorner: Offset, downCorner: Offset, size: Size) {
+        if (index >= 0 && index < layers.size)
+            layerManager.cropLayer(index, upCorner, downCorner, size)
+    }
+
     fun toggleVisibilityOfLayer(index: Int) {
         layerManager.layers[index].apply { visible = !visible }
     }

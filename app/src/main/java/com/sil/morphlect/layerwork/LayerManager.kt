@@ -49,6 +49,15 @@ class LayerManager : Closeable {
         layers.addAll(cropped)
     }
 
+    fun cropLayer(index: Int, upCorner: Offset, downCorner: Offset, size: Size) {
+        if (index >= 0 && index < layers.size) {
+            val cropped = layers[index].crop(upCorner, downCorner, size)
+            val copy = layers.mapIndexed { idx, layer -> if (idx == index) cropped else layer }
+            layers.clear()
+            layers.addAll(copy)
+        }
+    }
+
     /**
      frees the memory allocated by all layers (JNI optimization)
      */
