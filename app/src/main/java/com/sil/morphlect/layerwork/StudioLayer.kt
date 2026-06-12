@@ -8,7 +8,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.unit.IntOffset
 import androidx.datastore.core.Closeable
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.extension.extend
@@ -41,7 +40,7 @@ class StudioLayer(val mat: Mat) : Closeable {
             textSizeSp: Float = 24f,
             color: Color = Color.White,
             typeface: Typeface = Typeface.DEFAULT,
-            position: LayerPosition = LayerPosition.CENTER,
+            position: LayerPosition = LayerPosition.Center,
             antialiased: Boolean = true,
         ): StudioLayer {
             val paint = android.graphics.Paint().apply {

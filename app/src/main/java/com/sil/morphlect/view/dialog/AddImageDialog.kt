@@ -3,9 +3,12 @@ package com.sil.morphlect.view.dialog
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Save
@@ -24,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.layerwork.LayerPosition
+import com.sil.morphlect.view.asAlignment
 
 @Composable
 fun AddImageDialog(
@@ -31,7 +35,7 @@ fun AddImageDialog(
     onAddImage: (Bitmap, LayerPosition) -> Unit,
 ) {
     val context = LocalContext.current
-    var position by remember { mutableStateOf(LayerPosition.CENTER)}
+    var position by remember { mutableStateOf(LayerPosition.Center)}
     val imagePickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -46,15 +50,20 @@ fun AddImageDialog(
         onDismissRequest,
         icon = Icons.Default.AddCircle,
     ) {
-        FlowRow {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+        ) {
             LayerPosition.entries.forEach { pos ->
-                Column(modifier = Modifier.padding(10.dp)) {
-                    RadioButton(
-                        selected = (position == pos),
-                        onClick = { position = pos },
-                    )
-                    Text(text = pos.name, style = MaterialTheme.typography.bodySmall,)
-                }
+                RadioButton(
+                    selected = (position == pos),
+                    onClick = { position = pos },
+                    modifier = Modifier
+                        .align(pos.asAlignment())
+                        .padding(8.dp)
+                )
             }
         }
 

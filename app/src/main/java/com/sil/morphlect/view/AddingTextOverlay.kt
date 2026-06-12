@@ -1,18 +1,18 @@
 package com.sil.morphlect.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -32,12 +32,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.sil.morphlect.layerwork.LayerPosition
-import com.sil.morphlect.ui.theme.MorphlectTheme
 
 @Composable
 fun AddingTextOverlay(
@@ -46,7 +44,7 @@ fun AddingTextOverlay(
 ) {
     var text by remember { mutableStateOf("") }
     var textSize by remember { mutableIntStateOf(24) }
-    var position by remember { mutableStateOf(LayerPosition.CENTER)}
+    var position by remember { mutableStateOf(LayerPosition.Center)}
 
     Box(
         modifier = Modifier
@@ -105,15 +103,20 @@ fun AddingTextOverlay(
                     )
                 }
 
-                FlowRow {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                ) {
                     LayerPosition.entries.forEach { pos ->
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            RadioButton(
-                                selected = (position == pos),
-                                onClick = { position = pos },
-                            )
-                            Text(text = pos.name, style = MaterialTheme.typography.bodySmall,)
-                        }
+                        RadioButton(
+                            selected = (position == pos),
+                            onClick = { position = pos },
+                            modifier = Modifier
+                                .align(pos.asAlignment())
+                                .padding(8.dp)
+                        )
                     }
                 }
 
@@ -128,3 +131,16 @@ fun AddingTextOverlay(
         }
     }
 }
+
+fun LayerPosition.asAlignment(): Alignment =
+    when (this) {
+        LayerPosition.TopLeft -> Alignment.TopStart
+        LayerPosition.TopCenter -> Alignment.TopCenter
+        LayerPosition.TopRight -> Alignment.TopEnd
+        LayerPosition.CenterLeft -> Alignment.CenterStart
+        LayerPosition.Center -> Alignment.Center
+        LayerPosition.CenterRight -> Alignment.CenterEnd
+        LayerPosition.BottomLeft -> Alignment.BottomStart
+        LayerPosition.BottomCenter -> Alignment.BottomCenter
+        LayerPosition.BottomRight -> Alignment.BottomEnd
+    }

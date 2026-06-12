@@ -3,26 +3,26 @@ package com.sil.morphlect.layerwork
 import androidx.compose.ui.unit.IntOffset
 
 enum class LayerPosition {
-    TOP_LEFT,
-    TOP_CENTER,
-    TOP_RIGHT,
-    CENTER_LEFT,
-    CENTER,
-    CENTER_RIGHT,
-    BOTTOM_LEFT,
-    BOTTOM_CENTER,
-    BOTTOM_RIGHT;
+    TopLeft,
+    TopCenter,
+    TopRight,
+    CenterLeft,
+    Center,
+    CenterRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight;
 
     fun toOffset(canvasWidth: Int, canvasHeight: Int, layerWidth: Int, layerHeight: Int): IntOffset {
         val x = when (this) {
-            TOP_LEFT, CENTER_LEFT, BOTTOM_LEFT -> 0
-            TOP_CENTER, CENTER, BOTTOM_CENTER -> (canvasWidth - layerWidth) / 2
-            TOP_RIGHT, CENTER_RIGHT, BOTTOM_RIGHT -> canvasWidth - layerWidth
+            TopLeft, CenterLeft, BottomLeft -> 0
+            TopCenter, Center, BottomCenter -> (canvasWidth - layerWidth) / 2
+            TopRight, CenterRight, BottomRight -> canvasWidth - layerWidth
         }
         val y = when (this) {
-            TOP_LEFT, TOP_CENTER, TOP_RIGHT -> 0
-            CENTER_LEFT, CENTER, CENTER_RIGHT -> (canvasHeight - layerHeight) / 2
-            BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> canvasHeight - layerHeight
+            TopLeft, TopCenter, TopRight -> 0
+            CenterLeft, Center, CenterRight -> (canvasHeight - layerHeight) / 2
+            BottomLeft, BottomCenter, BottomRight -> canvasHeight - layerHeight
         }
         return IntOffset(x, y)
     }
