@@ -180,4 +180,18 @@ class StudioLayer(val mat: Mat) : Closeable {
         }
         return StudioLayer(newMat)
     }
+
+    // TODO!!!!!!!!!!! broken
+    fun repositioned(width: Int, height: Int, position: LayerPosition): StudioLayer {
+        return this
+//        val offset = position.toOffset(width, height, width, height)
+//
+//        val canvasMat = Mat.zeros(height, width, CvType.CV_8UC4)
+//
+//        val roi = Rect(offset.x, offset.y, mat.cols(), mat.rows())
+//        val targetRegion = canvasMat.submat(roi)
+//
+//        mat.copyTo(targetRegion)
+//        return StudioLayer(mat)
+    }
 }

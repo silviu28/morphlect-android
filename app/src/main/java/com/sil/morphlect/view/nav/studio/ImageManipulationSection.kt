@@ -1,5 +1,6 @@
 package com.sil.morphlect.view.nav.studio
 
+import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -16,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.sil.morphlect.layerwork.LayerPosition
+import com.sil.morphlect.view.dialog.AddImageDialog
 import com.sil.morphlect.viewmodel.StudioViewModel
 
 // TODO this structure can definitely be optimized...
@@ -27,9 +30,17 @@ fun ImageManipulationSection(
     onCropApply: () -> Unit,
     addingImage: Boolean,
     onImageAddToggle: () -> Unit,
+    onAddImage: (Bitmap, LayerPosition) -> Unit,
     addingText: Boolean,
     onAddText: () -> Unit,
 ) {
+    when {
+        addingImage -> AddImageDialog(
+            onDismissRequest = { onImageAddToggle() },
+            onAddImage = { bmp, pos -> onAddImage(bmp, pos) }
+        )
+    }
+
     AnimatedContent(
         targetState = croppingMode || addingImage || addingText,
         transitionSpec = {

@@ -372,9 +372,14 @@ fun Studio(
                                         )
                                 },
                                 addingImage = state.addingImage,
-                                onImageAddToggle = { imagePickLauncher.launch("image/*") },
+                                onImageAddToggle = { state.addingImage = true },
                                 addingText = state.addingText,
                                 onAddText = { state.addingText = true },
+                                onAddImage = { bmp, pos ->
+                                    val mat = FormatConverters.bitmapToMat(bmp)
+                                    vm.addLayer(StudioLayer(mat).repositioned(vm.layers[0].width, vm.layers[0].height, pos))
+                                    state.addingImage = false
+                                }
                             )
                         }
 
