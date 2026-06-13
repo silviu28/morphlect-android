@@ -22,10 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.sil.morphlect.layerwork.LayerPosition
-import com.sil.morphlect.view.dialog.AddImageDialog
-import com.sil.morphlect.viewmodel.StudioViewModel
+import com.sil.morphlect.view.dialog.impl.AddImageDialog
 
 // TODO this structure can definitely be optimized...
 @Composable
@@ -35,7 +35,7 @@ fun ImageManipulationSection(
     onCropApply: (cropAllLayers: Boolean) -> Unit,
     addingImage: Boolean,
     onImageAddToggle: () -> Unit,
-    onAddImage: (Bitmap, LayerPosition) -> Unit,
+    onAddImage: (Bitmap) -> Unit,
     addingText: Boolean,
     onAddText: () -> Unit,
 ) {
@@ -43,7 +43,7 @@ fun ImageManipulationSection(
     when {
         addingImage -> AddImageDialog(
             onDismissRequest = { onImageAddToggle() },
-            onAddImage = { bmp, pos -> onAddImage(bmp, pos) }
+            onAddImage = { bmp -> onAddImage(bmp) }
         )
     }
 
@@ -58,7 +58,10 @@ fun ImageManipulationSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 if (isWorking) {
-                    Column {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         Button(onClick = {
                             when {
                                 croppingMode -> {
@@ -74,7 +77,11 @@ fun ImageManipulationSection(
                             Icon(Icons.Default.Check, contentDescription = "apply")
                         }
                         if (croppingMode)
-                            Row(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
                                 Text("crop only the top layer")
                                 Checkbox(
                                     checked = !applyCropOnAllLayers,

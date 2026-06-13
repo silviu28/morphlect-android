@@ -374,9 +374,9 @@ fun Studio(
                                 onImageAddToggle = { state.addingImage = true },
                                 addingText = state.addingText,
                                 onAddText = { state.addingText = true },
-                                onAddImage = { bmp, pos ->
+                                onAddImage = { bmp->
                                     val mat = FormatConverters.bitmapToMat(bmp)
-                                    vm.addLayer(StudioLayer(mat).repositioned(vm.layers[0].width, vm.layers[0].height, pos))
+                                    vm.addLayer(StudioLayer(mat))
                                     state.addingImage = false
                                 }
                             )
