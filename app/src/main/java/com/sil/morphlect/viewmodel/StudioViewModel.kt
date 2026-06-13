@@ -206,13 +206,13 @@ class StudioViewModel : ViewModel, StudioCommandManager {
         }
     }
 
-    fun cropLayers(upCorner: Offset, downCorner: Offset, size: Size) {
-        layerManager.cropLayers(upCorner, downCorner, size)
+    fun cropLayers(upCorner: Offset, downCorner: Offset, size: Size, outerCrop: Boolean) {
+        layerManager.cropLayers(upCorner, downCorner, size, outerCrop)
     }
 
-    fun cropLayer(index: Int, upCorner: Offset, downCorner: Offset, size: Size) {
+    fun cropLayer(index: Int, upCorner: Offset, downCorner: Offset, size: Size, outerCrop: Boolean) {
         if (index >= 0 && index < layers.size)
-            layerManager.cropLayer(index, upCorner, downCorner, size)
+            layerManager.cropLayer(index, upCorner, downCorner, size, outerCrop)
     }
 
     fun toggleVisibilityOfLayer(index: Int) {

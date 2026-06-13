@@ -48,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -332,7 +333,7 @@ fun Studio(
                     cropUpCorner = state.cropUpCorner,
                     cropDownCorner = state.cropDownCorner,
                     onDragStart = { state.cropUpCorner = it },
-                    onDrag = { state.cropDownCorner = it },
+                    onDrag = { state.cropDownCorner = it; state.showLayersView = false },
                 )
 
                 // animate section switching using AnimatedContent
@@ -353,32 +354,36 @@ fun Studio(
                             Section.Filtering -> FilteringSection(vm, presetsRepository, state.fingerprint)
                             Section.SmartFeatures -> SmartFeaturesSection(
                                 navController,
-                                vm,
+                                { vm.emitEvaluationResult(it) },
                                 configRepository,
                                 extensionsRepository
                             )
                             Section.ImageManipulation -> ImageManipulationSection(
                                 croppingMode = state.croppingMode,
-                                onCropToggle = { state.croppingMode = !state.croppingMode },
-                                onCropApply = { cropAll ->
+                                onCropToggle = {
+                                    state.croppingMode = !state.croppingMode
+                               },
+                                onCropApply = { cropAll, outerCrop ->
                                     if (state.cropUpCorner != null && state.cropDownCorner != null)
                                         if (cropAll)
                                             vm.cropLayers(
                                                 state.cropUpCorner!!,
                                                 state.cropDownCorner!!,
-                                                thumbnailSizePx
+                                                thumbnailSizePx,
+                                                outerCrop
                                             )
-                                        else vm.cropLayer(vm.layers.size - 1, state.cropUpCorner!!, state.cropDownCorner!!, thumbnailSizePx)
+                                        else vm.cropLayer(vm.layers.size - 1, state.cropUpCorner!!, state.cropDownCorner!!, thumbnailSizePx, outerCrop)
                                 },
                                 addingImage = state.addingImage,
                                 onImageAddToggle = { state.addingImage = true },
                                 addingText = state.addingText,
                                 onAddText = { state.addingText = true },
-                                onAddImage = { bmp->
+                                onAddImage = { bmp ->
                                     val mat = FormatConverters.bitmapToMat(bmp)
                                     vm.addLayer(StudioLayer(mat))
                                     state.addingImage = false
-                                }
+                                },
+                                onCancel = { state.croppingMode = false; state.addingImage = false; state.addingText = false }
                             )
                         }
 

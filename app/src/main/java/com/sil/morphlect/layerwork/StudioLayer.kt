@@ -134,32 +134,69 @@ class StudioLayer(val mat: Mat) : Closeable {
         return StudioLayer(matClone)
     }
 
-    fun crop(upCorner: Offset, downCorner: Offset, size: androidx.compose.ui.geometry.Size): StudioLayer {
-        // scale factors between display space and mat space
-        val scaleX = mat.width().toFloat() / size.width
-        val scaleY = mat.height().toFloat() / size.height
+    fun cropped(
+        upCorner: Offset,
+        downCorner: Offset,
+        containerSize: androidx.compose.ui.geometry.Size,
+        outer: Boolean
+    ): StudioLayer {
+        val matWidth = mat.width().toFloat()
+        val matHeight = mat.height().toFloat()
 
-        // convert offsets from display space to mat space
-        val matUpCorner = Offset(upCorner.x * scaleX, upCorner.y * scaleY)
-        val matDownCorner = Offset(downCorner.x * scaleX, downCorner.y * scaleY)
+        val containerAspect = containerSize.width / containerSize.height
+        val matAspect = matWidth / matHeight
+
+        var displayedSize: androidx.compose.ui.geometry.Size
+        var displayOffset: Offset
+
+        if (matAspect > containerAspect) {
+            val displayedWidth = containerSize.width
+            val displayedHeight = displayedWidth / matAspect
+            displayedSize = androidx.compose.ui.geometry.Size(displayedWidth, displayedHeight)
+            displayOffset = Offset(0f, (containerSize.height - displayedHeight) / 2f)
+        } else {
+            val displayedHeight = containerSize.height
+            val displayedWidth = displayedHeight * matAspect
+            displayedSize = androidx.compose.ui.geometry.Size(displayedWidth, displayedHeight)
+            displayOffset = Offset((containerSize.width - displayedWidth) / 2f, 0f)
+        }
+
+        val scaleX = matWidth / displayedSize.width
+        val scaleY = matHeight / displayedSize.height
+
+        val matUpCorner = Offset(
+            (upCorner.x - displayOffset.x) * scaleX,
+            (upCorner.y - displayOffset.y) * scaleY
+        )
+        val matDownCorner = Offset(
+            (downCorner.x - displayOffset.x) * scaleX,
+            (downCorner.y - displayOffset.y) * scaleY
+        )
 
         val x = minOf(matUpCorner.x, matDownCorner.x).toInt()
         val y = minOf(matUpCorner.y, matDownCorner.y).toInt()
         val width = abs(matUpCorner.x - matDownCorner.x).toInt()
         val height = abs(matUpCorner.y - matDownCorner.y).toInt()
 
-        // clamp to mat bounds just in case
         val safeX = x.coerceIn(0, mat.width() - 1)
         val safeY = y.coerceIn(0, mat.height() - 1)
         val safeWidth = width.coerceIn(1, mat.width() - safeX)
         val safeHeight = height.coerceIn(1, mat.height() - safeY)
 
         val roi = Rect(safeX, safeY, safeWidth, safeHeight)
+
+        if (outer) {
+            val result = mat.clone()
+            val transparent = Mat.zeros(roi.height, roi.width, result.type())
+            transparent.copyTo(result.submat(roi))
+
+            return StudioLayer(result)
+        }
         return StudioLayer(mat.clone().submat(roi))
     }
 
-    fun downscaledUniformly(maxDimension: Int = 800) : StudioLayer {
-        return StudioLayer(Filtering.uniformDownscale(mat))
+    fun downscaledUniformly(maxDimension: Int = 1000) : StudioLayer {
+        return StudioLayer(Filtering.uniformDownscale(mat, maxDimension))
             .also { it.visible = this.visible }
     }
 

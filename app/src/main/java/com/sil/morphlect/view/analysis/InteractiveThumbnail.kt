@@ -68,7 +68,7 @@ fun InteractiveThumbnail(
     onDragStart: (Offset) -> Unit,
     onDrag: (Offset) -> Unit,
 ) {
-    var zoomScale      by remember { mutableFloatStateOf(1f) }
+    var zoomScale by remember { mutableFloatStateOf(1f) }
     var positionOffset by remember { mutableStateOf(Offset.Zero) }
     var holdingClick   by remember { mutableStateOf(false) }
 
@@ -164,6 +164,8 @@ fun InteractiveThumbnail(
                             )
                     )
                     if (croppingMode) {
+                        zoomScale = 1f
+                        positionOffset = Offset.Zero
                         ResizableCropRegion(cropUpCorner, cropDownCorner, onDragStart, onDrag)
                     }
                 }

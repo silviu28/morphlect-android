@@ -74,15 +74,15 @@ class LayerManager() : Closeable {
         }
     }
 
-    fun cropLayers(upCorner: Offset, downCorner: Offset, size: Size) {
-        val cropped = layers.map { it.crop(upCorner, downCorner, size) }
+    fun cropLayers(upCorner: Offset, downCorner: Offset, size: Size, outerCrop: Boolean) {
+        val cropped = layers.map { it.cropped(upCorner, downCorner, size, outerCrop) }
         layers.clear()
         layers.addAll(cropped)
     }
 
-    fun cropLayer(index: Int, upCorner: Offset, downCorner: Offset, size: Size) {
+    fun cropLayer(index: Int, upCorner: Offset, downCorner: Offset, size: Size, outerCrop: Boolean) {
         if (index >= 0 && index < layers.size) {
-            val cropped = layers[index].crop(upCorner, downCorner, size)
+            val cropped = layers[index].cropped(upCorner, downCorner, size, outerCrop)
             val copy = layers.mapIndexed { idx, layer -> if (idx == index) cropped else layer }
             layers.clear()
             layers.addAll(copy)

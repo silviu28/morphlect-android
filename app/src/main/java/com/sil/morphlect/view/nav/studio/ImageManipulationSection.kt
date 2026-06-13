@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -24,22 +25,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.sil.morphlect.layerwork.LayerPosition
 import com.sil.morphlect.view.dialog.impl.AddImageDialog
 
-// TODO this structure can definitely be optimized...
 @Composable
 fun ImageManipulationSection(
     croppingMode: Boolean,
     onCropToggle: () -> Unit,
-    onCropApply: (cropAllLayers: Boolean) -> Unit,
+    onCropApply: (cropAllLayers: Boolean, outerCrop: Boolean) -> Unit,
     addingImage: Boolean,
     onImageAddToggle: () -> Unit,
     onAddImage: (Bitmap) -> Unit,
     addingText: Boolean,
     onAddText: () -> Unit,
+    onCancel: () -> Unit,
 ) {
     var applyCropOnAllLayers by remember { mutableStateOf(false) }
+    var outerCrop by remember { mutableStateOf(false) }
     when {
         addingImage -> AddImageDialog(
             onDismissRequest = { onImageAddToggle() },
@@ -65,7 +66,7 @@ fun ImageManipulationSection(
                         Button(onClick = {
                             when {
                                 croppingMode -> {
-                                    onCropApply(applyCropOnAllLayers)
+                                    onCropApply(applyCropOnAllLayers, outerCrop)
                                     onCropToggle()
                                 }
 
@@ -76,22 +77,42 @@ fun ImageManipulationSection(
                         }) {
                             Icon(Icons.Default.Check, contentDescription = "apply")
                         }
-                        if (croppingMode)
+                        Button(onClick = onCancel) {
+                            Icon(Icons.Default.Close, contentDescription = "cancel")
+                        }
+                        if (croppingMode) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text("crop only the top layer")
+                                Text("cropped only the top layer")
                                 Checkbox(
                                     checked = !applyCropOnAllLayers,
-                                    onCheckedChange = { applyCropOnAllLayers = !applyCropOnAllLayers },
+                                    onCheckedChange = {
+                                        applyCropOnAllLayers = !applyCropOnAllLayers
+                                    },
                                 )
                             }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text("outer cropped (cutout by selection)")
+                                Checkbox(
+                                    checked = outerCrop,
+                                    onCheckedChange = {
+                                        outerCrop = !outerCrop
+                                    },
+                                )
+                            }
+                        }
                     }
                 } else {
                     TextButton(onClick = onCropToggle) {
-                        Text("crop")
+                        Text("cropped")
                     }
                     TextButton(onClick = onImageAddToggle) {
                         Text("add image")

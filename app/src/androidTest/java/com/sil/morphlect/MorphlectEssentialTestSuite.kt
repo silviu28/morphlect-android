@@ -28,7 +28,7 @@ class MockCommandManager : StudioCommandManager {
 }
 
 class MockLayerManager {
-    val manager = LayerManager(layers = mutableListOf())
+    val manager = LayerManager()
 }
 
 @RunWith(AndroidJUnit4::class)
@@ -153,10 +153,11 @@ class MorphlectEssentialTestSuite {
     @Test
     fun properCropping() {
         val layer = StudioLayer(Mat(Size(1000.0, 1000.0), CvType.CV_8UC4))
-        val cropped = layer.crop(
+        val cropped = layer.cropped(
             upCorner = Offset(0f, 0f),
             downCorner = Offset(500f, 500f),
-            size = androidx.compose.ui.geometry.Size(1000f, 1000f)
+            containerSize = androidx.compose.ui.geometry.Size(1000f, 1000f),
+            outer = false
         )
         assert(cropped.mat.width() == 500 && cropped.mat.height() == 500)
         layer.close()

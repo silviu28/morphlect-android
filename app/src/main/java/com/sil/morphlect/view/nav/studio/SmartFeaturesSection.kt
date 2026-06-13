@@ -36,7 +36,7 @@ import kotlin.random.Random
 @Composable
 fun SmartFeaturesSection(
     navController: NavController,
-    vm: StudioViewModel,
+    onEmitResult: (EvaluationResult) -> Unit,
     configRepository: AppConfigRepository,
     extensionsRepository: ExtensionsRepository,
 ) {
@@ -136,7 +136,7 @@ fun SmartFeaturesSection(
                 Text("style transfer")
             }
             if (developerMode)
-                TextButton(onClick = { vm.emitEvaluationResult(generateRandomResult()) }) {
+                TextButton(onClick = { onEmitResult(generateRandomResult()) }) {
                     Text("[DEBUG] verify animation")
                 }
         }
