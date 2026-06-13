@@ -82,7 +82,7 @@ fun MXTComposedView(
     var receivingBindingKey by remember { mutableStateOf<String?>(null) }
     var loader by remember { mutableStateOf<ExtensionModelLoader?>(null) }
     val bindings = remember { mutableStateMapOf<String, Any?>() }
-    var inferenceValue by remember { mutableStateOf<InferenceValue>(InferenceValue.Empty()) }
+    var inferenceValue by remember { mutableStateOf<InferenceValue?>(null) }
 
     val allFieldsCompleted = { !bindings.containsValue(null) }
 
@@ -208,24 +208,28 @@ fun MXTComposedView(
             }
 
             inferenceValue?.let {
-                when (it) {
-                    is Map<*, *> -> Text(
-                        (it as Map<*, *>).map { (k, v) -> "$k: $v" }
+                 when (it) {
+                    is InferenceValue.MapValue<*, *> -> Text(
+                        it.value.map { (k, v) -> "$k: $v" }
                             .joinToString(",\n")
                     )
-                    is Tensor4D -> {
-                        // currently this is tailored for MiDaS, as i can't think of any other model that would output a 4d tensor
-                        val result = depthToMat((inferenceValue as Tensor4D))
+
+                    is InferenceValue.Tensor4DValue -> {
+                        // currently this is tailored for MiDAS, as i can't think of any other model that would output a 4d tensor
+                        val result = depthToMat(it.value)
 
                         Image(
                             bitmap = FormatConverters.matToBitmap(result).asImageBitmap(),
                             contentDescription = "ong",
                             modifier = Modifier.size(300.dp)
                         )
-                        // [1, 256, 256, 1]
-                        // a[1][256][256][1] want to get 256x256 image of 1 channel -> a[0][i][j][0] = k
                     }
-                    else -> Text("an output too sophisticated...")
+
+                    is InferenceValue.BitmapValue -> TODO()
+                    is InferenceValue.ByteBufferValue -> TODO()
+                    is InferenceValue.FloatArrayValue -> TODO()
+                    is InferenceValue.FloatValue -> TODO()
+                    is InferenceValue.StringValue -> TODO()
                 }
             }
         }

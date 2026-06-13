@@ -101,23 +101,27 @@ class ExtensionModelLoader(
         val interp = interpreter ?: throw ModelLoaderException("Unable to load the model with given properties.")
 
         // order inputs by index to match model's expected input order
-        val fmtInputs = inputs.mapIndexed { index, inputSpec ->
+        val fmtInputs = inputs.map { inputSpec ->
             when (inputSpec.type) {
                 InteractorType.Image ->
-                    bitmapToByteBuffer(inputVals[inputSpec.name] as? Bitmap ?: throw Exception())
+                    bitmapToByteBuffer(
+                        (inputVals[inputSpec.name] as InferenceValue.BitmapValue).value
+                    )
 
                 InteractorType.Text ->
-                    (inputVals[inputSpec.name] as? String ?: throw Exception()).toByteArray()
-
-                InteractorType.TextArray -> TODO()
+                    (inputVals[inputSpec.name] as InferenceValue.StringValue).value.toByteArray()
 
                 InteractorType.Float ->
-                    listOf(inputVals[inputSpec.name] as? Float ?: throw Exception()).toFloatArray()
+                    listOf((inputVals[inputSpec.name] as InferenceValue.FloatValue).value).toFloatArray()
 
                 InteractorType.FloatArray ->
-                    inputVals[inputSpec.name] as? FloatArray ?: throw Exception()
+                    (inputVals[inputSpec.name] as InferenceValue.FloatArrayValue).value
 
-                else -> throw Exception()
+                InteractorType.FilterParams ->
+                    (inputVals[inputSpec.name] as InferenceValue.MapValue<*, *>).value
+
+                InteractorType.DepthMap ->
+                    (inputVals[inputSpec.name] as InferenceValue.Tensor4DValue).value.data
             }
         }.toTypedArray()
 
@@ -163,6 +167,7 @@ class ExtensionModelLoader(
         }
 
         // map results back to Output enum
+        @Suppress("UNCHECKED_CAST")
         return when (outputs[0].type){
             InteractorType.FilterParams -> {
                 val resultBuffer = (fmtOutputs[0] as Array<FloatArray>)[0]
@@ -171,10 +176,9 @@ class ExtensionModelLoader(
                 )
             }
 
-            InteractorType.Image -> TODO()
-            InteractorType.Text -> TODO()
-            InteractorType.TextArray -> TODO()
-            InteractorType.Float -> TODO()
+            InteractorType.Image -> InferenceValue.BitmapValue(fmtOutputs[0] as Bitmap)
+            InteractorType.Text -> InferenceValue.StringValue(fmtOutputs[0] as String)
+            InteractorType.Float -> InferenceValue.FloatValue(fmtOutputs[0] as Float)
             InteractorType.FloatArray -> {
                 when (outputs[0].shape.size) {
                     4 -> InferenceValue.Tensor4DValue(
@@ -183,7 +187,9 @@ class ExtensionModelLoader(
                     else -> TODO()
                 }
             }
-            InteractorType.DepthMap -> TODO()
+            InteractorType.DepthMap -> InferenceValue.Tensor4DValue(
+                Tensor4D(fmtOutputs[0] as Array<Array<Array<FloatArray>>>)
+            )
         }
     }
 
