@@ -6,6 +6,7 @@ import com.sil.morphlect.logic.imageSegmentKmeans
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
+import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -22,6 +23,11 @@ private fun pointToCenterWise(point: Point2D): CenterWise<Point2D> {
 
 @RunWith(JUnit4::class)
 class MorphlectUnitTests {
+    @Test
+    fun addition_isCorrect() {
+        Assert.assertEquals(4, 2 + 2)
+    }
+
     @Test
     fun dbscan_emptyListReturnsEmptyMap() {
         val result = dbscan(

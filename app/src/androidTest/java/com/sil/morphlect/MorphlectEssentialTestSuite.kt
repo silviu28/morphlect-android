@@ -2,6 +2,7 @@ package com.sil.morphlect
 
 import androidx.compose.ui.geometry.Offset
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.sil.morphlect.command.StudioCommand
 import com.sil.morphlect.command.StudioCommandManager
 import com.sil.morphlect.command.impl.ContrastCommand
@@ -10,6 +11,7 @@ import com.sil.morphlect.exception.CommandException
 import com.sil.morphlect.extension.extend
 import com.sil.morphlect.layerwork.LayerManager
 import com.sil.morphlect.layerwork.StudioLayer
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.BeforeClass
 import org.junit.Test
@@ -205,5 +207,12 @@ class MorphlectEssentialTestSuite {
             (manager.layers[0].tag == "B") &&
             (manager.layers[1].tag == "A")
         )
+    }
+
+    @Test
+    fun useAppContext() {
+        // Context of the app under test.
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        assertEquals("com.sil.morphlect", appContext.packageName)
     }
 }
