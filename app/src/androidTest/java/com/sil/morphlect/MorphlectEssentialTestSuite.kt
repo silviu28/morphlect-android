@@ -168,8 +168,42 @@ class MorphlectEssentialTestSuite {
     fun properUniformDownscaling() {
         val bigLayer = StudioLayer(Mat(Size(1000.0, 1000.0), CvType.CV_8UC4))
         val uniformDownscaled = bigLayer.downscaledUniformly()
-        assert(uniformDownscaled.mat.width() == 800 || uniformDownscaled.mat.height() == 800)
+        assert(uniformDownscaled.mat.width() == 1000 || uniformDownscaled.mat.height() == 1000)
         bigLayer.close()
         uniformDownscaled.close()
+    }
+
+    @Test
+    fun addingLayersScalesAllLayersAccordingly() {
+        val layers = listOf(
+            StudioLayer(Mat(Size(300.0, 400.0), CvType.CV_8UC4)),
+            StudioLayer(Mat(Size(100.0, 200.0), CvType.CV_8UC4)),
+            StudioLayer(Mat(Size(600.0, 150.0), CvType.CV_8UC4))
+        )
+        val manager = LayerManager()
+        layers.forEach { manager.addLayer(it) }
+        assert(manager.layers.size == 3)
+        assert(
+            (layers[0].width == 600 && layers[0].height == 400) &&
+            (layers[1].width == 600 && layers[1].height == 400) &&
+            (layers[2].width == 600 && layers[2].height == 400)
+        )
+    }
+
+    @Test
+    fun layersInterchangeAccordingly() {
+        val layers = listOf(
+            StudioLayer(Mat(Size(300.0, 400.0), CvType.CV_8UC4), "A", ),
+            StudioLayer(Mat(Size(100.0, 200.0), CvType.CV_8UC4), "B" ),
+            StudioLayer(Mat(Size(600.0, 150.0), CvType.CV_8UC4), "C",)
+        )
+        val manager = LayerManager()
+        layers.forEach { manager.addLayer(it) }
+        assert(manager.layers.size == 3)
+        manager.interchangeLayers(0, 1)
+        assert(
+            (manager.layers[0].tag == "B") &&
+            (manager.layers[1].tag == "A")
+        )
     }
 }

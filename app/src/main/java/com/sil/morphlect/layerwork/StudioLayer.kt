@@ -21,7 +21,7 @@ import org.opencv.core.Size
 import kotlin.math.abs
 import androidx.core.graphics.createBitmap
 
-class StudioLayer(val mat: Mat) : Closeable {
+open class StudioLayer(val mat: Mat, val tag: String? = null) : Closeable {
     companion object {
         /**
          * creates a new empty StudioLayer.
