@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import com.sil.morphlect.data.EvaluationResult
-import com.sil.morphlect.enums.Output
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.logic.WebHelper
@@ -38,7 +38,7 @@ import com.sil.morphlect.view.WebOverlay
 import kotlinx.coroutines.launch
 
 // all caused by the fact that sliders accept double instead of float... ugh
-fun Map<Output, Float>.valuesToDouble(): Map<Output, Double>
+fun Map<Filter, Float>.valuesToDouble(): Map<Filter, Double>
     = entries.associate { (k, v) -> k to v.toDouble() }
 
 fun AlteredMobileNetLoader.computeCompositionDiff(initialImage: Bitmap, selectedImage: Bitmap): EvaluationResult {
@@ -49,7 +49,8 @@ fun AlteredMobileNetLoader.computeCompositionDiff(initialImage: Bitmap, selected
         .valuesToDouble()
         .let { EvaluationResult(it) }
 
-    return initial.delta(selected)
+    val dlta = initial.delta(selected)
+    return dlta
 }
 
 @Composable
@@ -66,7 +67,7 @@ fun StyleTransfer(
     val imagePickLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
         uri?.let { referenceImage = FormatConverters.uriToBitmap(context, it) }
     }
-    var diff by remember { mutableStateOf<Map<Output, Double>>(emptyMap()) }
+    var diff by remember { mutableStateOf<Map<Filter, Double>>(emptyMap()) }
 
     if (initialImage == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -122,10 +123,9 @@ fun StyleTransfer(
                 Image(
                     bitmap =
                         StudioLayer(FormatConverters.bitmapToMat(initialImage))
-                            .applyFilterMap(
-                                diff.entries
-                                    .mapNotNull { (k, v) -> k.toFilter()?.let { it to v } }.toMap())
-                            .mat.let { FormatConverters.matToBitmap(it) }
+                            .applyFilterMap(diff)
+                            .mat
+                            .let { FormatConverters.matToBitmap(it) }
                             .asImageBitmap(),
                 contentDescription = "reference image",
                 modifier = Modifier

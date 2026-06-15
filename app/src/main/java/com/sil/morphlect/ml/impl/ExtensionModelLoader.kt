@@ -8,7 +8,7 @@ import androidx.core.graphics.get
 import com.sil.morphlect.data.BindingMap
 import com.sil.morphlect.data.InferenceValue
 import com.sil.morphlect.data.Tensor4D
-import com.sil.morphlect.enums.Output
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.exception.ModelLoaderException
 import com.sil.morphlect.ml.ModelLoader
 import com.sil.mxtengine.data.InteractorType
@@ -129,7 +129,7 @@ class ExtensionModelLoader(
         val fmtOutputs = mutableMapOf<Int, Any>()
         outputs.forEachIndexed { index, outputSpec ->
             fmtOutputs[index] = when (outputSpec.type) {
-                InteractorType.FilterParams -> Array(1) { FloatArray(Output.entries.size) }
+                InteractorType.FilterParams -> Array(1) { FloatArray(Filter.entries.size) }
                 InteractorType.Text -> Array(1) { FloatArray(outputSpec.shape[0]) }
                 else -> {
                     // might not be the best... but why would you need a tensor of a bigger shape for an output?
@@ -172,7 +172,7 @@ class ExtensionModelLoader(
             InteractorType.FilterParams -> {
                 val resultBuffer = (fmtOutputs[0] as Array<FloatArray>)[0]
                 InferenceValue.MapValue(
-                    Output.entries.associate { it to resultBuffer[it.ordinal] }
+                    Filter.entries.associate { it to resultBuffer[it.ordinal] }
                 )
             }
 

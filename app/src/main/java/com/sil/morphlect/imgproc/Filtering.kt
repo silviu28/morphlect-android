@@ -4,6 +4,7 @@ import android.util.Log
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.Scalar
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import kotlin.math.pow
@@ -12,7 +13,6 @@ object Filtering {
     fun contrast(src: Mat, gamma: Double): Mat {
         val correctedGamma = 1.0 + gamma // so 0 -> no change, positive -> more contrast
 
-        // build lookup table — faster than per-pixel math
         val lut = Mat(1, 256, CvType.CV_8U)
         val lutData = ByteArray(256) { i ->
             (255.0 * (i / 255.0).pow(correctedGamma))
@@ -111,14 +111,44 @@ object Filtering {
         return dst
     }
 
+    fun saturation(src: Mat, factor: Double): Mat {
+        if (factor == 0.0) return src
+
+        val dst = Mat()
+        val hsv = Mat()
+        Imgproc.cvtColor(src, hsv, Imgproc.COLOR_BGR2HSV)
+
+        val channels = mutableListOf<Mat>()
+        Core.split(hsv, channels)
+
+        // Scale saturation
+        val alpha = 1.0 + factor
+        Core.multiply(channels[1], Scalar(alpha), channels[1])
+
+        // Clamp to [0, 255]
+        val minMax = Core.minMaxLoc(channels[1])
+        // Use inRange isn't ideal, let's just threshold
+        val temp = Mat()
+        Imgproc.threshold(channels[1], temp, 255.0, 255.0, Imgproc.THRESH_TRUNC)
+        Imgproc.threshold(temp, channels[1], 0.0, 0.0, Imgproc.THRESH_TOZERO)
+        temp.release()
+
+        Core.merge(channels, hsv)
+        Imgproc.cvtColor(hsv, dst, Imgproc.COLOR_HSV2BGR)
+
+        channels.forEach { it.release() }
+        hsv.release()
+        return dst
+    }
+
     // uniformly downscales CV mats. the bigger the resolution -> the bigger the downscale
-    fun uniformDownscale(src: Mat, maxDimension: Int = 800): Mat {
+    fun uniformDownscale(src: Mat, maxDimension: Int = 1000, smoothing: Boolean = true): Mat {
         val largest = maxOf(src.rows(), src.cols())
         if (largest <= maxDimension) return src.clone()
 
         val scale = maxDimension / largest.toDouble()
         val dst = Mat()
         Imgproc.resize(src, dst, Size(), scale, scale, Imgproc.INTER_CUBIC)
-        return dst
+        return if (!smoothing) dst else blur(dst, .02, .02) // apply very minute smoothing
     }
 }

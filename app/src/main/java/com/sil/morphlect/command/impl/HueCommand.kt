@@ -9,6 +9,6 @@ class HueCommand(val factor: Double) : StudioCommand {
         get() = "Hue ${"%.2f".format(factor)}"
 
     override fun execute(src: StudioLayer): StudioLayer {
-        return StudioLayer(Filtering.hueShift(src.mat, factor))
+        return StudioLayer(Filtering.saturation(src.mat, factor))
     }
 }

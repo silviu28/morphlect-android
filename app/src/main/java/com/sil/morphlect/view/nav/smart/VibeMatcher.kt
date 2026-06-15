@@ -1,5 +1,6 @@
 package com.sil.morphlect.view.nav.smart
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -37,15 +38,19 @@ import androidx.compose.ui.unit.dp
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Filter
-import com.sil.morphlect.enums.Output
 import com.sil.morphlect.imgproc.Filtering
 import com.sil.morphlect.imgproc.FormatConverters
 import com.sil.morphlect.ml.impl.MiniLMEmbeddingLoader
+import com.sil.morphlect.ml.impl.RatingMaximizerLoader
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.view.custom.LedDotSlider
 import com.sil.morphlect.view.dialog.DialogScaffold
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
+
+
 
 fun applyPresetsWithIntensity(mat: Mat, presets: List<Preset>, intensities: Map<String, Float>): Mat {
     var newMat = mat.clone()
@@ -57,7 +62,7 @@ fun applyPresetsWithIntensity(mat: Mat, presets: List<Preset>, intensities: Map<
                 Filter.Brightness -> Filtering.brightness(newMat, v * intensity)
                 Filter.Blur -> Filtering.blur(newMat, v * intensity, v * intensity)
                 Filter.LightBalance -> Filtering.lightBalance(newMat, v * intensity)
-                Filter.Hue -> Filtering.hueShift(newMat, v * intensity)
+                Filter.Hue -> Filtering.saturation(newMat, v * intensity)
                 Filter.Sharpness -> Filtering.sharpen(newMat, v * intensity)
             }
         }
@@ -65,12 +70,12 @@ fun applyPresetsWithIntensity(mat: Mat, presets: List<Preset>, intensities: Map<
     return newMat
 }
 
-private fun Filter.toOutput(): Output? = when (this) {
-    Filter.Sharpness -> Output.Sharpness
-    Filter.Brightness -> Output.Brightness
-    Filter.Contrast -> Output.Contrast
-    Filter.Hue -> Output.Hue
-    Filter.Blur -> Output.Bitrate
+private fun Filter.toFilter(): Filter? = when (this) {
+    Filter.Sharpness -> Filter.Sharpness
+    Filter.Brightness -> Filter.Brightness
+    Filter.Contrast -> Filter.Contrast
+    Filter.Hue -> Filter.Hue
+    Filter.Blur -> /*Filter.Bitrate*/ null
     Filter.LightBalance -> null
 }
 
@@ -78,11 +83,11 @@ private fun mergedEvaluationResult(
     presets: List<Preset>,
     intensities: Map<String, Float>,
 ): EvaluationResult {
-    val merged = mutableMapOf<Output, Double>()
+    val merged = mutableMapOf<Filter, Double>()
     presets.forEachIndexed { index, preset ->
         val intensity = intensities[index.toString()]?.toDouble() ?: 1.0
         preset.params.forEach { (filter, value) ->
-            val outputKey = filter.toOutput() ?: return@forEach
+            val outputKey = filter.toFilter() ?: return@forEach
             merged[outputKey] = (merged[outputKey] ?: .0) + (value * intensity/10)
         }
     }

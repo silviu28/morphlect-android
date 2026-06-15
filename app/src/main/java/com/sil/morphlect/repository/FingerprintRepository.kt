@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import com.sil.morphlect.data.FingerprintData
 import com.sil.morphlect.enums.Filter
-import com.sil.morphlect.enums.Output
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONException
@@ -55,15 +54,15 @@ class FingerprintRepository(context: Context) {
         }
     }
 
-    fun computeNew(current: FingerprintData, params: Map<Output, Float>): FingerprintData {
+    fun computeNew(current: FingerprintData, params: Map<Filter, Float>): FingerprintData {
         // compute how much new params contribute
         val newImageCnt = current.savedImageCount + 1u
         val ratio = 1.0 / newImageCnt.toInt()
-        val rating = params[Output.QualityRating] ?: 0f
+//        val rating = params[Output.QualityRating] ?: 0f
+        val rating = 0f
         val newRating = current.meanPreferenceRating * (1 - ratio) + rating * ratio
         val filters = params
-            .filter { it.key != Output.QualityRating && it.key.toFilter() != null }
-            .entries.associate { (key, value) -> key.toFilter()!! to value }
+            .entries.associate { (key, value) -> key to value } // ?
 
         // compute new preferable filter weights
         val newWeights = filters.entries.associate { (filter, value) ->

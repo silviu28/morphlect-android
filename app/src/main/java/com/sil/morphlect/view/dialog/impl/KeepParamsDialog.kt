@@ -23,12 +23,6 @@ fun KeepParamsDialog(onDismissRequest: () -> Unit, onApply: () -> Unit) {
     var keepHue        by remember { mutableStateOf(false) }
 
     DialogScaffold(title = "select which parameters to keep", onDismissRequest) {
-        Text(
-            text = "select which parameters you want to keep",
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween

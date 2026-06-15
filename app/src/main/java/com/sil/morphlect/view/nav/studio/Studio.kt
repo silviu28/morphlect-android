@@ -136,7 +136,7 @@ fun Studio(
         result.outputs.entries.forEachIndexed { index, (key, value) ->
             val targetValue = value * 10
             delay(index * 400L)
-            key.toFilter()?.run {
+            key.run {
                 vm.changeSelectedEffect(this)
                 delay(150L)
 

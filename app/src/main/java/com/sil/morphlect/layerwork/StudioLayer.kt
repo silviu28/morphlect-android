@@ -203,17 +203,21 @@ class StudioLayer(val mat: Mat) : Closeable {
     fun toCvMat(): Mat = mat
 
     fun applyFilterMap(filters: Map<Filter, Double>): StudioLayer {
-        var newMat = mat.clone()
-        filters.forEach { (filter, factor) ->
-            newMat = when (filter) {
-                Filter.Contrast -> Filtering.contrast(newMat, factor * 10)
-                Filter.Brightness -> Filtering.brightness(newMat, factor * 10)
-                Filter.Blur -> Filtering.blur(newMat, factor * 10, factor * 10)
-                Filter.LightBalance -> Filtering.lightBalance(newMat, factor * 10)
-                Filter.Hue -> Filtering.hueShift(newMat, factor * 10)
-                Filter.Sharpness -> Filtering.sharpen(newMat, factor * 10)
-            }
-        }
-        return StudioLayer(newMat)
+        return StudioLayer(mat.applyFilterMap(filters))
     }
+}
+
+fun Mat.applyFilterMap(filters: Map<Filter, Double>): Mat {
+    var newMat = clone()
+    filters.forEach { (filter, factor) ->
+        newMat = when (filter) {
+            Filter.Contrast -> Filtering.contrast(newMat, factor * 10)
+            Filter.Brightness -> Filtering.brightness(newMat, factor * 10)
+            Filter.Blur -> Filtering.blur(newMat, factor * 10, factor * 10)
+            Filter.LightBalance -> Filtering.lightBalance(newMat, factor * 10)
+            Filter.Hue -> Filtering.saturation(newMat, factor * 10)
+            Filter.Sharpness -> Filtering.sharpen(newMat, factor * 10)
+        }
+    }
+    return newMat
 }

@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sil.morphlect.data.EvaluationResult
-import com.sil.morphlect.enums.Output
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.repository.AppConfigRepository
 import com.sil.morphlect.repository.ExtensionsRepository
 import com.sil.morphlect.viewmodel.StudioViewModel
@@ -156,5 +156,5 @@ fun SmartFeaturesSection(
 }
 
 fun generateRandomResult(): EvaluationResult = EvaluationResult(
-    Output.entries.associate { out -> out to Random.nextDouble() }
+    Filter.entries.associate { out -> out to Random.nextDouble() }
 )
