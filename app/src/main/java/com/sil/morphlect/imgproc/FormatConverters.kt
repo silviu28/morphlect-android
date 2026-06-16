@@ -6,6 +6,7 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import org.opencv.android.Utils
 import org.opencv.core.Mat
+import androidx.core.graphics.createBitmap
 
 object FormatConverters {
     /**
@@ -32,11 +33,7 @@ object FormatConverters {
      * convert an OpenCV Mat object to a Bitmap
      */
     fun matToBitmap(mat: Mat): Bitmap {
-        val bitmap = Bitmap.createBitmap(
-            mat.cols(),
-            mat.rows(),
-            Bitmap.Config.ARGB_8888
-        )
+        val bitmap = createBitmap(mat.cols(), mat.rows())
         Utils.matToBitmap(mat, bitmap)
         return bitmap
     }

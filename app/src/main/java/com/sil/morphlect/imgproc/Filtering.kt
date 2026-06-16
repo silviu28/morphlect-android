@@ -71,15 +71,20 @@ object Filtering {
 
     fun lightBalance(src: Mat, lb: Double): Mat {
         if (lb == 0.0) {
-            return src
+            return src.clone()
         }
         val dst = Mat()
         val channels = mutableListOf<Mat>()
         Core.split(src, channels)
         val redShift = -lb * 25
         val blueShift = lb * 25
-        channels[2].convertTo(channels[2], -1, 1.0, redShift)
-        channels[0].convertTo(channels[0], -1, 1.0, blueShift)
+        
+        if (channels.size >= 3) {
+            channels[0].convertTo(channels[0], -1, 1.0, redShift)
+            channels[2].convertTo(channels[2], -1, 1.0, blueShift)
+        } else if (channels.isNotEmpty()) {
+            channels[0].convertTo(channels[0], -1, 1.0, redShift)
+        }
 
         Core.merge(channels, dst)
         channels.forEach {
@@ -90,11 +95,20 @@ object Filtering {
 
     fun hueShift(src: Mat, shift: Double): Mat {
         if (shift == 0.0) {
-            return src
+            return src.clone()
         }
         val dst = Mat()
         val hsv = Mat()
-        Imgproc.cvtColor(src, hsv, Imgproc.COLOR_BGR2HSV)
+        
+        val rgb = Mat()
+        val hasAlpha = src.channels() == 4
+        if (hasAlpha) {
+            Imgproc.cvtColor(src, rgb, Imgproc.COLOR_RGBA2RGB)
+        } else {
+            src.copyTo(rgb)
+        }
+        
+        Imgproc.cvtColor(rgb, hsv, Imgproc.COLOR_RGB2HSV)
 
         val channels = mutableListOf<Mat>()
         Core.split(hsv, channels)
@@ -105,39 +119,93 @@ object Filtering {
         Core.normalize(channels[0], channels[0], 0.0, 180.0, Core.NORM_MINMAX)
 
         Core.merge(channels, hsv)
-        Imgproc.cvtColor(hsv, dst, Imgproc.COLOR_HSV2BGR)
+        val rgbProcessed = Mat()
+        Imgproc.cvtColor(hsv, rgbProcessed, Imgproc.COLOR_HSV2RGB)
+
+        if (hasAlpha) {
+            val srcChannels = mutableListOf<Mat>()
+            Core.split(src, srcChannels)
+            val alpha = srcChannels[3]
+            
+            val processedChannels = mutableListOf<Mat>()
+            Core.split(rgbProcessed, processedChannels)
+            processedChannels.add(alpha)
+            
+            Core.merge(processedChannels, dst)
+            
+            for (i in 0..2) {
+                srcChannels[i].release()
+                processedChannels[i].release()
+            }
+            alpha.release()
+        } else {
+            rgbProcessed.copyTo(dst)
+        }
 
         channels.forEach { it.release() }
+        rgb.release()
+        hsv.release()
+        rgbProcessed.release()
         return dst
     }
 
     fun saturation(src: Mat, factor: Double): Mat {
-        if (factor == 0.0) return src
+        if (factor == 0.0) return src.clone()
 
         val dst = Mat()
         val hsv = Mat()
-        Imgproc.cvtColor(src, hsv, Imgproc.COLOR_BGR2HSV)
+        
+        val rgb = Mat()
+        val hasAlpha = src.channels() == 4
+        if (hasAlpha) {
+            Imgproc.cvtColor(src, rgb, Imgproc.COLOR_RGBA2RGB)
+        } else {
+            src.copyTo(rgb)
+        }
+        
+        Imgproc.cvtColor(rgb, hsv, Imgproc.COLOR_RGB2HSV)
 
         val channels = mutableListOf<Mat>()
         Core.split(hsv, channels)
 
         // Scale saturation
-        val alpha = 1.0 + factor
-        Core.multiply(channels[1], Scalar(alpha), channels[1])
+        val alphaFactor = 1.0 + factor
+        Core.multiply(channels[1], Scalar(alphaFactor), channels[1])
 
         // Clamp to [0, 255]
-        val minMax = Core.minMaxLoc(channels[1])
-        // Use inRange isn't ideal, let's just threshold
         val temp = Mat()
         Imgproc.threshold(channels[1], temp, 255.0, 255.0, Imgproc.THRESH_TRUNC)
         Imgproc.threshold(temp, channels[1], 0.0, 0.0, Imgproc.THRESH_TOZERO)
         temp.release()
 
         Core.merge(channels, hsv)
-        Imgproc.cvtColor(hsv, dst, Imgproc.COLOR_HSV2BGR)
+        val rgbProcessed = Mat()
+        Imgproc.cvtColor(hsv, rgbProcessed, Imgproc.COLOR_HSV2RGB)
+
+        if (hasAlpha) {
+            val srcChannels = mutableListOf<Mat>()
+            Core.split(src, srcChannels)
+            val alpha = srcChannels[3]
+            
+            val processedChannels = mutableListOf<Mat>()
+            Core.split(rgbProcessed, processedChannels)
+            processedChannels.add(alpha)
+            
+            Core.merge(processedChannels, dst)
+            
+            for (i in 0..2) {
+                srcChannels[i].release()
+                processedChannels[i].release()
+            }
+            alpha.release()
+        } else {
+            rgbProcessed.copyTo(dst)
+        }
 
         channels.forEach { it.release() }
+        rgb.release()
         hsv.release()
+        rgbProcessed.release()
         return dst
     }
 
