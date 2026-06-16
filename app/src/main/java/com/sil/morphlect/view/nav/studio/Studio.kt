@@ -193,7 +193,7 @@ fun Studio(
                 )
 
                 showOptionsSheet -> OptionsBottomSheet(
-                    navController,
+                    onNavigate = { route -> navController.navigate(route) },
                     onDismiss = { showOptionsSheet = false }
                 )
 

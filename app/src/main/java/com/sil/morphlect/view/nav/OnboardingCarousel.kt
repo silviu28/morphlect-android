@@ -24,17 +24,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.sil.morphlect.TestTags
 import com.sil.morphlect.view.custom.PixelatedGraphic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // all page content organized in a tidy class
-private data class OnboardingPageContent(
+data class OnboardingPageContent(
     val title: String,
     val description: String,
     val imageBitmap: ImageBitmap? = null,
@@ -42,40 +44,7 @@ private data class OnboardingPageContent(
 )
 
 @Composable
-fun OnboardingCarousel(navController: NavController) {
-    val pages = listOf(
-        OnboardingPageContent(
-            title = "morphlect",
-            description = "a modern approach to post-processing, right from the comfort of your pocket.",
-            imageVector = Icons.Default.CameraAlt,
-        ),
-        OnboardingPageContent(
-            title = "personal fine-tuning",
-            description = "apply any filters to your liking. combine them together and find ways to add style to your images.",
-            imageVector = Icons.Default.Person
-        ),
-        OnboardingPageContent(
-            title = "intuitive effect application",
-            description = "extend your creative potential using personalized machine-learning models, running efficiently right from your device.",
-            imageVector = Icons.Default.Animation,
-        ),
-        OnboardingPageContent(
-            title = "extensible",
-            description = "want to add a personal feature? just add your own pre-trained TFLite model and start experimenting.",
-            imageVector = Icons.Default.Extension,
-        ),
-        OnboardingPageContent(
-            title = "transparent",
-            description = "no telemetry collected. most things happen locally on your device, with minor friction between content servers.",
-            imageVector = Icons.Default.Star,
-        ),
-        OnboardingPageContent(
-            title = "start creating",
-            description = "that's all there is to know. now go ahead and make your pics truly yours!",
-            imageVector = Icons.Default.Star,
-        )
-    )
-
+fun OnboardingCarousel(pages: Array<OnboardingPageContent>, onNavigate: (route: String) -> Unit) {
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()
 
@@ -100,7 +69,7 @@ fun OnboardingCarousel(navController: NavController) {
             }
 
             Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
-                Button(onClick = { navController.navigate("pick") }) {
+                Button(onClick = { onNavigate("pick") }) {
                     Text("let's get started")
                 }
             }
@@ -120,6 +89,7 @@ private fun OnboardingPage(pageContent: OnboardingPageContent) {
         PixelatedGraphic(
             imageBitmap = pageContent.imageBitmap,
             imageVector = pageContent.imageVector,
+            modifier = Modifier.testTag(TestTags.ONBOARDING_GRAPHIC)
         )
 
         Text(

@@ -1,5 +1,11 @@
 package com.sil.morphlect
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -14,17 +20,17 @@ import com.sil.morphlect.repository.FingerprintRepository
 import com.sil.morphlect.repository.PresetsRepository
 import com.sil.morphlect.view.nav.FingerprintManager
 import com.sil.morphlect.view.nav.Frontpage
-import com.sil.morphlect.view.nav.ImageComparison
 import com.sil.morphlect.view.nav.smart.ImageEvaluation
 import com.sil.morphlect.view.nav.ModelManager
 import com.sil.morphlect.view.nav.PickImage
-import com.sil.morphlect.view.nav.SaveImage
+import com.sil.morphlect.view.nav.SaveAndCompareImage
 import com.sil.morphlect.view.nav.Settings
 import com.sil.morphlect.view.nav.smart.StyleTransfer
 import com.sil.morphlect.view.nav.smart.VibeMatcher
 import com.sil.morphlect.view.nav.OnboardingCarousel
 import com.sil.morphlect.view.nav.studio.Studio
 import com.sil.morphlect.view.camera.CameraMode
+import com.sil.morphlect.view.nav.OnboardingPageContent
 import com.sil.morphlect.view.nav.smart.MXTComposedView
 import com.sil.morphlect.viewmodel.CameraModeViewModel
 import com.sil.morphlect.viewmodel.StudioViewModel
@@ -41,6 +47,40 @@ fun MorphlectNavHost() {
     val extensionsRepository                     = remember { ExtensionsRepository(ctx) }
     val fingerprintRepository                    = remember { FingerprintRepository(ctx) }
     val analyzerFeedFlow                         = remember { MutableSharedFlow<String>() }
+    val onboardingPages = remember {
+        arrayOf(
+            OnboardingPageContent(
+                title = "morphlect",
+                description = "a modern approach to post-processing, right from the comfort of your pocket.",
+                imageVector = Icons.Default.CameraAlt,
+            ),
+            OnboardingPageContent(
+                title = "personal fine-tuning",
+                description = "apply any filters to your liking. combine them together and find ways to add style to your images.",
+                imageVector = Icons.Default.Person
+            ),
+            OnboardingPageContent(
+                title = "intuitive effect application",
+                description = "extend your creative potential using personalized machine-learning models, running efficiently right from your device.",
+                imageVector = Icons.Default.Animation,
+            ),
+            OnboardingPageContent(
+                title = "extensible",
+                description = "want to add a personal feature? just add your own pre-trained TFLite model and start experimenting.",
+                imageVector = Icons.Default.Extension,
+            ),
+            OnboardingPageContent(
+                title = "transparent",
+                description = "no telemetry collected. most things happen locally on your device, with minor friction between content servers.",
+                imageVector = Icons.Default.Star,
+            ),
+            OnboardingPageContent(
+                title = "start creating",
+                description = "that's all there is to know. now go ahead and make your pics truly yours!",
+                imageVector = Icons.Default.Star,
+            )
+        )
+    }
 
     NavHost(
         navController = navController,
@@ -54,7 +94,10 @@ fun MorphlectNavHost() {
         }
 
         composable("onboarding") {
-            OnboardingCarousel(navController)
+            OnboardingCarousel(
+                pages = onboardingPages,
+                onNavigate = { route -> navController.navigate(route) }
+            )
         }
 
         composable("pick") {
@@ -112,20 +155,12 @@ fun MorphlectNavHost() {
         }
 
         composable("save") {
-            SaveImage(
-                imageLayers = studioViewModel.layers,
-                onReturn = { navController.popBackStack() },
-                fingerprintRepository = fingerprintRepository,
-                filters = studioViewModel.filterValues,
-            )
-        }
-
-        composable("compare") {
-            ImageComparison(
+            SaveAndCompareImage(
                 originalImageBitmap =
                     studioViewModel.originalMat?.let { FormatConverters.matToBitmap(it) },
-                layers = studioViewModel.layers,
-                onReturn = { navController.popBackStack() }
+                layers = studioViewModel.layers.toList(),
+                onReturn = { navController.popBackStack() },
+                fingerprintRepository = fingerprintRepository,
             )
         }
 
