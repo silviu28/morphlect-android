@@ -13,55 +13,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.view.dialog.DialogScaffold
 
 @Composable
-fun KeepParamsDialog(onDismissRequest: () -> Unit, onApply: () -> Unit) {
-    var keepSharpness  by remember { mutableStateOf(false) }
-    var keepBrightness by remember { mutableStateOf(false) }
-    var keepContrast   by remember { mutableStateOf(false) }
-    var keepHue        by remember { mutableStateOf(false) }
+fun KeepParamsDialog(
+    onDismissRequest: () -> Unit,
+    onApply: (keptParams: List<Filter>) -> Unit,
+) {
+    var keptParams by remember { mutableStateOf(listOf<Filter>()) }
 
     DialogScaffold(title = "select which parameters to keep", onDismissRequest) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("sharpness")
-            Checkbox(
-                checked = keepSharpness,
-                onCheckedChange = { keepSharpness = !keepSharpness }
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("brightness")
-            Checkbox(
-                checked = keepBrightness,
-                onCheckedChange = { keepBrightness = !keepBrightness }
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("contrast")
-            Checkbox(
-                checked = keepContrast,
-                onCheckedChange = { keepContrast = !keepContrast }
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("hue")
-            Checkbox(
-                checked = keepHue,
-                onCheckedChange = { keepHue = !keepHue }
-            )
+        Filter.entries.forEach { filter ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(filter.name.lowercase())
+                Checkbox(
+                    checked = filter in keptParams,
+                    onCheckedChange = {
+                        if (filter in keptParams)
+                            keptParams -= filter
+                        else
+                            keptParams += filter
+                    }
+                )
+            }
         }
 
         Row(
@@ -71,7 +49,7 @@ fun KeepParamsDialog(onDismissRequest: () -> Unit, onApply: () -> Unit) {
             TextButton(onClick = onDismissRequest) {
                 Text("cancel")
             }
-            TextButton(onClick = onApply) {
+            TextButton(onClick = { onApply(keptParams) }) {
                 Text("continue")
             }
         }

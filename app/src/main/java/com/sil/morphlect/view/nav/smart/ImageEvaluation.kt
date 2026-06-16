@@ -46,7 +46,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
-suspend fun RatingMaximizerLoader.optimizeComposition(image: Bitmap, iterationCount: Int): Map<Filter, Double> = withContext(Dispatchers.Default) {
+suspend fun RatingMaximizerLoader.optimizeComposition(
+    image: Bitmap,
+    iterationCount: Int,
+    keptParams: List<Filter>
+): Map<Filter, Double> = withContext(Dispatchers.Default) {
     val cvmat = FormatConverters.bitmapToMat(image)
     var stepSize = .05
     val decayPerStep = .995
@@ -54,6 +58,7 @@ suspend fun RatingMaximizerLoader.optimizeComposition(image: Bitmap, iterationCo
     var bestScore = 0f
     for (i in 0..iterationCount) {
         val next = bestSolution.entries
+            .filter { it.key !in keptParams }
             .associate { entry ->
                 val disposition = ((Math.random() * stepSize) * if (Math.random() > 0.5) 1 else -1).toFloat()
                 entry.key to (entry.value + disposition).coerceIn(-0.8, 0.8)
@@ -82,6 +87,7 @@ class ImageEvaluationUiState() {
     var optimizing by mutableStateOf(false)
     var optimizedParams by mutableStateOf<Map<Filter, Double>?>(null)
     var score by mutableFloatStateOf(0f)
+    var keptParams by mutableStateOf<List<Filter>>(emptyList())
 }
 
 @Composable
@@ -98,12 +104,15 @@ fun ImageEvaluation(
 
     LaunchedEffect(state.optimizing) {
         if (state.optimizing) {
-            state.optimizedParams = evaluator.optimizeComposition(previewBitmap!!, 100)
+            state.optimizedParams = evaluator.optimizeComposition(
+                previewBitmap!!,
+                100,
+                state.keptParams
+            )
             state.optimizing = !state.optimizing
             state.keepParamsDialogActive = !state.keepParamsDialogActive
             state.optimizedParams?.let {
-                val divided = it.entries.associate { (k, v) -> k to v / 10.0 }
-                onFinished(EvaluationResult(divided))
+                onFinished(EvaluationResult(it))
             }
             onReturn()
         }
@@ -168,7 +177,10 @@ fun ImageEvaluation(
         state.keepParamsDialogActive ->
             KeepParamsDialog(
                 onDismissRequest = { state.keepParamsDialogActive = false },
-                onApply = { state.optimizing = true }
+                onApply = { keptParams ->
+                    state.keptParams = keptParams
+                    state.optimizing = true
+                },
             )
     }
 
