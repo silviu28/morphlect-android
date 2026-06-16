@@ -119,7 +119,6 @@ fun FilteringSection(
     var presets            by remember { mutableStateOf<List<Preset>>(listOf()) }
     var showAddDialog      by remember { mutableStateOf(false) }
     var showRemoveDialog   by remember { mutableStateOf(false) }
-    var selectedPresetName by remember { mutableStateOf<String?>(null) }
     var selectedPreset     by remember { mutableStateOf<Preset?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
@@ -133,7 +132,7 @@ fun FilteringSection(
     }
 
     LaunchedEffect(Unit) {
-        presets = presetsRepository.loadAll()
+        presets = presetsRepository.load()
     }
 
     when {
@@ -142,13 +141,15 @@ fun FilteringSection(
             onAddPreset = { preset ->
                 coroutineScope.launch {
                     presetsRepository.addPreset(preset)
-                    presets = presetsRepository.load()
+                    presets += preset
                 }
             },
             onAddPresetFromStudio = { name ->
                 coroutineScope.launch {
-                    presetsRepository.addPreset(name, vm.filterValues)
-                    presets = presetsRepository.load()
+                    val preset = Preset(name, vm.getCumulativeFilterMap()).apply {
+                        presetsRepository.addPreset(this)
+                    }
+                    presets += preset
                 }
             }
         )
@@ -156,14 +157,17 @@ fun FilteringSection(
         showRemoveDialog -> AlertDialog(
             onDismissRequest = { showRemoveDialog = false },
             title = { Text("remove preset") },
-            text = { Text("do you want to remove $selectedPresetName?") },
+            text = { Text("do you want to remove ${selectedPreset?.name}?") },
             confirmButton = {
                 TextButton(onClick = {
-                    coroutineScope.launch {
-                        presetsRepository.removePreset(selectedPresetName!!)
-                        presets = presetsRepository.loadAll()
+                    selectedPreset?.let {
+                        coroutineScope.launch {
+                            presetsRepository.removePreset(it)
+                        }
+                        presets = presets.filter { preset -> !preset.name.equals( it.name) }
+                        showRemoveDialog = false
+                        selectedPreset = null
                     }
-                    showRemoveDialog = false
                 }) {
                     Text("yes")
                 }
@@ -196,7 +200,6 @@ fun FilteringSection(
                 Text("save preset")
             }
             TextButton(onClick = {
-                selectedPreset = null
                 showRemoveDialog = true
             }) {
                 Icon(Icons.Default.Delete, contentDescription = "remove")
@@ -323,7 +326,6 @@ fun FilteringSection(
         originalMat = vm.originalMat,
         onApply = { applyPreset(it) },
         onLongPress = { preset ->
-            selectedPresetName = preset.name
             selectedPreset = preset
         },
         onAddNew = { showAddDialog = true }

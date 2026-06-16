@@ -20,6 +20,7 @@ import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.imgproc.Filtering
 import com.sil.morphlect.imgproc.FormatConverters
+import com.sil.morphlect.layerwork.applyFilterMap
 import com.sil.morphlect.view.custom.FlickeringLedDotProgressIndicator
 import org.opencv.core.Mat
 import org.opencv.core.Size
@@ -33,29 +34,19 @@ fun PresetPreview(
     onLongPress: () -> Unit,
     expanded: Boolean = false,
 ) {
-    val processedBitmap by remember {
-        derivedStateOf {
-            originalMat?.let {
-                val smallMat = Mat()
-                val ratio = maxOf(it.width(), it.height()) / 256.0
-                Imgproc.resize(
-                    it, smallMat,
-                    Size(it.width() / ratio, it.height() / ratio)
-                )
-                var previewMat = smallMat.clone()
-                Filter.entries.forEach { filter ->
-                    val factor = preset.params[filter] ?: 0.0
-                    previewMat = when (filter) {
-                        Filter.Contrast -> Filtering.contrast(previewMat, factor)
-                        Filter.Brightness -> Filtering.brightness(previewMat, factor)
-                        Filter.Blur -> Filtering.blur(previewMat, factor, factor)
-                        Filter.LightBalance -> Filtering.lightBalance(previewMat, factor)
-                        Filter.Hue -> Filtering.hueShift(previewMat, factor)
-                        Filter.Sharpness -> Filtering.sharpen(previewMat, factor)
-                    }
-                }
-                FormatConverters.matToBitmap(previewMat).also { previewMat.release() }
-            }
+    val processedBitmap = remember(preset, originalMat) {
+        originalMat?.let {
+            val smallMat = Mat()
+            val ratio = maxOf(it.width(), it.height()) / 256.0
+            Imgproc.resize(
+                it, smallMat,
+                Size(it.width() / ratio, it.height() / ratio)
+            )
+            val previewMat = smallMat.applyFilterMap(preset.params)
+            val bitmap = FormatConverters.matToBitmap(previewMat)
+            smallMat.release()
+            previewMat.release()
+            bitmap
         }
     }
 
