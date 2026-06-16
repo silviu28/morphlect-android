@@ -94,8 +94,12 @@ fun dominantClusterBoundingBox(
     clustering: ClusteringType = ClusteringType.DBSCAN,
 ): Rect? {
     val clusters = when (clustering) {
-        ClusteringType.DBSCAN -> dbscan(bbs, eps, minPoints) { CenterWise(it.centerX(), it.centerY(), it) }
-        ClusteringType.Kmeans -> imageSegmentKmeans(bbs, imageWidth, imageHeight) { Pair(it.centerX(), it.centerY()) }
+        ClusteringType.DBSCAN -> dbscan(bbs, eps, minPoints) {
+            CenterWise(it.centerX(), it.centerY(), it)
+        }
+        ClusteringType.Kmeans -> imageSegmentKmeans(bbs, imageWidth, imageHeight) {
+            Pair(it.centerX(), it.centerY())
+        }
     }
     val dominant = clusters.maxByOrNull { it.value.size }?.value ?: return null
 
