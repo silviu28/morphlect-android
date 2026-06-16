@@ -145,29 +145,33 @@ object WebHelper {
 
         val body = response.body?.string()
 
-        if (query.isNullOrBlank()) {
-            val images = JSONArray(body)
-            return@withContext List(images.length()) {
-                images
-                    .getJSONObject(it)
-                    .getJSONObject("urls")
-                    .getString("small")
+        return@withContext try {
+            if (query.isNullOrBlank()) {
+                val images = JSONArray(body)
+                List(images.length()) {
+                    images
+                        .getJSONObject(it)
+                        .getJSONObject("urls")
+                        .getString("small")
+                } // return
+            } else {
+                val parsedBody = JSONArray(body)
+                List(parsedBody.length()) {
+                    parsedBody
+                        .getJSONObject(it)
+                        .getJSONObject("urls")
+                        .getString("small")
+                } // return
             }
-        } else {
-            val parsedBody = JSONObject(body)
-            val images = parsedBody.getJSONArray("results")
-            return@withContext List(images.length()) {
-                images
-                    .getJSONObject(it)
-                    .getJSONObject("urls")
-                    .getString("small")
-            }
+        } catch (e: Exception) {
+            Log.e("Unsplash", e.toString())
+            emptyList()
         }
     }
 
-    suspend fun downloadUnsplashImage(query: String, context: Context): Bitmap? = withContext(Dispatchers.IO) {
+    suspend fun downloadUnsplashImage(query: String): Bitmap? = withContext(Dispatchers.IO) {
         // first get a random image URL for the query
-        val searchUrl = "$query"
+        val searchUrl = query
 
         val request = Request.Builder()
             .url(searchUrl)
