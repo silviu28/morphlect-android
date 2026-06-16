@@ -10,7 +10,7 @@ data class CenterWise<T>(val x: Int, val y: Int, val obj: T)
 /**
  * the type of clustering applied to the algorithm - either `K-means` or `DBSCAN`
  */
-enum class ClusteringType { Kmeans, DBSCAN }
+enum class ClusteringType { Kmeans, DBSCAN, Adaptive }
 
 // approach 1 - using DBSCAN -> O(n^2) complexity
 // may run slower on lots of boxes but clusters the best

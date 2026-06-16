@@ -24,7 +24,7 @@ class CameraModeViewModel() : ViewModel() {
     var imageOnlyLoadedModels by mutableStateOf<Map<ExtensionModelLoader, Boolean>>(emptyMap())
     val inferenceRefreshTimes = arrayOf(1.seconds, 2.seconds, 4.seconds, 5.seconds)
     var inferenceRefreshInterval by mutableStateOf(inferenceRefreshTimes[0])
-    var clusteringType by mutableStateOf(ClusteringType.DBSCAN)
+    var clusteringType by mutableStateOf(ClusteringType.Adaptive)
 
     suspend fun loadRepositories(presetsRepository: PresetsRepository, extensionsRepository: ExtensionsRepository)
         = withContext(Dispatchers.IO) {

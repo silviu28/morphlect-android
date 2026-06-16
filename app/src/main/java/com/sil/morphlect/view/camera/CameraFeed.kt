@@ -100,6 +100,13 @@ fun dominantClusterBoundingBox(
         ClusteringType.Kmeans -> imageSegmentKmeans(bbs, imageWidth, imageHeight) {
             Pair(it.centerX(), it.centerY())
         }
+        ClusteringType.Adaptive -> {
+            if (bbs.size < 20) imageSegmentKmeans(bbs, imageWidth, imageHeight) {
+                Pair(it.centerX(), it.centerY())
+            } else dbscan(bbs, eps, minPoints) {
+                CenterWise(it.centerX(), it.centerY(), it)
+            }
+        }
     }
     val dominant = clusters.maxByOrNull { it.value.size }?.value ?: return null
 
@@ -252,7 +259,6 @@ fun CameraFeed(
                 // section 1 - performs conversion to Cv::Mat
                 if (mediaImage.planes.size == 3) {
                     val mat = mediaImage.yuvToRgba()
-//                    currentFrame?.close()
                     currentFrame = StudioLayer(mat)
                 }
 
@@ -269,7 +275,7 @@ fun CameraFeed(
                         imageHeight = analysisH
                         // take only the objects with high confidence
                         boundingBoxes = detectedObjects
-//                            .filter { it.labels.any { label -> label.confidence >= 0.5f } }
+                            .filter { it.labels.any { label -> label.confidence >= 0.7f } }
                             .map { it.boundingBox }
 
                         spanningBoundingBox = dominantClusterBoundingBox(
@@ -433,37 +439,6 @@ fun CameraFeed(
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun CameraFeedPreview() {
-    val ctx = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val previewFeedFlow = MutableSharedFlow<String>()
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            previewFeedFlow.emit("feed output here.")
-            delay(1000L)
-            previewFeedFlow.emit("feed output here..")
-            delay(1000L)
-            previewFeedFlow.emit("feed output here...")
-            delay(1000L)
-        }
-    }
-
-    CameraFeed(
-        context = ctx,
-        lifecycleOwner,
-        onImageCaptured = { _ -> },
-        analyzerFeedFlow = previewFeedFlow,
-        imageOnlyLoadedModels = emptyMap(),
-        cameraControllerState = CameraControllerState(),
-        uiState = CameraModeUiState(ctx),
-        clusteringType = ClusteringType.DBSCAN,
-        onCompositionCheck = { _ -> Unit },
-    )
 }
 
 fun DrawScope.drawBoundingBox(box: Rect, scaleX: Float, scaleY: Float, color: Color = Color.White.copy(alpha = .5f)) {
