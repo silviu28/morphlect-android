@@ -2,10 +2,17 @@ package com.sil.morphlect.extension
 
 import android.graphics.ImageFormat
 import android.media.Image
+import androidx.compose.ui.graphics.Color
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.Scalar
+import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
+
+fun Color.toCvScalar(): Scalar {
+    return Scalar(red * 255.0, green * 255.0, blue * 255.0)
+}
 
 // referenced from https://github.com/mcanyucel/camerax-opencv
 fun Image.yuvToRgba(): Mat {
@@ -81,4 +88,22 @@ fun Image.yuvToRgba(): Mat {
     return rgbaMat.apply {
         Core.rotate(rgbaMat, rgbaMat, Core.ROTATE_90_CLOCKWISE)
     }
+}
+
+/**
+ * returns a new `Mat` padded to fit given `size`.
+ */
+fun Mat.extend(size: Size): Mat {
+    if (size == size()) return this
+
+    val dst = Mat.zeros(size, type())
+
+    val xOffset = ((size.width - cols()) / 2).toInt()
+    val yOffset = ((size.height - rows()) / 2).toInt()
+
+    val region = dst.submat(yOffset, yOffset + rows(), xOffset, xOffset + cols())
+    copyTo(region)
+    region.release()
+
+    return dst
 }

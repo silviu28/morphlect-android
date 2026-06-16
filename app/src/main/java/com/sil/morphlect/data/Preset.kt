@@ -8,15 +8,17 @@ import org.json.JSONObject
 @Serializable
 data class Preset(val name: String, val params: Map<Filter, Double>) {
     companion object {
+        @Throws(JSONException::class)
         fun fromJSON(json: JSONObject): Preset {
             val name = json.getString("name")
             val paramsData = json.getJSONObject("values")
 
-            val params = Filter.entries.associate { it to paramsData.optDouble(it.name) }
+            val params = Filter.entries.associate { it to paramsData.optDouble(it.name, 0.0) }
             return Preset(name, params)
         }
     }
 
+    @Throws(JSONException::class)
     fun toJSON(): JSONObject {
         try {
             return JSONObject().apply {
