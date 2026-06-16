@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class RatingMaximizerLoader : ModelLoader<Bitmap, Float> {
-    override val name = "ratingmaximizer.tflite"
+    override val name = "mobilenet_rater.tflite"
     private var interpreter: Interpreter? = null
 
     companion object {
