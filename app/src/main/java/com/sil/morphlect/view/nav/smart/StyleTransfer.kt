@@ -133,7 +133,7 @@ fun StyleTransfer(
                     .weight(1f)
                 )
                 Button(onClick = {
-                    onFinished(EvaluationResult(diff))
+                    onFinished(EvaluationResult(diff.entries.associate { (k, v) -> k to v / 10.0 }))
                     onReturn()
                 }) {
                     Text("apply")

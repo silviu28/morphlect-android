@@ -256,6 +256,24 @@ class StudioViewModel : ViewModel, StudioCommandManager {
         }
     }
 
+    fun getCumulativeFilterMap(): Map<Filter, Double> {
+        val result = Filter.entries.associateWith { 0.0 }.toMutableMap()
+        undoStack.forEach { command ->
+            when (command) {
+                is ContrastCommand -> result[Filter.Contrast] = (result[Filter.Contrast] ?: 0.0) + command.factor
+                is BrightnessCommand -> result[Filter.Brightness] = (result[Filter.Brightness] ?: 0.0) + command.factor
+                is BlurCommand -> result[Filter.Blur] = (result[Filter.Blur] ?: 0.0) + command.xFactor
+                is SharpnessCommand -> result[Filter.Sharpness] = (result[Filter.Sharpness] ?: 0.0) + command.factor
+                is HueCommand -> result[Filter.Hue] = (result[Filter.Hue] ?: 0.0) + command.factor
+                is LightBalanceCommand -> result[Filter.LightBalance] = (result[Filter.LightBalance] ?: 0.0) + command.factor
+            }
+        }
+        val currentFilter = selectedFilter
+        val currentValue = filterValues[currentFilter] ?: 0.0
+        result[currentFilter] = (result[currentFilter] ?: 0.0) + currentValue
+        return result
+    }
+
     fun clearComposition() {
         layerManager.layers.clear()
     }

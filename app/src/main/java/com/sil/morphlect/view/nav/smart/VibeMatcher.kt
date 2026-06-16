@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -50,33 +51,26 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
 
-
-
 fun applyPresetsWithIntensity(mat: Mat, presets: List<Preset>, intensities: Map<String, Float>): Mat {
-    var newMat = mat.clone()
+    var current = mat.clone()
     presets.forEachIndexed { idx, preset ->
         val intensity = intensities[idx.toString()]?.toDouble() ?: 1.0
         preset.params.entries.forEach { (k, v) ->
-            newMat = when (k) {
-                Filter.Contrast -> Filtering.contrast(newMat, v * intensity)
-                Filter.Brightness -> Filtering.brightness(newMat, v * intensity)
-                Filter.Blur -> Filtering.blur(newMat, v * intensity, v * intensity)
-                Filter.LightBalance -> Filtering.lightBalance(newMat, v * intensity)
-                Filter.Hue -> Filtering.saturation(newMat, v * intensity)
-                Filter.Sharpness -> Filtering.sharpen(newMat, v * intensity)
+            val temp = current
+            current = when (k) {
+                Filter.Contrast -> Filtering.contrast(current, v * intensity)
+                Filter.Brightness -> Filtering.brightness(current, v * intensity)
+                Filter.Blur -> Filtering.blur(current, v * intensity, v * intensity)
+                Filter.LightBalance -> Filtering.lightBalance(current, v * intensity)
+                Filter.Hue -> Filtering.saturation(current, v * intensity)
+                Filter.Sharpness -> Filtering.sharpen(current, v * intensity)
+            }
+            if (temp !== current) {
+                temp.release()
             }
         }
     }
-    return newMat
-}
-
-private fun Filter.toFilter(): Filter? = when (this) {
-    Filter.Sharpness -> Filter.Sharpness
-    Filter.Brightness -> Filter.Brightness
-    Filter.Contrast -> Filter.Contrast
-    Filter.Hue -> Filter.Hue
-    Filter.Blur -> /*Filter.Bitrate*/ null
-    Filter.LightBalance -> null
+    return current
 }
 
 private fun mergedEvaluationResult(
@@ -87,8 +81,7 @@ private fun mergedEvaluationResult(
     presets.forEachIndexed { index, preset ->
         val intensity = intensities[index.toString()]?.toDouble() ?: 1.0
         preset.params.forEach { (filter, value) ->
-            val outputKey = filter.toFilter() ?: return@forEach
-            merged[outputKey] = (merged[outputKey] ?: .0) + (value * intensity/10)
+            merged[filter] = (merged[filter] ?: .0) + (value * intensity/10)
         }
     }
     return EvaluationResult(merged)
@@ -118,7 +111,17 @@ fun VibeMatcher(
     var appliedIntensities by remember { mutableStateOf<Map<String, Float>>(emptyMap()) }
     val tokensList by remember { derivedStateOf { tokens } }
     var separatePresets by remember { mutableStateOf<List<Preset>>(emptyList()) }
-    var initialMat by remember { mutableStateOf(originalMat) }
+    val previewMat = remember(originalMat) {
+        originalMat?.let { Filtering.uniformDownscale(it, maxDimension = 600) }
+    }
+    val previewBitmap = remember(previewMat, separatePresets, appliedIntensities) {
+        previewMat?.let { mat ->
+            val processedMat = applyPresetsWithIntensity(mat, separatePresets, appliedIntensities)
+            val bitmap = FormatConverters.matToBitmap(processedMat)
+            processedMat.release()
+            bitmap.asImageBitmap()
+        }
+    }
     val developerMode by configRepository.developerMode.collectAsState(initial = false)
 
     when {
@@ -135,17 +138,14 @@ fun VibeMatcher(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        initialMat?.let { mat ->
-            FormatConverters.matToBitmap(
-                applyPresetsWithIntensity(mat, separatePresets, appliedIntensities)
-            ).asImageBitmap().let {
-                Image(
-                    bitmap = it,
-                    contentDescription = "preview",
-                    modifier = Modifier.size(300.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
+        previewBitmap?.let { bitmap ->
+            Image(
+                bitmap = bitmap,
+                contentDescription = "preview",
+                modifier = Modifier.size(300.dp),
+                contentScale = ContentScale.Crop
+            )
+        }
 
             if (cherryPicking) {
                 tokensList.getOrNull(selectedVibeIdx)?.let { selected ->
@@ -198,7 +198,7 @@ fun VibeMatcher(
                 OutlinedTextField(
                     value = currentToken,
                     onValueChange = {
-                        if (it.contains(" ")) {
+                        if (it.contains(" ") || it.contains("\n")) {
                             val token = it.trim()
                             if (token.isNotBlank() && token !in tokens) {
                                 tokens = tokens + token
@@ -275,5 +275,4 @@ fun VibeMatcher(
                     }
             }
         }
-    }
 }

@@ -114,9 +114,9 @@ open class StudioLayer(val mat: Mat, val tag: String? = null) : Closeable {
         val opacityMask = channels[3]
 
         extendedOther.copyTo(extended, opacityMask)
-
-        // dispose JNI resources
-        extendedOther.release()
+        if (extendedOther !== other.mat) {
+            extendedOther.release()
+        }
         channels.forEach { it.release() }
 
         return StudioLayer(extended)
@@ -210,14 +210,16 @@ open class StudioLayer(val mat: Mat, val tag: String? = null) : Closeable {
 fun Mat.applyFilterMap(filters: Map<Filter, Double>): Mat {
     var newMat = clone()
     filters.forEach { (filter, factor) ->
+        val temp = newMat
         newMat = when (filter) {
-            Filter.Contrast -> Filtering.contrast(newMat, factor * 10)
-            Filter.Brightness -> Filtering.brightness(newMat, factor * 10)
-            Filter.Blur -> Filtering.blur(newMat, factor * 10, factor * 10)
-            Filter.LightBalance -> Filtering.lightBalance(newMat, factor * 10)
-            Filter.Hue -> Filtering.saturation(newMat, factor * 10)
-            Filter.Sharpness -> Filtering.sharpen(newMat, factor * 10)
+            Filter.Contrast -> Filtering.contrast(newMat, factor)
+            Filter.Brightness -> Filtering.brightness(newMat, factor)
+            Filter.Blur -> Filtering.blur(newMat, factor, factor)
+            Filter.LightBalance -> Filtering.lightBalance(newMat, factor)
+            Filter.Hue -> Filtering.saturation(newMat, factor)
+            Filter.Sharpness -> Filtering.sharpen(newMat, factor)
         }
+        if (temp !== newMat) temp.release()
     }
     return newMat
 }

@@ -95,16 +95,8 @@ fun ImageEvaluation(
             state.keepParamsDialogActive = !state.keepParamsDialogActive
 //            state.values = state.optimizedParams!!
             state.optimizedParams?.let {
-                // oh my god bruh...
-                val asEvalRes = EvaluationResult(it)
-                onFinished(EvaluationResult(it))
-//                val ogAsEvalRes = EvaluationResult(state.values.entries.associate { a -> a.key to a.value.toDouble() })
-//                onFinished(EvaluationResult(
-//                    asEvalRes.delta(ogAsEvalRes)
-//                    .outputs
-//                    .entries
-//                    .associate { a -> a.key to a.value / 10 }
-//                ))
+                val divided = it.entries.associate { (k, v) -> k to v / 10.0 }
+                onFinished(EvaluationResult(divided))
             }
             onReturn()
         }
