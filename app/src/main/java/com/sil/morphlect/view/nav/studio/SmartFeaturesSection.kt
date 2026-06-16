@@ -142,6 +142,12 @@ fun SmartFeaturesSection(
         }
 
         Text("mxt", style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+        if (extensions.isEmpty())
+            Text(
+                text = "no extensions available. try installing some!",
+                style = MaterialTheme.typography.bodySmall
+            )
+        else
         Row(
             modifier = Modifier.fillMaxWidth().padding(10.dp),
             horizontalArrangement = Arrangement.Center,

@@ -14,10 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -93,7 +99,6 @@ fun VibeMatcher(
     originalMat: Mat?,
     onFinished: (EvaluationResult) -> Unit,
     onReturn: () -> Unit,
-    configRepository: AppConfigRepository,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -103,7 +108,6 @@ fun VibeMatcher(
     val miniLMEmbeddingLoader = remember {
         MiniLMEmbeddingLoader().apply { initialize(context) }
     }
-    var anchorPresets by remember { mutableStateOf<List<Preset>>(listOf()) }
     var isProcessing by remember { mutableStateOf(false) }
     var similarities by remember { mutableStateOf<List<List<Pair<String, Float>>>>(listOf()) }
     var cherryPicking by remember { mutableStateOf(false) }
@@ -122,7 +126,6 @@ fun VibeMatcher(
             bitmap.asImageBitmap()
         }
     }
-    val developerMode by configRepository.developerMode.collectAsState(initial = false)
 
     when {
         isProcessing -> DialogScaffold(
@@ -131,21 +134,32 @@ fun VibeMatcher(
         ) { LinearProgressIndicator() }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        previewBitmap?.let { bitmap ->
-            Image(
-                bitmap = bitmap,
-                contentDescription = "preview",
-                modifier = Modifier.size(300.dp),
-                contentScale = ContentScale.Crop
-            )
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { onReturn() },
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "back")
+            }
         }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            previewBitmap?.let { bitmap ->
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = "preview",
+                    modifier = Modifier.size(300.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             if (cherryPicking) {
                 tokensList.getOrNull(selectedVibeIdx)?.let { selected ->
@@ -154,7 +168,8 @@ fun VibeMatcher(
                     LedDotSlider(
                         value = appliedIntensities[selectedVibeIdx.toString()] ?: 0.5f,
                         onValueChange = { newValue ->
-                            appliedIntensities = appliedIntensities + (selectedVibeIdx.toString() to newValue)
+                            appliedIntensities =
+                                appliedIntensities + (selectedVibeIdx.toString() to newValue)
                         },
                         modifier = Modifier,
                     )
@@ -188,13 +203,8 @@ fun VibeMatcher(
                     }) {
                         Text("continue")
                     }
-                    TextButton(onClick = { }) {
-                        Text("auto")
-                    }
                 }
-                Text(miniLMEmbeddingLoader.combineMultipleTags(similarities).toString())
             } else {
-                Text(anchorPresets.joinToString())
                 OutlinedTextField(
                     value = currentToken,
                     onValueChange = {
@@ -225,8 +235,8 @@ fun VibeMatcher(
 
                 Row(
                     modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     tokens.forEach { token ->
@@ -244,6 +254,12 @@ fun VibeMatcher(
                         }
                     }
                 }
+
+                Text(
+                    text = "specify with tags the vibe for your image. tap on a tag to remove it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(15.dp)
+                )
 
                 Row {
                     TextButton(onClick = {
@@ -264,15 +280,7 @@ fun VibeMatcher(
                         Text("seems good")
                     }
                 }
-
-                TextButton(onClick = { onReturn() }) {
-                    Text("back to studio")
-                }
-
-                if (developerMode)
-                    similarities.forEach { l ->
-                        Text(l.joinToString { it.first + ":" + it.second.toString() })
-                    }
             }
         }
+    }
 }

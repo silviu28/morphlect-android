@@ -2,6 +2,7 @@ package com.sil.morphlect.ml.impl
 
 import android.content.Context
 import android.util.Log
+import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.data.Preset
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.ml.BertTokenizer
@@ -15,7 +16,7 @@ import org.tensorflow.lite.support.common.FileUtil
 
 // https://github.com/hissain/AndroidSemanticSearch
 
-class MiniLMEmbeddingLoader: ModelLoader<Any, Any> {
+class MiniLMEmbeddingLoader: ModelLoader<List<String>, List<Preset>> {
     companion object {
         const val MAX_SEQ_LEN = 128
         const val EMBEDDING_DIM = 384
@@ -92,8 +93,8 @@ class MiniLMEmbeddingLoader: ModelLoader<Any, Any> {
         return outputBatch[0]
     }
 
-    override fun infer(input: Any): Any {
-        TODO("Not yet implemented")
+    override fun infer(input: List<String>): List<Preset> {
+        return emptyList() // cannot run as inference requires suspend
     }
 
     override fun close() {

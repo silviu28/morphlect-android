@@ -9,9 +9,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -26,6 +32,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.imgproc.FormatConverters
@@ -37,6 +44,7 @@ import com.sil.morphlect.view.dialog.DialogScaffold
 import com.sil.morphlect.view.dialog.impl.KeepParamsDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 suspend fun RatingMaximizerLoader.optimizeComposition(image: Bitmap, iterationCount: Int): Map<Filter, Double> = withContext(Dispatchers.Default) {
     val cvmat = FormatConverters.bitmapToMat(image)
@@ -93,7 +101,6 @@ fun ImageEvaluation(
             state.optimizedParams = evaluator.optimizeComposition(previewBitmap!!, 100)
             state.optimizing = !state.optimizing
             state.keepParamsDialogActive = !state.keepParamsDialogActive
-//            state.values = state.optimizedParams!!
             state.optimizedParams?.let {
                 val divided = it.entries.associate { (k, v) -> k to v / 10.0 }
                 onFinished(EvaluationResult(divided))
@@ -135,8 +142,8 @@ fun ImageEvaluation(
             state.values[Filter.Hue]?.let {
                 when {
                     it > 0f && it <= .15f -> appendLine("your image has dull colors.")
-                    it > .15f && it <= .4f -> append("your image has okay colors.")
-                    it > .4f -> append("your image has punchy colors. it might be an eye-strain.")
+                    it > .15f && it <= .4f -> appendLine("your image has okay colors.")
+                    it > .4f -> appendLine("your image has punchy colors. it might be an eye-strain.")
                 }
             }
             appendLine("in my opinion...")
@@ -154,53 +161,61 @@ fun ImageEvaluation(
 
     when {
         state.optimizing ->
-            DialogScaffold(
-                title = "",
-                onDismissRequest = {},
-            ) {
+            Dialog(onDismissRequest = { }) {
                 Text("please wait...")
             }
 
         state.keepParamsDialogActive ->
             KeepParamsDialog(
                 onDismissRequest = { state.keepParamsDialogActive = false },
-                onApply = { state.optimizing = true })
+                onApply = { state.optimizing = true }
+            )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .padding(15.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        previewBitmap?.asImageBitmap()?.let {
-            Image(
-                bitmap = it,
-                contentDescription = "preview",
-                modifier = Modifier.size(300.dp),
-                contentScale = ContentScale.Crop
-            )
-        }
-        state.values.forEach { (effect, value) ->
-            Text("${effect.name}: ${"%.2f".format(value)}")
-        }
-        Text("Rating ${state.score}")
-        Text(informativeMessage)
-        Row {
-            Button(onClick = { onReturn() }) {
-                Text("back to studio")
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { onReturn() },
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "back")
             }
-            Button(onClick = { state.keepParamsDialogActive = true }) {
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .padding(15.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            previewBitmap?.asImageBitmap()?.let {
+                Image(
+                    bitmap = it,
+                    contentDescription = "preview",
+                    modifier = Modifier.size(300.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+//            state.values.forEach { (effect, value) ->
+//                Text("${effect.name}: ${"%.2f".format(value)}")
+//            }
+
+            Text("Rating ${(state.score * 100).roundToInt()}")
+
+            Text(informativeMessage)
+
+            TextButton(onClick = { state.keepParamsDialogActive = true }) {
                 Text("improve")
             }
-        }
-        Row(horizontalArrangement = Arrangement.End) {
-            Text(
-                text = "image evaluation uses AI and can make mistakes. use this to orientate yourself.",
-                style = MaterialTheme.typography.labelSmall
-            )
+
+            Row(horizontalArrangement = Arrangement.End) {
+                Text(
+                    text = "image evaluation uses AI and can make mistakes. use this to orientate yourself.",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
         }
     }
 }

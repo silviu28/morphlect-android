@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,8 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHost
-import androidx.navigation.NavHostController
 import com.sil.morphlect.data.EvaluationResult
 import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.imgproc.FormatConverters
@@ -70,7 +67,10 @@ fun StyleTransfer(
     var diff by remember { mutableStateOf<Map<Filter, Double>>(emptyMap()) }
 
     if (initialImage == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
             Text("no initial image")
         }
         return
@@ -81,7 +81,7 @@ fun StyleTransfer(
             onDismissRequest = { webOverlayActive = false },
             onImageSelected = { str ->
                 coroutineScope.launch {
-                    referenceImage = WebHelper.downloadUnsplashImage(str, context)
+                    referenceImage = WebHelper.downloadUnsplashImage(str)
                 }
                 webOverlayActive = false
             }

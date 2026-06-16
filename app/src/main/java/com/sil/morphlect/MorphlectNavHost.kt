@@ -134,7 +134,6 @@ fun MorphlectNavHost() {
                 originalMat = studioViewModel.originalMat,
                 onFinished = { evalResult -> studioViewModel.emitEvaluationResult(evalResult) },
                 onReturn = { navController.popBackStack() },
-                configRepository = configRepository,
             )
         }
 
