@@ -19,7 +19,10 @@ import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OptionsBottomSheet(navController: NavController, onDismiss: () -> Unit) {
+fun OptionsBottomSheet(
+    onNavigate: (route: String) -> Unit,
+    onDismiss: () -> Unit,
+) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = Modifier.padding(18.dp)
@@ -36,19 +39,13 @@ fun OptionsBottomSheet(navController: NavController, onDismiss: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(onClick = {
-                navController.navigate("save")
+                onNavigate("save")
             }) {
-                Text("save image")
+                Text("compare and save image")
             }
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(onClick = {
-                navController.navigate("compare")
-            }) {
-                Text("compare with initial image")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            TextButton(onClick = {
-                navController.navigate("settings")
+                onNavigate("settings")
             }) {
                 Text("settings")
             }

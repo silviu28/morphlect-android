@@ -7,7 +7,7 @@ enum class InteractorType {
     FilterParams,
     Image,
     Text,
-    TextArray,
     Float,
-    FloatArray
+    FloatArray,
+    DepthMap,
 }

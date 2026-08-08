@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.ui.geometry)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -102,9 +103,6 @@ dependencies {
     // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-support
     implementation(libs.tensorflow.lite.support)
 
-    // https://mvnrepository.com/artifact/com.google.code.gson/gson
-    implementation(libs.gson)
-
     // https://mvnrepository.com/artifact/androidx.compose.material/material-icons-extended
     implementation(libs.androidx.compose.material.icons.extended)
 
@@ -124,6 +122,9 @@ dependencies {
 
     // Source: https://mvnrepository.com/artifact/net.mamoe.yamlkt/yamlkt
     implementation("net.mamoe.yamlkt:yamlkt:0.13.0")
+
+    // Source: https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-task-text
+//    implementation("org.tensorflow:tensorflow-lite-task-text:0.4.4")
 }
 
 

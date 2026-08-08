@@ -1,0 +1,552 @@
+[
+  {
+    "name": "fuzzy",
+    "params": {
+      "Contrast": -0.3,
+      "Brightness": 0.1,
+      "Blur": 0.8,
+      "LightBalance": 0.0,
+      "Hue": 0.0,
+      "Sharpness": -0.7
+    }
+  },
+  {
+    "name": "jazzy",
+    "params": {
+      "Contrast": 0.7,
+      "Brightness": 0.3,
+      "Blur": 0.0,
+      "LightBalance": 0.2,
+      "Hue": 0.4,
+      "Sharpness": 0.5
+    }
+  },
+  {
+    "name": "classy",
+    "params": {
+      "Contrast": 0.6,
+      "Brightness": 0.2,
+      "Blur": -0.2,
+      "LightBalance": 0.3,
+      "Hue": -0.1,
+      "Sharpness": 0.7
+    }
+  },
+  {
+    "name": "amateurish",
+    "params": {
+      "Contrast": -0.4,
+      "Brightness": 0.6,
+      "Blur": 0.3,
+      "LightBalance": -0.3,
+      "Hue": 0.2,
+      "Sharpness": -0.5
+    }
+  },
+  {
+    "name": "vintage",
+    "params": {
+      "Contrast": 0.3,
+      "Brightness": -0.2,
+      "Blur": 0.1,
+      "LightBalance": -0.4,
+      "Hue": 0.3,
+      "Sharpness": -0.3
+    }
+  },
+  {
+    "name": "old-school",
+    "params": {
+      "Contrast": 0.4,
+      "Brightness": -0.3,
+      "Blur": 0.0,
+      "LightBalance": -0.5,
+      "Hue": 0.2,
+      "Sharpness": -0.2
+    }
+  },
+  {
+    "name": "sunny",
+    "params": {
+      "Contrast": 0.5,
+      "Brightness": 0.8,
+      "Blur": -0.1,
+      "LightBalance": 0.5,
+      "Hue": 0.1,
+      "Sharpness": 0.4
+    }
+  },
+  {
+    "name": "happy",
+    "params": {
+      "Contrast": 0.6,
+      "Brightness": 0.7,
+      "Blur": -0.2,
+      "LightBalance": 0.4,
+      "Hue": 0.3,
+      "Sharpness": 0.5
+    }
+  },
+  {
+    "name": "chilling",
+    "params": {
+      "Contrast": -0.2,
+      "Brightness": -0.3,
+      "Blur": 0.1,
+      "LightBalance": -0.6,
+      "Hue": -0.4,
+      "Sharpness": -0.2
+    }
+  },
+  {
+    "name": "grotesque",
+    "params": {
+      "Contrast": 0.9,
+      "Brightness": -0.2,
+      "Blur": 0.0,
+      "LightBalance": -0.8,
+      "Hue": 0.7,
+      "Sharpness": 0.6
+    }
+  },
+  {
+    "name": "noir",
+    "params": {
+      "Contrast": 0.9,
+      "Brightness": -0.5,
+      "Blur": 0.0,
+      "LightBalance": -0.7,
+      "Hue": -0.9,
+      "Sharpness": 0.8
+    }
+  },
+  {
+    "name": "dreamy",
+    "params": {
+      "Contrast": -0.3,
+      "Brightness": 0.4,
+      "Blur": 0.6,
+      "LightBalance": 0.3,
+      "Hue": 0.2,
+      "Sharpness": -0.8
+    }
+  },
+  {
+    "name": "cyberpunk",
+    "params": {
+      "Contrast": 0.8,
+      "Brightness": -0.1,
+      "Blur": -0.3,
+      "LightBalance": -0.2,
+      "Hue": 0.9,
+      "Sharpness": 0.9
+    }
+  },
+  {
+    "name": "faded",
+    "params": {
+      "Contrast": -0.6,
+      "Brightness": 0.3,
+      "Blur": 0.2,
+      "LightBalance": 0.1,
+      "Hue": -0.2,
+      "Sharpness": -0.6
+    }
+  },
+  {
+    "name": "crisp",
+    "params": {
+      "Contrast": 0.7,
+      "Brightness": 0.1,
+      "Blur": -0.5,
+      "LightBalance": 0.2,
+      "Hue": 0.0,
+      "Sharpness": 1.0
+    }
+  },
+  {
+    "name": "melancholic",
+    "params": {
+      "Contrast": 0.2,
+      "Brightness": -0.4,
+      "Blur": 0.3,
+      "LightBalance": -0.5,
+      "Hue": -0.5,
+      "Sharpness": -0.3
+    }
+  },
+  {
+    "name": "tropical",
+    "params": {
+      "Contrast": 0.5,
+      "Brightness": 0.6,
+      "Blur": -0.1,
+      "LightBalance": 0.6,
+      "Hue": 0.6,
+      "Sharpness": 0.3
+    }
+  },
+  {
+    "name": "infrared",
+    "params": {
+      "Contrast": 0.6,
+      "Brightness": 0.2,
+      "Blur": 0.0,
+      "LightBalance": 0.4,
+      "Hue": -0.8,
+      "Sharpness": 0.7
+    }
+  },
+  {
+    "name": "ghostly",
+    "params": {
+      "Contrast": -0.5,
+      "Brightness": 0.7,
+      "Blur": 0.5,
+      "LightBalance": 0.6,
+      "Hue": -0.3,
+      "Sharpness": -0.9
+    }
+  },
+  {
+    "name": "rustic",
+    "params": {
+      "Contrast": 0.3,
+      "Brightness": -0.1,
+      "Blur": 0.1,
+      "LightBalance": -0.3,
+      "Hue": 0.4,
+      "Sharpness": 0.1
+    }
+  },
+  {
+    "name": "arctic",
+    "params": {
+      "Contrast": 0.4,
+      "Brightness": 0.5,
+      "Blur": 0.1,
+      "LightBalance": 0.7,
+      "Hue": -0.6,
+      "Sharpness": 0.3
+    }
+  },
+  {
+    "name": "apocalyptic",
+    "params": {
+      "Contrast": 0.8,
+      "Brightness": -0.6,
+      "Blur": 0.2,
+      "LightBalance": -0.9,
+      "Hue": 0.5,
+      "Sharpness": 0.4
+    }
+  },
+  {
+    "name": "pastel",
+    "params": {
+      "Contrast": -0.4,
+      "Brightness": 0.5,
+      "Blur": 0.1,
+      "LightBalance": 0.4,
+      "Hue": 0.3,
+      "Sharpness": -0.4
+    }
+  },
+  {
+    "name": "surreal",
+    "params": {
+      "Contrast": 0.5,
+      "Brightness": 0.1,
+      "Blur": 0.3,
+      "LightBalance": 0.1,
+      "Hue": 1.0,
+      "Sharpness": -0.2
+    }
+  },
+  {
+    "name": "cinematic",
+    "params": {
+      "Contrast": 0.6,
+      "Brightness": -0.2,
+      "Blur": 0.0,
+      "LightBalance": -0.3,
+      "Hue": -0.2,
+      "Sharpness": 0.6
+    }
+  },
+  {
+    "name": "underwater",
+    "params": {
+      "Contrast": -0.2,
+      "Brightness": -0.1,
+      "Blur": 0.3,
+      "LightBalance": -0.4,
+      "Hue": -0.7,
+      "Sharpness": -0.3
+    }
+  },
+  {
+    "name": "golden-hour",
+    "params": {
+      "Contrast": 0.4,
+      "Brightness": 0.5,
+      "Blur": 0.0,
+      "LightBalance": 0.6,
+      "Hue": 0.5,
+      "Sharpness": 0.3
+    }
+  },
+  {
+    "name": "neon",
+    "params": {
+      "Contrast": 0.9,
+      "Brightness": 0.2,
+      "Blur": -0.1,
+      "LightBalance": 0.1,
+      "Hue": 0.8,
+      "Sharpness": 0.8
+    }
+  },
+  {
+    "name": "foggy",
+    "params": {
+      "Contrast": -0.5,
+      "Brightness": 0.3,
+      "Blur": 0.7,
+      "LightBalance": 0.2,
+      "Hue": -0.1,
+      "Sharpness": -0.8
+    }
+  },
+  {
+    "name": "bleached",
+    "params": {
+      "Contrast": -0.7,
+      "Brightness": 0.8,
+      "Blur": 0.1,
+      "LightBalance": 0.7,
+      "Hue": -0.1,
+      "Sharpness": -0.5
+    }
+  },
+  {
+    "name": "moonlit",
+    "params": {
+      "Contrast": 0.3,
+      "Brightness": -0.6,
+      "Blur": 0.2,
+      "LightBalance": -0.7,
+      "Hue": -0.5,
+      "Sharpness": 0.2
+    }
+  },
+  {
+    "name": "lo-fi",
+    "params": {
+      "Contrast": -0.3,
+      "Brightness": 0.2,
+      "Blur": 0.4,
+      "LightBalance": -0.2,
+      "Hue": 0.1,
+      "Sharpness": -0.7
+    }
+  },
+  {
+    "name": "hyperreal",
+    "params": {
+      "Contrast": 0.1,
+      "Brightness": 0.1,
+      "Blur": -0.5,
+      "LightBalance": 0.3,
+      "Hue": 0.0,
+      "Sharpness": 1.0
+    }
+  },
+  {
+    "name": "washed",
+    "params": {
+      "Contrast": -0.6,
+      "Brightness": 0.6,
+      "Blur": 0.2,
+      "LightBalance": 0.3,
+      "Hue": -0.3,
+      "Sharpness": -0.6
+    }
+  },
+  {
+    "name": "forest",
+    "params": {
+      "Contrast": 0.3,
+      "Brightness": -0.2,
+      "Blur": 0.1,
+      "LightBalance": -0.2,
+      "Hue": -0.6,
+      "Sharpness": 0.4
+    }
+  },
+  {
+    "name": "desert",
+    "params": {
+      "Contrast": 0.5,
+      "Brightness": 0.4,
+      "Blur": 0.0,
+      "LightBalance": 0.5,
+      "Hue": 0.5,
+      "Sharpness": 0.2
+    }
+  },
+  {
+    "name": "eerie",
+    "params": {
+      "Contrast": 0.6,
+      "Brightness": -0.5,
+      "Blur": 0.3,
+      "LightBalance": -0.6,
+      "Hue": 0.3,
+      "Sharpness": -0.1
+    }
+  },
+  {
+    "name": "bubblegum",
+    "params": {
+      "Contrast": 0.2,
+      "Brightness": 0.7,
+      "Blur": 0.0,
+      "LightBalance": 0.5,
+      "Hue": 0.7,
+      "Sharpness": 0.2
+    }
+  },
+  {
+    "name": "stormy",
+    "params": {
+      "Contrast": 0.7,
+      "Brightness": -0.4,
+      "Blur": 0.2,
+      "LightBalance": -0.6,
+      "Hue": -0.3,
+      "Sharpness": 0.5
+    }
+  },
+  {
+    "name": "velvet",
+    "params": {
+      "Contrast": 0.4,
+      "Brightness": -0.1,
+      "Blur": 0.3,
+      "LightBalance": -0.1,
+      "Hue": 0.2,
+      "Sharpness": -0.4
+    }
+  },
+  {
+    "name": "toxic",
+    "params": {
+      "Contrast": 0.8,
+      "Brightness": 0.3,
+      "Blur": -0.2,
+      "LightBalance": 0.2,
+      "Hue": -0.9,
+      "Sharpness": 0.7
+    }
+  },
+  {
+    "name": "dusty",
+    "params": {
+      "Contrast": -0.2,
+      "Brightness": 0.1,
+      "Blur": 0.3,
+      "LightBalance": -0.2,
+      "Hue": 0.3,
+      "Sharpness": -0.5
+    }
+  },
+  {
+    "name": "celestial",
+    "params": {
+      "Contrast": 0.5,
+      "Brightness": 0.3,
+      "Blur": 0.2,
+      "LightBalance": 0.4,
+      "Hue": -0.4,
+      "Sharpness": 0.1
+    }
+  },
+  {
+    "name": "volcanic",
+    "params": {
+      "Contrast": 0.9,
+      "Brightness": -0.3,
+      "Blur": 0.1,
+      "LightBalance": -0.5,
+      "Hue": 0.6,
+      "Sharpness": 0.5
+    }
+  },
+  {
+    "name": "soap-opera",
+    "params": {
+      "Contrast": 0.3,
+      "Brightness": 0.5,
+      "Blur": -0.4,
+      "LightBalance": 0.5,
+      "Hue": 0.1,
+      "Sharpness": 0.9
+    }
+  },
+  {
+    "name": "glitchy",
+    "params": {
+      "Contrast": 0.7,
+      "Brightness": 0.0,
+      "Blur": -0.3,
+      "LightBalance": 0.0,
+      "Hue": 1.0,
+      "Sharpness": 0.6
+    }
+  },
+  {
+    "name": "candlelit",
+    "params": {
+      "Contrast": 0.3,
+      "Brightness": -0.1,
+      "Blur": 0.2,
+      "LightBalance": -0.2,
+      "Hue": 0.6,
+      "Sharpness": -0.2
+    }
+  },
+  {
+    "name": "overexposed",
+    "params": {
+      "Contrast": -0.4,
+      "Brightness": 1.0,
+      "Blur": 0.1,
+      "LightBalance": 0.8,
+      "Hue": 0.0,
+      "Sharpness": -0.3
+    }
+  },
+  {
+    "name": "underexposed",
+    "params": {
+      "Contrast": 0.2,
+      "Brightness": -0.9,
+      "Blur": 0.1,
+      "LightBalance": -0.8,
+      "Hue": 0.0,
+      "Sharpness": 0.1
+    }
+  },
+  {
+    "name": "haunted",
+    "params": {
+      "Contrast": 0.5,
+      "Brightness": -0.4,
+      "Blur": 0.4,
+      "LightBalance": -0.7,
+      "Hue": -0.2,
+      "Sharpness": -0.5
+    }
+  }
+]

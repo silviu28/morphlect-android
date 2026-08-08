@@ -30,13 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.sil.morphlect.data.EditorLayer
+import com.sil.morphlect.layerwork.StudioLayer
 import com.sil.morphlect.view.dialog.DialogScaffold
 
 @Composable
 fun LayeringDialog(
-    layers: List<EditorLayer>,
-    onRemoveLayer: (EditorLayer) -> Unit,
+    layers: List<StudioLayer>,
+    onRemoveLayer: (StudioLayer) -> Unit,
     onMergeLayerWithBelow: (Int) -> Unit,
     onDismissRequest: () -> Unit,
     onInterchangeLayers: (Int, Int) -> Unit,
@@ -77,8 +77,8 @@ fun LayeringDialog(
 @Composable
 private fun LayerInfo(
     key: Int,
-    layer: EditorLayer,
-    onRemoveLayer: (EditorLayer) -> Unit,
+    layer: StudioLayer,
+    onRemoveLayer: (StudioLayer) -> Unit,
     onMergeLayerWithBelow: (Int) -> Unit,
     onInterchangeLayers: (Int, Int) -> Unit,
     onVisibilityToggle: (Int) -> Unit

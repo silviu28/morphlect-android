@@ -1,15 +1,14 @@
 package com.sil.morphlect.command.impl
 
-import com.sil.morphlect.command.EditorCommand
-import com.sil.morphlect.data.EditorLayer
-import com.sil.morphlect.logic.Filtering
-import org.opencv.core.Mat
+import com.sil.morphlect.command.StudioCommand
+import com.sil.morphlect.layerwork.StudioLayer
+import com.sil.morphlect.imgproc.Filtering
 
-class SharpnessCommand(val factor: Double) : EditorCommand {
+class SharpnessCommand(val factor: Double) : StudioCommand {
     override val actionName: String
-        get() = "Sharpness ${".2f".format(factor)}"
+        get() = "Sharpness ${"%.2f".format(factor)}"
 
-    override fun execute(src: EditorLayer): EditorLayer {
-        return EditorLayer(Filtering.sharpen(src.mat, factor))
+    override fun execute(src: StudioLayer): StudioLayer {
+        return StudioLayer(Filtering.sharpen(src.mat, factor))
     }
 }

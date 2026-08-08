@@ -23,6 +23,7 @@ import com.sil.morphlect.R
 */
 @Composable
 fun PixelatedGraphic(
+    modifier: Modifier = Modifier,
     imageBitmap: ImageBitmap? = null,
     imageVector: ImageVector? = null,
     size: Dp = 200.dp,
@@ -31,6 +32,7 @@ fun PixelatedGraphic(
         Modifier
             .size(size)
             .padding(10.dp)
+            .then(modifier)
     ) {
         imageBitmap?.let {
             Image(

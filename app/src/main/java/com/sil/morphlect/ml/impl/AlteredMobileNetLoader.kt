@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.graphics.get
 import androidx.core.graphics.scale
-import com.sil.morphlect.enums.Output
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.exception.ModelLoaderException
 import com.sil.morphlect.ml.ModelLoader
 import org.tensorflow.lite.Interpreter
@@ -14,12 +14,11 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class AlteredMobileNetLoader : ModelLoader<Bitmap, Map<Output, Float>> {
+class AlteredMobileNetLoader : ModelLoader<Bitmap, Map<Filter, Float>> {
     companion object {
         private const val IMAGE_SIZE = 224
         private const val CHANNELS = 3
-        private const val OUTPUT_SIZE = 6
-        private const val MODEL_NAME = "altered_mobilenet.tflite"
+        private const val OUTPUT_SIZE = 4
     }
 
     override val name = "altered_mobilenet.tflite"
@@ -56,7 +55,7 @@ class AlteredMobileNetLoader : ModelLoader<Bitmap, Map<Output, Float>> {
         return buffer
     }
 
-    override fun infer(bitmap: Bitmap): Map<Output, Float> {
+    override fun infer(bitmap: Bitmap): Map<Filter, Float> {
         if (interpreter == null) {
             throw ModelLoaderException("Unable to load the model with given properties.")
         }
@@ -66,7 +65,12 @@ class AlteredMobileNetLoader : ModelLoader<Bitmap, Map<Output, Float>> {
         interpreter!!.run(input, output)
 
         val actualOutput = output[0]
-        return Output.entries.associate { it to actualOutput[it.ordinal] }
+        return mapOf(
+            Filter.Brightness to actualOutput[0],
+            Filter.Contrast to actualOutput[1],
+            Filter.Hue to actualOutput[2],
+            Filter.Sharpness to actualOutput[3],
+        )
     }
 
     override fun close() {

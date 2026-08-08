@@ -1,0 +1,186 @@
+package com.sil.morphlect.view.nav
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.sil.morphlect.repository.AppConfigRepository
+import com.sil.morphlect.view.custom.DecoratedContainer
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material3.Scaffold
+
+/**
+ the settings page, where the user can adjust any setting.
+*/
+@Composable
+fun Settings(
+    configRepository: AppConfigRepository,
+    onNavigate: (route: String) -> Unit,
+) {
+    val advancedMode       by configRepository.advancedMode.collectAsState(initial = false)
+    val hidePrimaryBar     by configRepository.hidePrimaryBar.collectAsState(initial = false)
+    val developerMode      by configRepository.developerMode.collectAsState(initial = false)
+
+    val scope = rememberCoroutineScope()
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { onNavigate("studio") },
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "layering")
+            }
+        }
+    ) { _ ->
+        DecoratedContainer(Icons.Default.Settings) {
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                SliderSettingsEntry(
+                    title = "advanced mode",
+                    description = "activate professional grade tooling, such as dynamic adjustable color levels using a dynamic histogram",
+                    checked = advancedMode,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setAdvancedMode(it) }
+                    }
+                )
+
+                SliderSettingsEntry(
+                    title = "hide primary bar",
+                    description = "hide primary bar for sections that may have it",
+                    checked = hidePrimaryBar,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setHidePrimaryBar(it) }
+                    }
+                )
+
+                SliderSettingsEntry(
+                    title = "developer mode",
+                    description = "enable app insights and several hidden features",
+                    checked = developerMode,
+                    onCheckedChange = {
+                        scope.launch { configRepository.setDeveloperMode(it) }
+                    }
+                )
+
+                SettingsEntry(title = "manage fingerprint") {
+                    IconButton(onClick = { onNavigate("fingerprint-manager") }) {
+                        Icon(Icons.Default.Fingerprint, contentDescription = "manage fingerprint")
+                    }
+                }
+
+                SettingsEntry(title = "manage models") {
+                    IconButton(onClick = { onNavigate("model-download") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "manage models")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ a compact brief for a setting, alongside a slider to adjust it.
+*/
+@Composable
+private fun SliderSettingsEntry(
+    title: String,
+    description: String? = null,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            description?.let {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.padding(start = 16.dp)
+        )
+    }
+}
+
+@Composable
+private fun SettingsEntry(
+    title: String,
+    description: String? = null,
+    content: @Composable (() -> Unit),
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            description?.let {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+
+        content()
+    }
+}

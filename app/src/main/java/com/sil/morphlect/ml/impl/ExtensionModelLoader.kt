@@ -5,7 +5,10 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.util.Log
 import androidx.core.graphics.get
-import com.sil.morphlect.enums.Output
+import com.sil.morphlect.data.BindingMap
+import com.sil.morphlect.data.InferenceValue
+import com.sil.morphlect.data.Tensor4D
+import com.sil.morphlect.enums.Filter
 import com.sil.morphlect.exception.ModelLoaderException
 import com.sil.morphlect.ml.ModelLoader
 import com.sil.mxtengine.data.InteractorType
@@ -16,15 +19,14 @@ import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.to
 
-typealias BindingMap = Map<String, Any?>
-
-class ExtensionModelLoader (
+class ExtensionModelLoader(
     override val name: String,
     val inputs: List<ModelInteractor>,
     val outputs: List<ModelInteractor>,
     val threadCount: Int = 4,
-) : ModelLoader<BindingMap, Map<Output, Float>> {
+) : ModelLoader<BindingMap, InferenceValue> {
     class Builder {
         private var name: String = "none"
         private var inputs: List<ModelInteractor> = listOf()
@@ -91,30 +93,35 @@ class ExtensionModelLoader (
         return buffer
     }
 
-    override fun infer(inputVals: BindingMap): Map<Output, Float> {
+    @Throws(ModelLoaderException::class, Exception::class)
+    override fun infer(inputVals: BindingMap): InferenceValue {
         if (interpreter == null) {
             throw ModelLoaderException("Unable to load the model with given properties.")
         }
         val interp = interpreter ?: throw ModelLoaderException("Unable to load the model with given properties.")
 
         // order inputs by index to match model's expected input order
-        val fmtInputs = inputs.mapIndexed { index, inputSpec ->
+        val fmtInputs = inputs.map { inputSpec ->
             when (inputSpec.type) {
                 InteractorType.Image ->
-                    bitmapToByteBuffer(inputVals[inputSpec.name] as? Bitmap ?: throw Exception())
+                    bitmapToByteBuffer(
+                        (inputVals[inputSpec.name] as InferenceValue.BitmapValue).value
+                    )
 
                 InteractorType.Text ->
-                    (inputVals[inputSpec.name] as? String ?: throw Exception()).toByteArray()
-
-                InteractorType.TextArray -> TODO()
+                    (inputVals[inputSpec.name] as InferenceValue.StringValue).value.toByteArray()
 
                 InteractorType.Float ->
-                    listOf(inputVals[inputSpec.name] as? Float ?: throw Exception()).toFloatArray()
+                    listOf((inputVals[inputSpec.name] as InferenceValue.FloatValue).value).toFloatArray()
 
                 InteractorType.FloatArray ->
-                    inputVals[inputSpec.name] as? FloatArray ?: throw Exception()
+                    (inputVals[inputSpec.name] as InferenceValue.FloatArrayValue).value
 
-                else -> throw Exception()
+                InteractorType.FilterParams ->
+                    (inputVals[inputSpec.name] as InferenceValue.MapValue<*, *>).value
+
+                InteractorType.DepthMap ->
+                    (inputVals[inputSpec.name] as InferenceValue.Tensor4DValue).value.data
             }
         }.toTypedArray()
 
@@ -122,9 +129,33 @@ class ExtensionModelLoader (
         val fmtOutputs = mutableMapOf<Int, Any>()
         outputs.forEachIndexed { index, outputSpec ->
             fmtOutputs[index] = when (outputSpec.type) {
-                InteractorType.FilterParams -> Array(1) { FloatArray(Output.entries.size) }
+                InteractorType.FilterParams -> Array(1) { FloatArray(Filter.entries.size) }
                 InteractorType.Text -> Array(1) { FloatArray(outputSpec.shape[0]) }
-                else -> Array(1) { FloatArray(1) }
+                else -> {
+                    // might not be the best... but why would you need a tensor of a bigger shape for an output?
+                    when (outputSpec.shape.size) {
+                        1 -> FloatArray(outputSpec.shape[0])
+
+                        2 -> Array(outputSpec.shape[0]) { FloatArray(outputSpec.shape[1]) }
+
+                        3 -> Array(outputSpec.shape[0]) {
+                            Array(outputSpec.shape[1]) {
+                                FloatArray(outputSpec.shape[2])
+                            }
+                        }
+
+                        4 -> Array(outputSpec.shape[0]) {
+                            Array(outputSpec.shape[1]) {
+                                Array(outputSpec.shape[2]) {
+                                    FloatArray(outputSpec.shape[3])
+                                }
+                            }
+                        }
+
+                        // oh my god bruh
+                        else -> Array(1) { FloatArray(1) }
+                    }
+                }
             }
         }
 
@@ -136,8 +167,30 @@ class ExtensionModelLoader (
         }
 
         // map results back to Output enum
-        val resultBuffer = (fmtOutputs[0] as Array<FloatArray>)[0]
-        return Output.entries.associate { it to resultBuffer[it.ordinal] }
+        @Suppress("UNCHECKED_CAST")
+        return when (outputs[0].type){
+            InteractorType.FilterParams -> {
+                val resultBuffer = (fmtOutputs[0] as Array<FloatArray>)[0]
+                InferenceValue.MapValue(
+                    Filter.entries.associate { it to resultBuffer[it.ordinal] }
+                )
+            }
+
+            InteractorType.Image -> InferenceValue.BitmapValue(fmtOutputs[0] as Bitmap)
+            InteractorType.Text -> InferenceValue.StringValue(fmtOutputs[0] as String)
+            InteractorType.Float -> InferenceValue.FloatValue(fmtOutputs[0] as Float)
+            InteractorType.FloatArray -> {
+                when (outputs[0].shape.size) {
+                    4 -> InferenceValue.Tensor4DValue(
+                        Tensor4D(fmtOutputs[0] as Array<Array<Array<FloatArray>>>)
+                    )
+                    else -> TODO()
+                }
+            }
+            InteractorType.DepthMap -> InferenceValue.Tensor4DValue(
+                Tensor4D(fmtOutputs[0] as Array<Array<Array<FloatArray>>>)
+            )
+        }
     }
 
     override fun close() {

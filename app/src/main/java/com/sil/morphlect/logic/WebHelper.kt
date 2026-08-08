@@ -1,16 +1,14 @@
 package com.sil.morphlect.logic
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import com.sil.morphlect.BuildConfig
 import com.sil.morphlect.constant.WebConstants
 import com.sil.morphlect.dto.ModelInfoDTO
-import com.sil.morphlect.view.mxt.MXTManifestDTO
-import com.sil.mxtengine.data.MXTManifest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import net.mamoe.yamlkt.Yaml
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -147,23 +145,47 @@ object WebHelper {
 
         val body = response.body?.string()
 
-        if (query.isNullOrBlank()) {
-            val images = JSONArray(body)
-            return@withContext List(images.length()) {
-                images
-                    .getJSONObject(it)
-                    .getJSONObject("urls")
-                    .getString("small")
+        return@withContext try {
+            if (query.isNullOrBlank()) {
+                val images = JSONArray(body)
+                List(images.length()) {
+                    images
+                        .getJSONObject(it)
+                        .getJSONObject("urls")
+                        .getString("small")
+                } // return
+            } else {
+                val parsedBody = JSONArray(body)
+                List(parsedBody.length()) {
+                    parsedBody
+                        .getJSONObject(it)
+                        .getJSONObject("urls")
+                        .getString("small")
+                } // return
             }
-        } else {
-            val parsedBody = JSONObject(body)
-            val images = parsedBody.getJSONArray("results")
-            return@withContext List(images.length()) {
-                images
-                    .getJSONObject(it)
-                    .getJSONObject("urls")
-                    .getString("small")
-            }
+        } catch (e: Exception) {
+            Log.e("Unsplash", e.toString())
+            emptyList()
+        }
+    }
+
+    suspend fun downloadUnsplashImage(query: String): Bitmap? = withContext(Dispatchers.IO) {
+        // first get a random image URL for the query
+        val searchUrl = query
+
+        val request = Request.Builder()
+            .url(searchUrl)
+            .build()
+
+        return@withContext try {
+            val response = http.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext null
+
+            val bytes = response.body?.bytes() ?: return@withContext null
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        } catch (e: Exception) {
+            Log.e("Unsplash", e.toString())
+            null
         }
     }
 }

@@ -1,24 +1,26 @@
 package com.sil.morphlect.ml.impl
 
 import android.content.Context
-import com.sil.morphlect.enums.Output
+import android.graphics.Bitmap
+import android.graphics.Color
+import androidx.core.graphics.get
+import androidx.core.graphics.scale
 import com.sil.morphlect.exception.ModelLoaderException
 import com.sil.morphlect.ml.ModelLoader
 import okio.IOException
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-class RatingMaximizerLoader : ModelLoader<Map<Output, Double>, Double> {
+class RatingMaximizerLoader : ModelLoader<Bitmap, Float> {
+    override val name = "mobilenet_rater.tflite"
+    private var interpreter: Interpreter? = null
+
     companion object {
         private const val IMAGE_SIZE = 224
         private const val CHANNELS = 3
-        private const val OUTPUT_SIZE = 6
-        private const val MODEL_NAME = "ratingmaximizer.tflite"
     }
-
-    override val name = "ratingmaximizer.tflite"
-
-    private var interpreter: Interpreter? = null
 
     override fun initialize(context: Context): Boolean {
         return try {
@@ -32,15 +34,35 @@ class RatingMaximizerLoader : ModelLoader<Map<Output, Double>, Double> {
         }
     }
 
-    override fun infer(input: Map<Output, Double>): Double {
+    fun bitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
+        val resized = bitmap.scale(IMAGE_SIZE, IMAGE_SIZE, false)
+        val buffer = ByteBuffer.allocateDirect(1 * IMAGE_SIZE * IMAGE_SIZE * CHANNELS * Float.SIZE_BYTES)
+        buffer.order(ByteOrder.nativeOrder())
+
+        for (y in 0 until IMAGE_SIZE) {
+            for (x in 0 until IMAGE_SIZE) {
+                val px = resized[x, y]
+                buffer.putFloat(Color.red(px) / 255f)
+                buffer.putFloat(Color.green(px) / 255f)
+                buffer.putFloat(Color.blue(px) / 255f)
+            }
+        }
+
+        buffer.rewind()
+        return buffer
+    }
+
+    override fun infer(input: Bitmap): Float {
         if (interpreter == null) {
             throw ModelLoaderException("Unable to load the model with given properties.")
         }
 
-        val output = arrayOf(doubleArrayOf(0.0))
+        val input = bitmapToByteBuffer(input)
+        val output = Array(1) { FloatArray(1) }
         interpreter!!.run(input, output)
 
-        return output[0][0]
+        val actualOutput = output[0][0]
+        return actualOutput
     }
 
     override fun close() {

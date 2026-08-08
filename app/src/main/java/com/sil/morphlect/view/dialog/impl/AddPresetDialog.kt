@@ -32,14 +32,14 @@ import com.sil.morphlect.view.dialog.DialogScaffold
 fun AddPresetDialog(
     onDismissRequest: () -> Unit,
     onAddPreset: (Preset) -> Unit,
-    onAddPresetFromEditor: (String) -> Unit,
+    onAddPresetFromStudio: (String) -> Unit,
 ) {
-    val ctx = LocalContext.current
+    val context = LocalContext.current
     val presetPickLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            val fileName = ctx.contentResolver.query(uri, null, null, null, null)?.use {
+            val fileName = context.contentResolver.query(uri, null, null, null, null)?.use {
                 val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                 it.moveToFirst()
                 it.getString(nameIndex)
@@ -47,11 +47,11 @@ fun AddPresetDialog(
 
             fileName?.let {
                 if (!it.endsWith(".preset")) {
-                    Toast.makeText(ctx, "Please select a .preset file.", Toast.LENGTH_SHORT)
+                    Toast.makeText(context, "Please select a .preset file.", Toast.LENGTH_SHORT)
                         .show()
                 } else {
                     try {
-                        val content = ctx.contentResolver.openInputStream(uri)?.use { stream ->
+                        val content = context.contentResolver.openInputStream(uri)?.use { stream ->
                             stream.bufferedReader().readText()
                         }
                         val json = JSONObject(content ?: return@let)
@@ -89,7 +89,7 @@ fun AddPresetDialog(
             TextButton(
                 onClick = {
                     if (presetName.isNotBlank()) {
-                        onAddPresetFromEditor(presetName)
+                        onAddPresetFromStudio(presetName)
                         onDismissRequest()
                     }
                 }
