@@ -4,9 +4,6 @@
   <p><strong>Native Android image processing app using on-device inference</strong></p>
 
   <!-- Badges -->
-  <a href="https://github.com/silviu28/morphlect-android/releases">
-    <img src="https://img.shields.io/github/v/release/silviu28/morphlect-android?style=for-the-badge&color=success" alt="Release">
-  </a>
   <a href="https://github.com/silviu28/morphlect-android/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/silviu28/morphlect-android/android.yml?style=for-the-badge" alt="Build Status">
   </a>
