@@ -55,9 +55,11 @@ Check out the <a href="https://github.com/silviu28/morphlect-server">server temp
 ## Screenshots
 
 <div align="center">
-  <img src="screenshots/home.png" alt="Home Screen" width="250">
-  <img src="screenshots/dashboard.png" alt="Dashboard" width="250">
-  <img src="screenshots/settings.png" alt="Settings" width="250">
+  <img src="screenshots/Screenshot_20260417_180521-portrait.png" alt="Studio Filtering" width="250">
+  <img src="screenshots/Screenshot_20260417_180706-portrait.png" alt="Image Quality Assessment" width="250">
+  <img src="screenshots/Screenshot_20260417_181150-portrait.png" alt="Tags to Filter Transformation" width="250">
+  <img src="screenshots/Screenshot_20260417_181335-portrait.png" alt="Expanded Layers View" width="250">
+  <img src="screenshots/Screenshot_20260417_185301-portrait.png" alt="MXT Search" width="250">
 </div>
 
 ---
@@ -112,5 +114,11 @@ These only run on the device. Beware if you have an existing build as the test e
 ```
 
 ## Contributing
-While the project isn't actively maintained, contributions are welcome.
+
+While the project isn't actively maintained, contributions are welcome. Do not push directly on the `master` branch and create a PR. Even if the workflow fails your contribution may still pass after approval. Purely AI-generated contributions are prohibited.
+
+## Additional Credits
+- Android Semantic Search repository for helpful transformer loading and wiring logic https://github.com/hissain/AndroidSemanticSearch
+- CameraX OpenCV repository for helpful CameraX and OpenCV linking logic https://github.com/mcanyucel/camerax-opencv
   
+<sub>silviu28 | 2026</sub>
